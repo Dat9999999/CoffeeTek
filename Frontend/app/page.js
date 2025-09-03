@@ -6,7 +6,7 @@ import OrderCoffee from "./components/OrderCoffee";
 import SellingCoffee from "./components/SellingCoffee";
 import InstantCoffee from "./components/InstantCoffee";
 import Footer from "./components/Footer";
-// import Testimonial from "./components/Testimonial";
+import Testimonial from "./components/Testimonial";
 
 export default function Home() {
   return (
@@ -17,7 +17,7 @@ export default function Home() {
       <OrderCoffee />
       <SellingCoffee />
       <InstantCoffee />
-      {/* <Testimonial /> */}
+      <Testimonial />
       <Footer />
     </>
   );

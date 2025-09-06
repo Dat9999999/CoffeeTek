@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
+import { STORAGE_KEYS } from "@/lib/constant/storageKey.constant";
+import { getAccessToken } from "@/utils/auth";
 export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -21,13 +23,10 @@ export default function AuthPage() {
             const data = await response.json();
 
             //store token in local storage
-            console.log(data);
-            localStorage.setItem('accesToken', data.token);
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
             if (response.ok) {
                 // Handle successful login (e.g., redirect, store token, etc.)
-                // alert('Login successful!');
                 router.push('/');
-
 
             } else {
                 // Handle login error (e.g., show error message)

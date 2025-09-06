@@ -18,10 +18,10 @@ export class AuthService {
                 email: dto.username,
             }
         })
-        if (!user) throw new ForbiddenException("Email doesn't exits")
+        if (!user) throw new ForbiddenException("Email doesn't exits or password is wrong!")
         const pwMatches = await argon.verify(user.hash, dto.password);
 
-        if (!pwMatches) throw new ForbiddenException("Email or password is wrong!")
+        if (!pwMatches) throw new ForbiddenException("Email doesn't exits or password is wrong!")
 
         return this.signToken(user.id, user.email);
     }

@@ -15,7 +15,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
                 break;
             default:
                 errorResponse = new InternalServerErrorException({
-                    message: `Database error: ${exception.message}`,
+                    message: `${exception.message}`,
                 });
         }
         const res = errorResponse.getResponse();

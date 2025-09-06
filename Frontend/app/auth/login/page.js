@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -7,7 +8,7 @@ export default function AuthPage() {
         e.preventDefault();
         // Handle authentication logic here
         try {
-            const response = await fetch('http://localhost:3001/auth/login', {
+            const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

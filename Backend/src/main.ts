@@ -5,9 +5,15 @@ import { PrismaExceptionFilter } from './prisma/exception/PrismaExceptionFilter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // set global prefix
+  app.setGlobalPrefix('api');
+
   // data validation
   app.useGlobalPipes(new ValidationPipe());
 
+
+  // CORS configuration
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

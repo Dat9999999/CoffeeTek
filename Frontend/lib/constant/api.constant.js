@@ -1,10 +1,7 @@
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 export const API_ENDPOINTS = {
     AUTH: {
-        LOGIN: "/auth/login",
-        SIGNUP: "/auth/signup",
-    },
-    USER: {
-        PROFILE: "/user/profile",
-        UPDATE: "/user/update",
+        LOGIN: `${BASE_URL}/auth/login`,
+        SIGNUP: `${BASE_URL}/auth/signup`,
     },
 };

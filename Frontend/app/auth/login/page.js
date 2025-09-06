@@ -22,6 +22,7 @@ export default function AuthPage() {
 
             //store token in local storage
             console.log(data);
+            localStorage.setItem('accesToken', data.token);
             if (response.ok) {
                 // Handle successful login (e.g., redirect, store token, etc.)
                 // alert('Login successful!');

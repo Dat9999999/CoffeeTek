@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const router = useRouter();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         // Handle authentication logic here
@@ -16,10 +19,15 @@ export default function AuthPage() {
                 body: JSON.stringify({ username: email, password }),
             });
             const data = await response.json();
+
+            //store token in local storage
             console.log(data);
             if (response.ok) {
                 // Handle successful login (e.g., redirect, store token, etc.)
-                alert('Login successful!');
+                // alert('Login successful!');
+                router.push('/');
+
+
             } else {
                 // Handle login error (e.g., show error message)
                 alert(data.message || 'Login failed');

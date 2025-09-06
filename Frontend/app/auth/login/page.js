@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 import { STORAGE_KEYS } from "@/lib/constant/storageKey.constant";
+import Link from "next/link";
 
 export default function AuthPage() {
     const [email, setEmail] = useState("");
@@ -93,6 +94,9 @@ export default function AuthPage() {
                         Sign In
                     </button>
                 </form>
+                <Link href={"/auth/signup"} className="text-sm mt-4 text-right block text-coffee-600">
+                    Sign up
+                </Link>
             </div>
         </div>
     );

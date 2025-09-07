@@ -70,65 +70,66 @@ export default function AuthPage() {
     };
 
     return (
-        <Card className="w-full max-w-sm">
-            <CardHeader>
-                <CardTitle>Login to your account</CardTitle>
-                <CardDescription>
-                    Enter your email below to login to your account
-                </CardDescription>
-                <Button variant="link" asChild>
-                    <Link href="/auth/signup">Sign Up</Link>
-                </Button>
-            </CardHeader>
+        <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-[url(/image/login_background.jpg)] bg-cover">
+            <Card className="w-full max-w-lg">
+                <CardHeader>
+                    <CardTitle>Login to your account</CardTitle>
+                    <CardDescription>
+                        Enter your email below to login to your account
+                    </CardDescription>
+                    <Button className="w-fit bg-lime-300" variant="link" asChild>
+                        <Link href="/auth/signup">Sign Up</Link>
+                    </Button>
+                </CardHeader>
 
-            <CardContent>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="m@example.com"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                    </div>
-
-                    <div className="grid gap-2">
-                        <div className="flex items-center">
-                            <Label htmlFor="password">Password</Label>
-                            <a
-                                href="#"
-                                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                            >
-                                Forgot your password?
-                            </a>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="m@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                         </div>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-                    </div>
 
-                    {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
+                        <div className="grid gap-2">
+                            <div className="flex items-center">
+                                <Label htmlFor="password">Password</Label>
+                                <a
+                                    href="#"
+                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                                >
+                                    Forgot your password?
+                                </a>
+                            </div>
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                        </div>
 
-                    <CardFooter className="flex-col gap-2 px-0">
-                        <Button type="submit" className="w-full">
-                            Login
-                        </Button>
-                        <Button type="button" variant="outline" className="w-full">
-                            Login with Google
-                        </Button>
-                    </CardFooter>
-                </form>
-            </CardContent>
-        </Card>
+                        {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
 
+                        <CardFooter className="flex-col gap-2 px-0">
+                            <Button type="submit" className="w-full">
+                                Login
+                            </Button>
+                            <Button type="button" variant="outline" className="w-full">
+                                Login with Google
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

@@ -4,7 +4,18 @@ import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 import { STORAGE_KEYS } from "@/lib/constant/storageKey.constant";
 import Link from "next/link";
-
+import { Button } from "@/components/ui/button"
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -59,26 +70,46 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center">
-            <div className="p-6 rounded-2xl shadow-md bg-white w-80">
-                <h1 className="text-2xl font-bold mb-4">Sign In</h1>
-                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                    <div>
-                        <input
+        <Card className="w-full max-w-sm">
+            <CardHeader>
+                <CardTitle>Login to your account</CardTitle>
+                <CardDescription>
+                    Enter your email below to login to your account
+                </CardDescription>
+                <Button variant="link" asChild>
+                    <Link href="/auth/signup">Sign Up</Link>
+                </Button>
+            </CardHeader>
+
+            <CardContent>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
                             type="email"
-                            placeholder="Email"
-                            className="border rounded px-3 py-2 w-full"
+                            placeholder="m@example.com"
+                            required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
                         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                     </div>
 
-                    <div>
-                        <input
+                    <div className="grid gap-2">
+                        <div className="flex items-center">
+                            <Label htmlFor="password">Password</Label>
+                            <a
+                                href="#"
+                                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                            >
+                                Forgot your password?
+                            </a>
+                        </div>
+                        <Input
+                            id="password"
                             type="password"
-                            placeholder="Password"
-                            className="border rounded px-3 py-2 w-full"
+                            required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
@@ -87,17 +118,17 @@ export default function AuthPage() {
 
                     {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
 
-                    <button
-                        type="submit"
-                        className="bg-black text-white rounded px-4 py-2 hover:bg-gray-800"
-                    >
-                        Sign In
-                    </button>
+                    <CardFooter className="flex-col gap-2 px-0">
+                        <Button type="submit" className="w-full">
+                            Login
+                        </Button>
+                        <Button type="button" variant="outline" className="w-full">
+                            Login with Google
+                        </Button>
+                    </CardFooter>
                 </form>
-                <Link href={"/auth/signup"} className="text-sm mt-4 text-right block text-coffee-600">
-                    Sign up
-                </Link>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
+
     );
 }

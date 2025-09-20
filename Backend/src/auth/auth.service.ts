@@ -133,6 +133,23 @@ export class AuthService {
         return update;
     }
     assignRole(dto: authAssignRoleDto) {
-        return "assign role";
+        const userUpdated = this.prisma.user.update({
+            where: {
+                id: dto.userId,
+            },
+            data: {
+                roles: {
+                    connect: { role_name: dto.roleName }
+                }
+            },
+            select: {
+                id: true,
+                phone_number: true,
+                first_name: true,
+                last_name: true,
+                roles: true,
+            }
+        })
+        return userUpdated;
     }
 }

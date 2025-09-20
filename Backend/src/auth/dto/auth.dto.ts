@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString } from 'class-validator'
 
 export class authLoginDto {
@@ -53,6 +54,7 @@ export class authForgetPasswordDto {
 
 export class authAssignRoleDto {
     @IsNotEmpty()
+    @Type(() => Number)
     userId: number;
 
     @IsNotEmpty()

@@ -1,9 +1,11 @@
-import { Body, Controller, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorator';
 import * as client from 'generated/prisma/client';
+import { Role } from './decorator/role.decorator';
+import { RolesGuard } from './strategy/role.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -31,7 +33,10 @@ export class AuthController {
         return this.authservice.resetPassword(dto);
     }
     @Put('edit-role')
-    editRole(@Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Role('owner', 'manager')
+    editRole(@GetUser() user: client.User, @Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
+        console.log(user);
         return this.authservice.editRole(dto, assign);
     }
 

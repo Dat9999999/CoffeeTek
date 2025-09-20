@@ -32,11 +32,12 @@ export class AuthController {
     resetPassword(@Body() dto: authForgetPasswordDto) {
         return this.authservice.resetPassword(dto);
     }
+
+    // only owner or manager can assign or remove role for user
     @Put('edit-role')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Role('owner', 'manager')
-    editRole(@GetUser() user: client.User, @Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
-        console.log(user);
+    editRole(@Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
         return this.authservice.editRole(dto, assign);
     }
 

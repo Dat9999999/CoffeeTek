@@ -7,6 +7,8 @@ import { ChangeSensitiveInfoDTO, UserUpdateDTO } from './dto';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetAllDto } from 'src/common/dto/pagination.dto';
+import { Role } from 'src/auth/decorator/role.decorator';
+import { RolesGuard } from 'src/auth/strategy/role.strategy';
 
 @Controller('user')
 
@@ -44,19 +46,27 @@ export class UserController {
 
     //owner or manager only
     @Get('get-all')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Role('owner', 'manager')
     async getAllUsers(@Query() query: GetAllDto) {
         return await this.userService.getAllUsers(query);
     }
     @Delete('lock/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Role('owner', 'manager')
     async lockUser(@Param('id', ParseIntPipe) id: number) {
         return await this.userService.lockUser(id);
     }
     @Patch('unlock/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Role('owner', 'manager')
     async unlockUser(@Param('id', ParseIntPipe) id: number) {
         return await this.userService.unlockUser(id);
     }
 
     @Put('change-sensitive/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Role('owner', 'manager')
     async changeSensitiveInfo(@Param('id', ParseIntPipe) id: number, @Body() body: ChangeSensitiveInfoDTO) {
         return await this.userService.changeSensitiveInfo(id, body);
     }

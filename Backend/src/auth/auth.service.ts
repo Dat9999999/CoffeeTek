@@ -11,6 +11,7 @@ import { RedisService } from 'src/redis/redis.service';
 @Injectable()
 export class AuthService {
 
+
     constructor(
         private prisma: PrismaService,
         private jwt: JwtService,
@@ -132,24 +133,45 @@ export class AuthService {
         })
         return update;
     }
-    assignRole(dto: authAssignRoleDto) {
-        const userUpdated = this.prisma.user.update({
-            where: {
-                id: dto.userId,
-            },
-            data: {
-                roles: {
-                    connect: { role_name: dto.roleName }
+    editRole(dto: authAssignRoleDto, assign: Boolean) {
+        const userUpdated = assign
+            // assign role 
+            ? this.prisma.user.update({
+                where: {
+                    id: dto.userId,
+                },
+                data: {
+                    roles: {
+                        connect: { role_name: dto.roleName }
+                    }
+                },
+                select: {
+                    id: true,
+                    phone_number: true,
+                    first_name: true,
+                    last_name: true,
+                    roles: true,
                 }
-            },
-            select: {
-                id: true,
-                phone_number: true,
-                first_name: true,
-                last_name: true,
-                roles: true,
-            }
-        })
+            })
+            // remove role
+            : this.prisma.user.update({
+                where: {
+                    id: dto.userId,
+                },
+                data: {
+                    roles: {
+                        disconnect: { role_name: dto.roleName }
+                    }
+                },
+                select: {
+                    id: true,
+                    phone_number: true,
+                    first_name: true,
+                    last_name: true,
+                    roles: true,
+                }
+            })
         return userUpdated;
     }
+
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -30,9 +30,10 @@ export class AuthController {
     resetPassword(@Body() dto: authForgetPasswordDto) {
         return this.authservice.resetPassword(dto);
     }
-    @Put('assign-role')
-    assignRole(@Body() dto: authAssignRoleDto) {
-        return this.authservice.assignRole(dto);
+    @Put('edit-role')
+    editRole(@Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
+        return this.authservice.editRole(dto, assign);
     }
+
 
 }

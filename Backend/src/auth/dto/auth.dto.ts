@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString } from 'class-validator'
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString } from 'class-validator'
+import { Role } from 'src/common/enums/role.enum';
 
 export class authLoginDto {
     @IsPhoneNumber('VN')
@@ -58,5 +59,7 @@ export class authAssignRoleDto {
     userId: number;
 
     @IsNotEmpty()
+    //check role is valid
+    @IsEnum(Role, { message: 'role must be one of manager, staff, customer, barista, baker, stocktaker, cashier' })
     roleName: string;
 }

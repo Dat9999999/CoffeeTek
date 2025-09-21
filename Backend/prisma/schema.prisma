@@ -50,3 +50,28 @@ model Role {
   @@map("roles")
 }
 
+model OptionGroup {
+  id     Int           @id @default(autoincrement())
+  name   String
+  values OptionValue[] // 1 group có nhiều value
+
+  @@map("option_groups")
+}
+
+model OptionValue {
+  id              Int         @id @default(autoincrement())
+  name            String
+  sort_index      Int
+  option_group    OptionGroup @relation(fields: [option_group_id], references: [id])
+  option_group_id Int
+
+  @@map("option_values")
+}
+
+model Size {
+  id         Int    @id @default(autoincrement())
+  name       String @unique
+  sort_index Int
+
+  @@map("sizes")
+}

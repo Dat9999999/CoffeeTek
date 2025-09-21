@@ -1,0 +1,55 @@
+# --- Stage 1: Build ---
+FROM node:22-alpine AS builder
+
+# Enable pnpm
+RUN corepack enable
+
+# Set working dir
+WORKDIR /app
+
+# Copy file cấu hình
+COPY package.json pnpm-lock.yaml ./
+
+# Cài dependencies (chưa copy source để tận dụng cache)
+RUN pnpm install --frozen-lockfile
+
+# Copy Prisma schema trước
+COPY prisma ./prisma
+
+# Generate Prisma Client (cần schema + node_modules)
+RUN pnpm exec prisma generate
+
+# Copy toàn bộ source code
+COPY . .
+
+# Build project (NestJS build ra thư mục dist)
+RUN pnpm run build
+
+# --- Stage 2: Run ---
+FROM node:22-alpine
+
+RUN corepack enable
+WORKDIR /app
+
+# Copy node_modules từ builder
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy Prisma Client (nếu generate vào node_modules thì có sẵn rồi,
+# nếu generate ra ./prisma/generated thì copy thêm)
+COPY --from=builder /app/prisma ./prisma
+
+# Copy file dist sau khi build
+COPY --from=builder /app/dist ./dist
+
+# Copy file cấu hình cần thiết
+COPY --from=builder /app/package.json ./package.json
+
+
+# copy env file 
+COPY --from=builder /app/.env ./.env
+
+# Expose cổng (NestJS mặc định 3001)
+EXPOSE 3001
+
+# Start app
+CMD ["node", "dist/main"]

@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorator';
-import * as client from 'generated/prisma/client';
+import * as client from '@prisma/client';
 import { Role } from './decorator/role.decorator';
 import { RolesGuard } from './strategy/role.strategy';
 

@@ -40,7 +40,7 @@ export class UserController {
     async updateInfo(@Param('id', ParseIntPipe) id: number,
         @UploadedFile() avatar: Express.Multer.File,
         @Body() updateDto: UserUpdateDTO): Promise<string> {
-        return await this.userService.updateInfo(id, updateDto, avatar.filename);
+        return await this.userService.updateInfo(id, updateDto, avatar?.filename);
     }
 
 

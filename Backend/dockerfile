@@ -4,52 +4,54 @@ FROM node:22-alpine AS builder
 # Enable pnpm
 RUN corepack enable
 
-# Set working dir
 WORKDIR /app
 
-# Copy file cấu hình
+# Copy package.json & lockfile
 COPY package.json pnpm-lock.yaml ./
 
-# Cài dependencies (chưa copy source để tận dụng cache)
+# Cài full dependencies (bao gồm dev để build TS)
 RUN pnpm install --frozen-lockfile
 
-# Copy Prisma schema trước
+# Copy Prisma schema trước để generate client
 COPY prisma ./prisma
 
-# Generate Prisma Client (cần schema + node_modules)
+# Generate Prisma client
 RUN pnpm exec prisma generate
 
 # Copy toàn bộ source code
 COPY . .
 
-# Build project (NestJS build ra thư mục dist)
+# Build NestJS
 RUN pnpm run build
+
+# Compile seed.ts sang JS
+RUN pnpm exec tsc --project tsconfig.seed.json
+
+
 
 # --- Stage 2: Run ---
 FROM node:22-alpine
 
-RUN corepack enable
 WORKDIR /app
+RUN corepack enable
 
-# Copy node_modules từ builder
+# Copy node_modules prod từ builder
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy Prisma Client (nếu generate vào node_modules thì có sẵn rồi,
-# nếu generate ra ./prisma/generated thì copy thêm)
+# Copy Prisma folder (schema + dist seed.js)
 COPY --from=builder /app/prisma ./prisma
 
-# Copy file dist sau khi build
+# Copy NestJS dist
 COPY --from=builder /app/dist ./dist
 
-# Copy file cấu hình cần thiết
+# Copy package.json để prisma seed đọc script
 COPY --from=builder /app/package.json ./package.json
 
+# Nếu dùng env file, uncomment:
+# COPY --from=builder /app/.env ./.env
 
-# copy env file 
-COPY --from=builder /app/.env ./.env
-
-# Expose cổng (NestJS mặc định 3001)
+# Expose cổng
 EXPOSE 3001
 
-# Start app
-CMD ["node", "dist/main"]
+# CMD production: migrate -> seed -> start NestJS
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm exec prisma db seed && node dist/main.js"]

@@ -6,7 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { OrderModule } from './order/order.module';
 import { MailModule } from './common/mail/mail.module';
 import { RedisModule } from './redis/redis.module';
+import { OptionGroupsModule } from './option-groups/option-groups.module';
+import { OptionValuesModule } from './option-values/option-values.module';
+import { SizesModule } from './sizes/sizes.module';
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, PrismaModule, OrderModule, MailModule, RedisModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, PrismaModule, OrderModule, MailModule, RedisModule, OptionGroupsModule, OptionValuesModule, SizesModule],
 })
 export class AppModule { }

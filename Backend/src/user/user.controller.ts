@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/decorator';
-import * as client from 'generated/prisma/client';
+import * as client from '@prisma/client';
 import { UserService } from './user.service';
 import { ChangeSensitiveInfoDTO, UserUpdateDTO } from './dto';
 import { diskStorage } from 'multer';

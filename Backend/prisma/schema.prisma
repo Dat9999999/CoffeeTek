@@ -20,11 +20,12 @@ model User {
   // password hash for security
   hash         String
 
-  first_name String      @default("empty")
-  last_name  String      @default("empty")
-  is_locked  Boolean     @default(false)
-  roles      Role[]      @relation("UserRoles")
-  detail     UserDetail?
+  first_name    String         @default("empty")
+  last_name     String         @default("empty")
+  is_locked     Boolean        @default(false)
+  roles         Role[]         @relation("UserRoles")
+  detail        UserDetail?
+  customerPoint CustomerPoint?
 
   @@map("users")
 }
@@ -77,12 +78,24 @@ model Size {
 }
 
 model LoyaltyLevel {
-  id            Int     @id @default(autoincrement())
-  name          String  @unique
-  discount_rate Float   @default(0) // percentage discount
-  min_point     Int     @default(0)
-  max_point     Int     @default(0)
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  discount_rate Float           @default(0) // percentage discount
+  min_point     Int             @default(0)
+  max_point     Int             @default(0)
   description   String?
+  CustomerPoint CustomerPoint[]
 
   @@map("loyalty_levels")
+}
+
+model CustomerPoint {
+  id             Int           @id @default(autoincrement())
+  total_point    Int           @default(0)
+  user           User          @relation(fields: [userId], references: [id])
+  userId         Int           @unique
+  loyaltyLevel   LoyaltyLevel? @relation(fields: [loyaltyLevelId], references: [id])
+  loyaltyLevelId Int?
+
+  @@map("customer_points")
 }

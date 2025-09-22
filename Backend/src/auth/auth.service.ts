@@ -58,6 +58,13 @@ export class AuthService {
                     //signup user with customer role
                     roles: {
                         connect: { role_name: 'customer' }
+                    },
+                    //create customer loyality point
+                    customerPoint: {
+                        create: {
+                            // initial point
+                            total_point: 0,
+                        }
                     }
                 }
             });

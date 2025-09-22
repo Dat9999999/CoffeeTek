@@ -59,19 +59,108 @@ model OptionGroup {
 }
 
 model OptionValue {
-  id              Int         @id @default(autoincrement())
-  name            String
-  sort_index      Int
-  option_group    OptionGroup @relation(fields: [option_group_id], references: [id])
-  option_group_id Int
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  sort_index         Int
+  option_group       OptionGroup          @relation(fields: [option_group_id], references: [id])
+  option_group_id    Int
+  ProductOptionValue ProductOptionValue[]
 
   @@map("option_values")
 }
 
 model Size {
-  id         Int    @id @default(autoincrement())
-  name       String @unique
-  sort_index Int
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  sort_index  Int
+  ProductSize ProductSize[]
 
   @@map("sizes")
+}
+
+model Category {
+  id                 Int     @id @default(autoincrement())
+  name               String
+  sort_index         Int
+  is_parent_category Boolean @default(false)
+
+  parent_category_id Int?
+  parent_category    Category?  @relation("CategoryToSubcategories", fields: [parent_category_id], references: [id])
+  subcategories      Category[] @relation("CategoryToSubcategories")
+
+  @@map("categories")
+}
+
+model Topping {
+  id             Int              @id @default(autoincrement())
+  name           String
+  price          Float
+  image_name     String?
+  sort_index     Int
+  ProductTopping ProductTopping[]
+
+  @@map("toppings")
+}
+
+model Product {
+  id             Int     @id @default(autoincrement())
+  name           String
+  is_multi_size  Boolean @default(false)
+  product_detail String?
+  price          Float?
+
+  sizes        ProductSize[] // 1 product có nhiều size
+  optionValues ProductOptionValue[] // 1 product có nhiều option value
+  toppings     ProductTopping[] // 1 product có nhiều topping
+  images       ProductImage[]
+
+  @@map("products")
+}
+
+model ProductSize {
+  id    Int   @id @default(autoincrement())
+  price Float
+
+  product_id Int
+  size_id    Int
+
+  product Product @relation(fields: [product_id], references: [id])
+  size    Size    @relation(fields: [size_id], references: [id])
+
+  @@map("product_sizes")
+}
+
+model ProductOptionValue {
+  id Int @id @default(autoincrement())
+
+  product_id      Int
+  option_value_id Int
+
+  product      Product     @relation(fields: [product_id], references: [id])
+  option_value OptionValue @relation(fields: [option_value_id], references: [id])
+
+  @@map("product_option_values")
+}
+
+model ProductTopping {
+  id Int @id @default(autoincrement())
+
+  product_id Int
+  topping_id Int
+
+  product Product @relation(fields: [product_id], references: [id])
+  topping Topping @relation(fields: [topping_id], references: [id])
+
+  @@map("product_toppings")
+}
+
+model ProductImage {
+  id         Int    @id @default(autoincrement())
+  image_name String
+  sort_index Int
+
+  product_id Int
+  product    Product @relation(fields: [product_id], references: [id])
+
+  @@map("product_images")
 }

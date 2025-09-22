@@ -46,6 +46,7 @@ export class UserService {
                     email: true,
                     phone_number: true,
                     detail: true,
+                    customerPoint: true
                 },
                 orderBy: { id: orderBy }
             }),

@@ -75,3 +75,14 @@ model Size {
 
   @@map("sizes")
 }
+
+model LoyaltyLevel {
+  id            Int     @id @default(autoincrement())
+  name          String  @unique
+  discount_rate Float   @default(0) // percentage discount
+  min_point     Int     @default(0)
+  max_point     Int     @default(0)
+  description   String?
+
+  @@map("loyalti_levels")
+}

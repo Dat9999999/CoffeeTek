@@ -9,7 +9,8 @@ import { RedisModule } from './redis/redis.module';
 import { OptionGroupsModule } from './option-groups/option-groups.module';
 import { OptionValuesModule } from './option-values/option-values.module';
 import { SizesModule } from './sizes/sizes.module';
+import { LoyalityLevelModule } from './loyality-level/loyality-level.module';
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, PrismaModule, OrderModule, MailModule, RedisModule, OptionGroupsModule, OptionValuesModule, SizesModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, PrismaModule, OrderModule, MailModule, RedisModule, OptionGroupsModule, OptionValuesModule, SizesModule, LoyalityLevelModule],
 })
 export class AppModule { }

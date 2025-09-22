@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Put } from '@nestjs/common';
 import { LoyalityLevelService } from './loyality-level.service';
 import { CreateLoyalityLevelDto } from './dto/create-loyality-level.dto';
 import { UpdateLoyalityLevelDto } from './dto/update-loyality-level.dto';
 
 @Controller('loyality-level')
 export class LoyalityLevelController {
-  constructor(private readonly loyalityLevelService: LoyalityLevelService) {}
+  constructor(private readonly loyalityLevelService: LoyalityLevelService) { }
 
   @Post()
   create(@Body() createLoyalityLevelDto: CreateLoyalityLevelDto) {
@@ -18,17 +18,17 @@ export class LoyalityLevelController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.loyalityLevelService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.loyalityLevelService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLoyalityLevelDto: UpdateLoyalityLevelDto) {
-    return this.loyalityLevelService.update(+id, updateLoyalityLevelDto);
+  @Put(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateLoyalityLevelDto: UpdateLoyalityLevelDto) {
+    return this.loyalityLevelService.update(id, updateLoyalityLevelDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.loyalityLevelService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.loyalityLevelService.remove(id);
   }
 }

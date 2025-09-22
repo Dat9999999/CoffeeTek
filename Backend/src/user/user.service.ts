@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { ChangeSensitiveInfoDTO, UserUpdateDTO } from "./dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { GetAllDto } from "src/common/dto/pagination.dto";
-import { Order } from "src/common/enums/order.enum";
 
 @Injectable()
 export class UserService {

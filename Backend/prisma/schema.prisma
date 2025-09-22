@@ -84,5 +84,5 @@ model LoyaltyLevel {
   max_point     Int     @default(0)
   description   String?
 
-  @@map("loyalti_levels")
+  @@map("loyalty_levels")
 }

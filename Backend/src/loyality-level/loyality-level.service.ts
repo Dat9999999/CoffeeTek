@@ -1,26 +1,67 @@
 import { Injectable } from '@nestjs/common';
 import { CreateLoyalityLevelDto } from './dto/create-loyality-level.dto';
 import { UpdateLoyalityLevelDto } from './dto/update-loyality-level.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class LoyalityLevelService {
-  create(createLoyalityLevelDto: CreateLoyalityLevelDto) {
-    return 'This action adds a new loyalityLevel';
+  constructor(private prisma: PrismaService) { }
+
+  async create(dto: CreateLoyalityLevelDto) {
+    const newLevel = await this.prisma.loyaltyLevel.create({
+      data: {
+        name: dto.name,
+        discount_rate: dto.discountRate,
+        min_point: dto.minPoint,
+        max_point: dto.maxPoint,
+        description: dto.description
+      }
+    })
+    return newLevel;
   }
 
   findAll() {
-    return `This action returns all loyalityLevel`;
+    const levels = this.prisma.loyaltyLevel.findMany();
+    if (!levels) {
+      throw new Error('No loyalty levels found');
+    }
+    return levels;
+    //
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} loyalityLevel`;
+  async findOne(id: number) {
+    const level = await this.prisma.loyaltyLevel.findUnique({
+      where: { id }
+    });
+    if (!level) {
+      throw new Error('Loyalty level not found');
+    }
+    return level;
   }
 
   update(id: number, updateLoyalityLevelDto: UpdateLoyalityLevelDto) {
-    return `This action updates a #${id} loyalityLevel`;
+    const updatedLevel = this.prisma.loyaltyLevel.update({
+      where: { id },
+      data: {
+        name: updateLoyalityLevelDto.name,
+        discount_rate: updateLoyalityLevelDto.discountRate,
+        min_point: updateLoyalityLevelDto.minPoint,
+        max_point: updateLoyalityLevelDto.maxPoint,
+        description: updateLoyalityLevelDto.description
+      }
+    })
+    return updatedLevel;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} loyalityLevel`;
+  async remove(id: number) {
+    try {
+      const deletedLevel = await this.prisma.loyaltyLevel.delete({
+        where: { id }
+      })
+      return deletedLevel;
+    } catch (error) {
+      return { message: 'Loyalty level not found or already deleted' };
+    }
+
   }
 }

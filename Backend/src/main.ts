@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { PrismaExceptionFilter } from './prisma/exception/PrismaExceptionFilter';
 
 async function bootstrap() {
@@ -10,7 +10,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // data validation
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    exceptionFactory: (errors) => {
+      console.error('Validation errors:', errors); //  log ra terminal
+      return new BadRequestException(errors);
+    },
+  }));
 
 
   // CORS configuration

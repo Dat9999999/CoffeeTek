@@ -8,6 +8,7 @@ export class CreateSizeDto {
     name: string;
 
     @IsInt()
+    @Type(() => Number)
     sort_index: number;
 }
 

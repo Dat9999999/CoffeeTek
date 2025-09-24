@@ -57,7 +57,13 @@ export class ToppingsService {
         });
     }
 
-    remove(id: number) {
-        return this.prisma.topping.delete({ where: { id } });
+    async remove(id: number) {
+        await this.prisma.productTopping.deleteMany({
+            where: { topping_id: id },
+        });
+
+        return this.prisma.topping.delete({
+            where: { id },
+        });
     }
 }

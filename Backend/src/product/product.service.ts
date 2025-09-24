@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 import { Prisma } from '@prisma/client';
@@ -11,7 +11,7 @@ export class ProductsService {
   constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateProductDto) {
-    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds } = dto;
+    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds, categoryId } = dto;
 
     // Validate logic
     if (!is_multi_size && (price === undefined || price === null)) {
@@ -33,6 +33,9 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
+        category: categoryId
+          ? { connect: { id: categoryId } }
+          : undefined,
         sizes: sizeIds
           ? {
             create: sizeIds.map((s) => ({
@@ -65,18 +68,29 @@ export class ProductsService {
 
   }
 
-
   async findAll(query: GetAllProductsDto) {
-    const { page, size, search, orderBy = 'id', orderDirection = 'asc' } = query;
+    const {
+      page,
+      size,
+      search,
+      orderBy = 'id',
+      orderDirection = 'asc',
+      categoryId
+    } = query;
 
-    const where: Prisma.ProductWhereInput = search
-      ? { name: { contains: search, mode: Prisma.QueryMode.insensitive } }
-      : {};
+    const where: Prisma.ProductWhereInput = {
+      AND: [
+        search
+          ? { name: { contains: search, mode: Prisma.QueryMode.insensitive } }
+          : {},
+        categoryId ? { category_id: categoryId } : {},
+      ],
+    };
 
     const [data, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        include: { sizes: true, optionValues: true, toppings: true },
+        include: { sizes: true, optionValues: true, toppings: true, images: true, category: true },
         orderBy: { [orderBy]: orderDirection },
         skip: (page - 1) * size,
         take: size,
@@ -95,15 +109,20 @@ export class ProductsService {
     };
   }
 
-  findOne(id: number) {
+
+  async findOne(id: number) {
+    const existing = await this.prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
     return this.prisma.product.findUnique({
       where: { id },
-      include: { sizes: true, optionValues: true, toppings: true },
+      include: { sizes: true, optionValues: true, toppings: true, images: true },
     });
   }
 
   async update(id: number, dto: UpdateProductDto) {
-    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds } = dto;
+    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds, categoryId } = dto;
 
 
     const existing = await this.prisma.product.findUnique({
@@ -112,7 +131,7 @@ export class ProductsService {
     });
 
     if (!existing) {
-      throw new Error("Product not found");
+      throw new NotFoundException("Product not found");
     }
 
     const finalIsMultiSize = is_multi_size ?? existing.is_multi_size;
@@ -138,6 +157,9 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
+        category: categoryId
+          ? { connect: { id: categoryId } }
+          : undefined,
         // Cập nhật quan hệ (topping, option, size)
         sizes: sizeIds
           ? {
@@ -176,7 +198,20 @@ export class ProductsService {
   }
 
 
-  remove(id: number) {
+  async remove(id: number) {
+
+    const existing = await this.prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+
+    // delete related records
+    await this.prisma.productSize.deleteMany({ where: { product_id: id } });
+    await this.prisma.productOptionValue.deleteMany({ where: { product_id: id } });
+    await this.prisma.productTopping.deleteMany({ where: { product_id: id } });
+    await this.prisma.productImage.deleteMany({ where: { product_id: id } });
+
     return this.prisma.product.delete({ where: { id } });
   }
+
 }

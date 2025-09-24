@@ -1,10 +1,14 @@
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber } from 'class-validator';
 
 export class CreateProductDto {
     name: string;
     is_multi_size: boolean;
     product_detail?: string;
     price?: number;
+
+    @IsOptional()
+    @IsNumber()
+    categoryId?: number | null;
 
     @IsOptional()
     sizeIds?: { id: number; price: number }[];
@@ -16,5 +20,5 @@ export class CreateProductDto {
     toppingIds?: number[];
 
     @IsOptional()
-    images?: { image_name: string; sort_index: number }[]; // 👈 thêm
+    images?: { image_name: string; sort_index: number }[];
 }

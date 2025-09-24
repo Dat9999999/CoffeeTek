@@ -50,9 +50,14 @@ export class OptionValuesService {
         });
     }
 
-    remove(id: number) {
+    async remove(id: number) {
+        await this.prisma.productOptionValue.deleteMany({
+            where: { option_value_id: id },
+        });
+
         return this.prisma.optionValue.delete({
             where: { id },
         });
     }
+
 }

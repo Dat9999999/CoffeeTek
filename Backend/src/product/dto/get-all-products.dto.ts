@@ -9,12 +9,17 @@ export class GetAllProductsDto {
     @Min(1)
     page = 1;
 
-    @Type(() => Number)
+
     @Min(1)
+    @Type(() => Number)
     size = 10;
 
     @IsOptional()
     search?: string;
+
+    @Type(() => Number)
+    @IsOptional()
+    categoryId?: number;
 
     @IsOptional()
     orderBy?: string = 'name';

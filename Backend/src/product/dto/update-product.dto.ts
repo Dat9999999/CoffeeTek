@@ -18,6 +18,10 @@ export class UpdateProductDto {
     @IsNumber()
     price?: number;
 
+    @IsOptional()
+    @IsNumber()
+    categoryId?: number | null;
+
     // Nếu is_multi_size = true thì sizeIds phải có
     @ValidateIf((o) => o.is_multi_size === true)
     @IsArray()

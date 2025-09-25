@@ -1,7 +1,7 @@
 import React from "react";
-import Header from "@/app/components/Header";
-import Footer from "@/app/components/Footer";
-import MenuItemCard from "@/app/components/MenuItemCard";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import MenuItemCard from "@/app/menu/MenuItemCard";
 import { menuItems } from "@/lib/menuData";
 
 export default function MenuPage() {

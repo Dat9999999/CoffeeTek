@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import FormContainer from "./forms/FormContainer";
-import FormInput from "./forms/FormInput";
-import FormLabel from "./forms/FormLabel";
-import FormButton from "./forms/FormButton";
-import FormError from "./forms/FormError";
+import FormContainer from "@/components/forms/FormContainer";
+import FormInput from "@/components/forms/FormInput";
+import FormLabel from "@/components/forms/FormLabel";
+import FormButton from "@/components/forms/FormButton";
+import FormError from "@/components/forms/FormError";
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("");

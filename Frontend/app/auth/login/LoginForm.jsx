@@ -100,12 +100,11 @@ export default function LoginForm() {
         <div className="grid gap-2">
           <div className="flex items-center">
             <FormLabel htmlFor="password">Password</FormLabel>
-            <a
-              href="#"
+            <Link href="/auth/forgot-password"
               className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?
-            </a>
+            </Link>
           </div>
           <FormInput
             id="password"

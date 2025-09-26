@@ -1,30 +1,109 @@
 export const menuItems = [
+  // --- Coffee ---
   {
     id: "1",
+    category: "coffee",
     name: "Double Espresso",
     price: 59.99,
+    size: ["S", "M", "L"], // thêm size để match Item Detail
+    calories: 5,
     image: "/image/image1.png",
-    description: "Đậm đà, mạnh mẽ cho ngày dài."
+    description: "Đậm đà, mạnh mẽ cho ngày dài.",
   },
   {
     id: "2",
+    category: "coffee",
     name: "Caramel Frappe",
     price: 49.99,
+    size: ["M", "L"],
+    calories: 210,
     image: "/image/image2.png",
-    description: "Ngọt ngào, mát lạnh, dễ ghiền."
+    description: "Ngọt ngào, mát lạnh, dễ ghiền.",
   },
   {
     id: "3",
+    category: "coffee",
     name: "Iced Coffee",
     price: 39.99,
+    size: ["S", "M", "L"],
+    calories: 90,
     image: "/image/image3.png",
-    description: "Tươi mới, thích hợp mùa hè."
+    description: "Tươi mới, thích hợp mùa hè.",
   },
   {
     id: "4",
+    category: "coffee",
     name: "Regular Coffee",
     price: 29.99,
+    size: ["S", "M"],
+    calories: 50,
     image: "/image/image4.png",
-    description: "Cà phê truyền thống cho mọi người."
-  }
+    description: "Cà phê truyền thống cho mọi người.",
+  },
+
+  // --- Tea ---
+  {
+    id: "5",
+    category: "tea",
+    name: "Matcha Latte",
+    price: 45.99,
+    size: ["M", "L"],
+    calories: 160,
+    image: "/image/image1.png",
+    description: "Trà xanh Nhật Bản thanh mát, thêm sữa béo ngậy.",
+  },
+  {
+    id: "6",
+    category: "tea",
+    name: "Peach Iced Tea",
+    price: 35.99,
+    size: ["S", "M", "L"],
+    calories: 120,
+    image: "/image/image2.png",
+    description: "Trà đào mát lạnh, giải nhiệt ngày hè.",
+  },
+
+  // --- Bakery ---
+  {
+    id: "7",
+    category: "bakery",
+    name: "Croissant",
+    price: 25.99,
+    size: ["1 pc"],
+    calories: 230,
+    image: "/image/image3.png",
+    description: "Bánh sừng bò bơ thơm, giòn tan.",
+  },
+  {
+    id: "8",
+    category: "bakery",
+    name: "Cheesecake",
+    price: 55.99,
+    size: ["1 pc"],
+    calories: 350,
+    image: "/image/image4.png",
+    description: "Bánh phô mai béo ngậy, ngọt ngào.",
+  },
+
+  // --- Others ---
+  {
+    id: "9",
+    category: "others",
+    name: "Orange Juice",
+    price: 29.99,
+    size: ["S", "M", "L"],
+    calories: 110,
+    image: "/image/image1.png",
+    description: "Nước cam tươi vắt nguyên chất.",
+  },
+  {
+    id: "10",
+    category: "others",
+    name: "Mineral Water",
+    price: 15.99,
+    size: ["500ml"],
+    calories: 0,
+    image: "/image/image2.png",
+    description: "Nước khoáng tinh khiết, giải khát tự nhiên.",
+  },
 ];

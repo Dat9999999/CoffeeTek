@@ -16,27 +16,26 @@ export default function ResetPasswordForm() {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      setError("Vui lòng nhập đầy đủ thông tin.");
+      setError("Please fill in all required information.");
       return;
     }
     if (password !== confirmPassword) {
-      setError("Mật khẩu nhập lại không khớp.");
+      setError("Passwords do not match.");
       return;
     }
     setError("");
 
-    // TODO: Gọi API reset password
     console.log("Reset password to:", password);
   };
 
   return (
     <FormContainer
-      title="Đặt lại mật khẩu"
-      description="Nhập mật khẩu mới cho tài khoản của bạn."
+      title="Reset Password"
+      description="Enter a new password for your account."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <FormLabel htmlFor="password">Mật khẩu mới</FormLabel>
+          <FormLabel htmlFor="password">New Password</FormLabel>
           <FormInput
             id="password"
             type="password"
@@ -48,7 +47,7 @@ export default function ResetPasswordForm() {
         </div>
 
         <div>
-          <FormLabel htmlFor="confirmPassword">Xác nhận mật khẩu</FormLabel>
+          <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
           <FormInput
             id="confirmPassword"
             type="password"
@@ -61,7 +60,7 @@ export default function ResetPasswordForm() {
         </div>
 
         <FormButton type="submit" variant="default">
-          Đặt lại mật khẩu
+          Reset Password
         </FormButton>
       </form>
     </FormContainer>

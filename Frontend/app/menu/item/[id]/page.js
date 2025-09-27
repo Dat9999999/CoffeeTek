@@ -3,8 +3,9 @@
 import { useParams } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { menuItems } from "@/lib/menuData";
 import ItemDetail from "@/components/menu/ItemDetail";
+import { menuItems } from "@/lib/menuData";
+import BackButton from "@/components/common/BackButton";
 
 export default function ItemDetailPage() {
   const { id } = useParams();
@@ -15,7 +16,7 @@ export default function ItemDetailPage() {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-1 flex items-center justify-center">
-          <p className="text-gray-600">Không tìm thấy sản phẩm.</p>
+          <p className="text-gray-600 text-lg">No products found.</p>
         </main>
         <Footer />
       </div>
@@ -25,7 +26,10 @@ export default function ItemDetailPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 container mx-auto px-6 py-12">
+      <main className="flex-1 container mx-auto pt-4 px-6 pb-12">
+        <div className="pt-0 mb-6">
+          <BackButton label="Back to menu" />
+        </div>
         <ItemDetail {...item} />
       </main>
       <Footer />

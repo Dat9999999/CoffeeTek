@@ -3,21 +3,28 @@ import { Button } from "@/components/ui/button";
 
 export default function MenuItemCard({ id, name, price, image, description }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300">
-      <div className="relative aspect-square mb-4">
+    <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 ease-in-out">
+      {/* Image */}
+      <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
         <Image
           src={image}
           alt={name}
           fill
-          className="object-contain rounded-md shadow-lg shadow-gray-300"
+          className="object-contain rounded-md transition-transform duration-300 ease-in-out hover:scale-110"
         />
       </div>
+
+      {/* Content */}
       <div className="text-center">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
         <p className="text-gray-600 mb-2">${price.toFixed(2)}</p>
-        {description && <p className="text-sm text-gray-500 mb-4">{description}</p>}
-        <Button className="w-full py-3 rounded-full bg-gray-900 hover:bg-gray-700 transition-colors">
-          ADD TO CART
+        {description && (
+          <p className="text-sm text-gray-500 mb-4">{description}</p>
+        )}
+
+        {/* Button */}
+        <Button className="w-full py-3 rounded-full bg-gray-900 text-white tracking-wide shadow-md hover:bg-gray-700 hover:scale-105 transition-all duration-300">
+          ADD TO FAVORITES
         </Button>
       </div>
     </div>

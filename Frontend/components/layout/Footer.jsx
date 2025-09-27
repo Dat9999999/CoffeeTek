@@ -12,10 +12,10 @@ const Footer = () => {
           {/* Logo & About Section */}
           <div className="space-y-4">
             <Image 
-              src="/image/logo.png" 
+              src="/image/logo.jpg" 
               alt="logo" 
               width={150} 
-              height={50}
+              height={150}
               className="mb-4" 
             />
             <p className="text-gray-600 text-sm leading-relaxed">

@@ -19,11 +19,11 @@ const Header = () => {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <Image
-              src="/image/logo.png"
+              src="/image/logo.jpg"
               alt="logo"
               width={150}
-              height={50}
-              className="w-auto h-8 md:h-10"
+              height={150}
+              className="w-auto h-20 md:h-22"
             />
           </Link>
 

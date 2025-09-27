@@ -11,24 +11,24 @@ export default function MenuPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 pt-20">
-        <section className="container mx-auto px-6 py-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-            Menu của chúng tôi
+      <main className="flex-1 pt-4">
+        <section className="container mx-auto px-6 pb-12">
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+            Our Menu
           </h1>
           <CategoryList />
-          <SearchFilter />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="mt-6">
+            <SearchFilter />
+          </div>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {menuItems.map((item) => (
               <Link key={item.id} href={`/menu/item/${item.id}`}>
-                <MenuItemCard key={item.id} {...item} />
+                <MenuItemCard {...item} />
               </Link>
             ))}
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );

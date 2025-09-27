@@ -32,7 +32,6 @@ export default function SignUpForm() {
       return;
     }
 
-    // TODO: gọi API signup
     console.log("Sign up success:", { email, password });
     router.push("/auth/login");
   };
@@ -59,7 +58,7 @@ export default function SignUpForm() {
           <FormInput
             id="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="you@example.com"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}

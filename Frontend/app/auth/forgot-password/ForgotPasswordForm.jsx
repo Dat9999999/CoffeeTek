@@ -6,7 +6,7 @@ import FormInput from "@/components/forms/FormInput";
 import FormLabel from "@/components/forms/FormLabel";
 import FormButton from "@/components/forms/FormButton";
 import FormError from "@/components/forms/FormError";
-import AuthBackLink from "@/components/auth/AuthBackLink";
+import BackButton from "@/components/common/BackButton";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -27,12 +27,14 @@ export default function ForgotPasswordForm() {
 
   return (
     <FormContainer
-      title="Quên mật khẩu"
+      title="Forgot Password"
       description="Nhập email của bạn để nhận liên kết đặt lại mật khẩu."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <AuthBackLink href="/auth/login" label="Quay lại đăng nhập" />
+          <div>
+            <BackButton label="Back to login" href="/auth/login" />
+          </div>
           <FormLabel htmlFor="email">Email</FormLabel>
           <FormInput
             id="email"
@@ -46,7 +48,7 @@ export default function ForgotPasswordForm() {
         </div>
 
         <FormButton type="submit" variant="default">
-          Gửi liên kết đặt lại
+          Submit
         </FormButton>
       </form>
     </FormContainer>

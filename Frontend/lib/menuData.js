@@ -5,10 +5,15 @@ export const menuItems = [
     category: "coffee",
     name: "Double Espresso",
     price: 59.99,
-    size: ["S", "M", "L"], // thêm size để match Item Detail
+    size: ["S", "M", "L"],
     calories: 5,
-    image: "/image/image1.png",
-    description: "Đậm đà, mạnh mẽ cho ngày dài.",
+    image: "/image/products/espresso1.png",
+    images: [
+      "/image/products/espresso1.png",
+      "/image/products/espresso2.png",
+      "/image/products/espresso3.png"
+    ],
+    description: "Rich, powerful for the day.",
   },
   {
     id: "2",
@@ -18,7 +23,7 @@ export const menuItems = [
     size: ["M", "L"],
     calories: 210,
     image: "/image/image2.png",
-    description: "Ngọt ngào, mát lạnh, dễ ghiền.",
+    description: "Sweet, cool, addictive.",
   },
   {
     id: "3",
@@ -28,7 +33,7 @@ export const menuItems = [
     size: ["S", "M", "L"],
     calories: 90,
     image: "/image/image3.png",
-    description: "Tươi mới, thích hợp mùa hè.",
+    description: "Fresh, suitable for summer.",
   },
   {
     id: "4",
@@ -38,7 +43,7 @@ export const menuItems = [
     size: ["S", "M"],
     calories: 50,
     image: "/image/image4.png",
-    description: "Cà phê truyền thống cho mọi người.",
+    description: "Traditional coffee for everyone.",
   },
 
   // --- Tea ---
@@ -50,7 +55,7 @@ export const menuItems = [
     size: ["M", "L"],
     calories: 160,
     image: "/image/image1.png",
-    description: "Trà xanh Nhật Bản thanh mát, thêm sữa béo ngậy.",
+    description: "Refreshing Japanese green tea, add rich milk.",
   },
   {
     id: "6",
@@ -60,7 +65,7 @@ export const menuItems = [
     size: ["S", "M", "L"],
     calories: 120,
     image: "/image/image2.png",
-    description: "Trà đào mát lạnh, giải nhiệt ngày hè.",
+    description: "Cool peach tea, cooling off on summer days.",
   },
 
   // --- Bakery ---
@@ -72,7 +77,7 @@ export const menuItems = [
     size: ["1 pc"],
     calories: 230,
     image: "/image/image3.png",
-    description: "Bánh sừng bò bơ thơm, giòn tan.",
+    description: "Crispy, fragrant butter croissants.",
   },
   {
     id: "8",
@@ -82,7 +87,7 @@ export const menuItems = [
     size: ["1 pc"],
     calories: 350,
     image: "/image/image4.png",
-    description: "Bánh phô mai béo ngậy, ngọt ngào.",
+    description: "Rich, sweet cheesecake.",
   },
 
   // --- Others ---
@@ -94,7 +99,7 @@ export const menuItems = [
     size: ["S", "M", "L"],
     calories: 110,
     image: "/image/image1.png",
-    description: "Nước cam tươi vắt nguyên chất.",
+    description: "Freshly squeezed orange juice.",
   },
   {
     id: "10",
@@ -104,6 +109,6 @@ export const menuItems = [
     size: ["500ml"],
     calories: 0,
     image: "/image/image2.png",
-    description: "Nước khoáng tinh khiết, giải khát tự nhiên.",
+    description: "Pure mineral water, natural refreshment.",
   },
 ];

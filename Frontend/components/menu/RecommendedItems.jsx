@@ -8,7 +8,7 @@ export default function RecommendedItems({ currentItemId }) {
 
   return (
     <div className="mt-12">
-      <h2 className="text-xl font-semibold mb-6">Sản phẩm gợi ý</h2>
+      <h2 className="text-xl font-semibold mb-6">Recommended products</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {recommended.map((item) => (
           <MenuItemCard key={item.id} {...item} />

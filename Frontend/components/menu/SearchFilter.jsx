@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Search, Filter } from "lucide-react";
 
 export default function SearchFilter({ onSearch, onFilter }) {
   const [search, setSearch] = useState("");
@@ -11,28 +12,48 @@ export default function SearchFilter({ onSearch, onFilter }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-4 mt-6 justify-center">
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Tìm sản phẩm..."
-        className="border rounded px-3 py-2 w-64"
-      />
-      <select
-        onChange={(e) => onFilter?.(e.target.value)}
-        className="border rounded px-3 py-2"
-      >
-        <option value="">Lọc theo</option>
-        <option value="price-low">Giá: Thấp → Cao</option>
-        <option value="price-high">Giá: Cao → Thấp</option>
-        <option value="rating">Đánh giá cao</option>
-      </select>
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-wrap items-center gap-3 mt-8 justify-center"
+    >
+      {/* Ô tìm kiếm */}
+      <div className="relative">
+        <Search
+          size={18}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Find products..."
+          className="pl-10 pr-3 py-2 w-64 rounded-xl border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none shadow-sm"
+        />
+      </div>
+
+      {/* Ô filter */}
+      <div className="relative">
+        <Filter
+          size={18}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
+        <select
+          onChange={(e) => onFilter?.(e.target.value)}
+          className="pl-10 pr-3 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none shadow-sm"
+        >
+          <option value="">Filter by</option>
+          <option value="price-low">Price: Low → High</option>
+          <option value="price-high">Price: High → Low</option>
+          <option value="rating">Highly appreciated</option>
+        </select>
+      </div>
+
+      {/* Nút tìm */}
       <button
         type="submit"
-        className="px-4 py-2 bg-black text-white rounded"
+        className="px-5 py-2 rounded-xl bg-black text-white shadow hover:bg-gray-800 transition"
       >
-        Tìm
+        Find
       </button>
     </form>
   );

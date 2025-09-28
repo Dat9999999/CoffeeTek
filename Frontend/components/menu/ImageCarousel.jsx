@@ -24,14 +24,21 @@ export default function ImageCarousel({ images }) {
   };
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden rounded-lg shadow-md">
-      <img
-        src={images[index]}
-        alt={`image-${index}`}
-        className="w-full h-full object-contain transition-opacity duration-500 bg-white"
-      />
+    <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden rounded-lg shadow-md bg-white">
+      <div
+        className="flex h-full transition-transform duration-700 ease-in-out"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt={`image-${i}`}
+            className="w-full h-full flex-shrink-0 object-contain"
+          />
+        ))}
+      </div>
 
-      {/* Nút điều hướng */}
       <button
         onClick={prevImage}
         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white p-2 rounded-full shadow"
@@ -45,7 +52,6 @@ export default function ImageCarousel({ images }) {
         <ChevronRight className="w-6 h-6 text-gray-700" />
       </button>
 
-      {/* Dots chỉ số */}
       <div className="absolute bottom-4 w-full flex justify-center gap-2">
         {images.map((_, i) => (
           <div

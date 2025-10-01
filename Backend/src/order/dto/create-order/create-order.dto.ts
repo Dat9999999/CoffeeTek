@@ -12,7 +12,7 @@ export class CreateOrderDto {
     // voucherId?: number
     @Type(() => Number)
     @IsNotEmpty()
-    staffId: number
+    staffId: string
     notes?: string
 
     // paymentMethod: 'CASH' | 'CARD' | 'MOMO'

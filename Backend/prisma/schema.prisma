@@ -74,11 +74,12 @@ model OptionValue {
 }
 
 model Size {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique
-  sort_index  Int
-  ProductSize ProductSize[]
-  OrderDetail OrderDetail[]
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  increase_rate Float
+  sort_index    Int
+  ProductSize   ProductSize[]
+  OrderDetail   OrderDetail[]
 
   @@map("sizes")
 }
@@ -186,12 +187,12 @@ model Order {
   order_details  OrderDetail[]
   status         String          @default("pending") // pending, confirmed, preparing, delivered, cancelled
   PaymentDetail  PaymentDetail[]
-  
-  customerPhone  String?
-  Customer       User?           @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
- 
-  staffId        Int
-  Staff          User            @relation("StaffOrders", fields: [staffId], references: [id])
+
+  customerPhone String?
+  Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
+
+  staffId Int
+  Staff   User @relation("StaffOrders", fields: [staffId], references: [id])
 
   @@map("orders")
 }

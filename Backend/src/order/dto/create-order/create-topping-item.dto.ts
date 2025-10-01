@@ -1,4 +1,9 @@
+import { Type } from "class-transformer";
+import { IsNotEmpty } from "class-validator";
+
 export class createToppingItemDTO {
-    toppingId: number;
-    quantity: number;
+    @Type(() => Number)
+    @IsNotEmpty()
+    toppingId: string;
+    quantity: string;
 }

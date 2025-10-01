@@ -1,12 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+// import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaClient) { }
+  constructor(
+    private prisma: PrismaService
+  ) { }
   create(createOrderDto: CreateOrderDto) {
+    const products = this.prisma.product.findMany({
+      where: {
+        id: { in: createOrderDto.orderItems.map(i => i.productId) }
+      }
+    })
+    const toppings = this.prisma.topping.findMany({
+      where: {
+        id: { in: createOrderDto.orderItems.flatMap(i => i.toppingItems?.map(t => t.toppingId) || []) }
+      }
+    })
+    console.log({ products, toppings });
     return createOrderDto;
   }
 

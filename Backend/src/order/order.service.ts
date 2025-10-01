@@ -25,47 +25,82 @@ export class OrderService {
         id: { in: createOrderDto.orderItems.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
       }
     })
+    const orderItems = await Promise.all(
+      createOrderDto.orderItems.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: parseInt(item.productId) },
+        });
+
+        const toppings = item.toppingItems?.length
+          ? await this.prisma.topping.findMany({
+            where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
+          })
+          : [];
+
+        const size = item.sizeId
+          ? await this.prisma.size.findUnique({
+            where: { id: parseInt(item.sizeId) },
+          })
+          : null;
+
+        return {
+          ...item, // giữ lại quantity, productId, toppingItems, sizeId...
+          product,
+          toppings,
+          size,
+        };
+      })
+    );
+
+
 
     //create order
-    // const order = await this.prisma.order.create({
-    //   data: {
-    //     customerPhone: createOrderDto.customerPhone,
-    //     staffId: parseInt(createOrderDto.staffId),
-    //     note: createOrderDto.notes,
-    //     status: 'PENDING',
-    //     // order_details: {
-    //     //   create: createOrderDto.orderItems.map(item => {
-    //     //     const product = products.find(p => p.id === parseInt(item.productId));
-    //     //     const size = item.sizeId ? sizes.find(s => s.id === parseInt(item.sizeId)) : null;
-    //     //     return {
-    //     //       productId: parseInt(item.productId),
-    //     //       quantity: item.quantity,
-    //     //       sizeId: item.sizeId ? parseInt(item.sizeId) : null,
-    //     //       price: product ? product.price : 0,
-    //     //       sizePrice: size ? size. : 0,
-    //     //       order_toppings: {
-    //     //         create: item.toppingItems?.map(toppingItem => {
-    //     //           const topping = toppings.find(t => t.id === parseInt(toppingItem.toppingId));
-    //     //           return {
-    //     //             toppingId: parseInt(toppingItem.toppingId),
-    //     //             quantity: toppingItem.quantity,
-    //     //             price: topping ? topping.price : 0
-    //     //           }
-    //     //         }) || []
-    //     //       }
-    //     //     }
-    //     //   })
-    //     // }
-    //   },
-    //   include: {
-    //     order_details: {
-    //       include: {
-    //         order_toppings: true
-    //       }
-    //     }
+    const order = await this.prisma.order.create({
+      data: {
+        customerPhone: createOrderDto.customerPhone,
+        original_price: 0,
+        final_price: 0,
+        note: createOrderDto.notes,
+        staffId: parseInt(createOrderDto.staffId),
+        order_details: {
+          create: orderItems.map(item => ({
+            quantity: parseInt(item.quantity),
+            unit_price: item.product?.price || 0,
 
-    //   }
-    // });
+            product: {
+              connect: { id: parseInt(item.productId) }
+            },
+
+            size: item.sizeId
+              ? { connect: { id: parseInt(item.sizeId) } }
+              : undefined,
+
+            ToppingOrderDetail: item.toppingItems?.length
+              ? {
+                create: item.toppingItems.map(t => ({
+                  quantity: parseInt(t.quantity),
+                  unit_price: 0, // TODO: lấy từ topping.price
+                  topping: { connect: { id: parseInt(t.toppingId) } }
+                }))
+              }
+              : undefined,
+          }))
+        }
+      },
+      include: {
+        order_details: {
+          include: {
+            product: true,
+            size: true,
+            ToppingOrderDetail: {
+              include: {
+                topping: true
+              }
+            }
+          }
+        }
+      }
+    });
     return createOrderDto;
   }
 

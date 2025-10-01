@@ -179,20 +179,21 @@ model ProductImage {
 }
 
 model Order {
-  id             Int             @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   note           String?
   original_price Float
   final_price    Float
-  created_at     DateTime        @default(now())
+  created_at     DateTime      @default(now())
   order_details  OrderDetail[]
-  status         String          @default("pending") // pending, confirmed, preparing, delivered, cancelled
-  PaymentDetail  PaymentDetail[]
+  status         String        @default("pending") // pending, confirmed, preparing, delivered, cancelled
 
   customerPhone String?
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
 
-  staffId Int
-  Staff   User @relation("StaffOrders", fields: [staffId], references: [id])
+  staffId         Int
+  Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
+  paymentDetailId Int?           @unique
+  PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
 
   @@map("orders")
 }
@@ -242,12 +243,11 @@ model PaymentDetail {
   id               Int          @id @default(autoincrement())
   payment_model    PaymentModel @relation(fields: [payment_model_id], references: [id])
   payment_model_id Int
-  order            Order        @relation(fields: [order_id], references: [id])
-  order_id         Int
   amount           Float
   paymentcode      String?
   payment_time     DateTime     @default(now())
   status           String       @default("completed") // completed, failed, pending
+  Order            Order?       @relation("OrderPaymentDetail")
 
   @@map("payment_details")
 }

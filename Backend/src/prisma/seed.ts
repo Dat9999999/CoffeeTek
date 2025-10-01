@@ -73,9 +73,9 @@ async function main() {
     });
 
     // 2. Size
-    const sizeS = await prisma.size.create({ data: { name: 'Small', sort_index: 1 } });
-    const sizeM = await prisma.size.create({ data: { name: 'Medium', sort_index: 2 } });
-    const sizeL = await prisma.size.create({ data: { name: 'Large', sort_index: 3 } });
+    const sizeS = await prisma.size.create({ data: { name: 'Small', sort_index: 1, increase_rate: 0.0 } });
+    const sizeM = await prisma.size.create({ data: { name: 'Medium', sort_index: 2, increase_rate: 1.5 } });
+    const sizeL = await prisma.size.create({ data: { name: 'Large', sort_index: 3, increase_rate: 3.0 } });
 
     // 3. OptionGroup + OptionValues (ví dụ: Đường, Đá)
     const sugarGroup = await prisma.optionGroup.create({

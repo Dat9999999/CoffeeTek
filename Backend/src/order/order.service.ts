@@ -20,7 +20,7 @@ export class OrderService {
         id: { in: createOrderDto.orderItems.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
       }
     })
-    const sizes = await this.prisma.size.findMany({
+    const productSizePrice = await this.prisma.productSize.findMany({
       where: {
         id: { in: createOrderDto.orderItems.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
       }
@@ -58,12 +58,27 @@ export class OrderService {
         return sum + (topping ? topping.price * parseInt(t.quantity) : 0);
       }, 0) || 0;
     };
+
     const original_price = orderItems.reduce((sum, item) => {
-      const productPrice = item.product?.price || 0;
-      return sum + (productPrice + toppingPrice(item)) * parseInt(item.quantity);
+      const defaultProductPrice = item.product?.price || 0;
+
+      // đảm bảo sizeId luôn có giá trị hợp lệ
+      const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
+      const sizePrice = sizeId
+        ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
+        : 0;
+
+      // đảm bảo quantity là số
+      const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
+
+      // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
+      const toppingTotal = toppingPrice(item) * quantity;
+
+      return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
     }, 0);
 
-    
+
+
     const final_price = original_price;
     // Tính toán giá gốc và giá cuối cùng
     //create order

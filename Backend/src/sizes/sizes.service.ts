@@ -9,7 +9,7 @@ export class SizesService {
     async create(createSizeDto: CreateSizeDto) {
         const { name, sort_index } = createSizeDto;
         return this.prisma.size.create({
-            data: { name, sort_index, increase_rate: 0.0 },
+            data: { name, sort_index },
         });
     }
 

@@ -74,12 +74,11 @@ model OptionValue {
 }
 
 model Size {
-  id            Int           @id @default(autoincrement())
-  name          String        @unique
-  increase_rate Float
-  sort_index    Int
-  ProductSize   ProductSize[]
-  OrderDetail   OrderDetail[]
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  sort_index  Int
+  OrderDetail OrderDetail[]
+  ProductSize ProductSize[]
 
   @@map("sizes")
 }

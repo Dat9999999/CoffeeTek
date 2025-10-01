@@ -73,9 +73,9 @@ async function main() {
     });
 
     // 2. Size
-    const sizeS = await prisma.size.create({ data: { name: 'Small', sort_index: 1, increase_rate: 0.0 } });
-    const sizeM = await prisma.size.create({ data: { name: 'Medium', sort_index: 2, increase_rate: 1.5 } });
-    const sizeL = await prisma.size.create({ data: { name: 'Large', sort_index: 3, increase_rate: 3.0 } });
+    const sizeS = await prisma.size.create({ data: { name: 'Small', sort_index: 1 } });
+    const sizeM = await prisma.size.create({ data: { name: 'Medium', sort_index: 2 } });
+    const sizeL = await prisma.size.create({ data: { name: 'Large', sort_index: 3 } });
 
     // 3. OptionGroup + OptionValues (ví dụ: Đường, Đá)
     const sugarGroup = await prisma.optionGroup.create({
@@ -120,6 +120,7 @@ async function main() {
             is_multi_size: true,
             product_detail: 'Hot or iced latte with espresso and milk',
             category_id: coffeeCategory.id,
+            price: 35000, // default price (size M)
             sizes: {
                 create: [
                     { size_id: sizeS.id, price: 30000 },

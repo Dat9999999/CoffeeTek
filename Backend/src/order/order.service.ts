@@ -52,8 +52,20 @@ export class OrderService {
       })
     );
 
+    const toppingPrice = (item) => {
+      return item.toppingItems?.reduce((sum, t) => {
+        const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
+        return sum + (topping ? topping.price * parseInt(t.quantity) : 0);
+      }, 0) || 0;
+    };
+    const original_price = orderItems.reduce((sum, item) => {
+      const productPrice = item.product?.price || 0;
+      return sum + (productPrice + toppingPrice(item)) * parseInt(item.quantity);
+    }, 0);
 
-
+    
+    const final_price = original_price;
+    // Tính toán giá gốc và giá cuối cùng
     //create order
     const order = await this.prisma.order.create({
       data: {

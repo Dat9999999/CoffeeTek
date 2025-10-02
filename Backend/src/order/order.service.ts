@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 // import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -131,7 +132,7 @@ export class OrderService {
     return createOrderDto;
   }
 
-  findAll() {
+  findAll(dto: GetAllOrderDto) {
     return `This action returns all order`;
   }
 

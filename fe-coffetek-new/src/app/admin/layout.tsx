@@ -9,12 +9,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar />
-      <main className="w-full">
-        <Navbar />
-        <div className="px-4">{children}</div>
-      </main>
-    </SidebarProvider>
+    <>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar />
+        <main className="w-full  max-w-full">
+          <Navbar />
+          <div className="px-4 ">{children}</div>
+        </main>
+      </SidebarProvider>
+    </>
+
   )
 }

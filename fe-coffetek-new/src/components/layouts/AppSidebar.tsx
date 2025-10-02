@@ -153,7 +153,7 @@ const AppSidebar = () => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/admin/products">
+                  <Link href="/admin/sizes">
                     <Shirt />
                     Size
                   </Link>

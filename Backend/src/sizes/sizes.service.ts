@@ -14,16 +14,33 @@ export class SizesService {
     }
 
     async findAll(paginationDto: PaginationDto) {
-        const { page, limit } = paginationDto;
-        const skip = (page - 1) * limit;
+        const {
+            page,
+            size,
+            orderBy = 'id',
+            orderDirection = 'asc',
+            search,
+        } = paginationDto;
+
+        const skip = (page - 1) * size;
+
+        const where: any = {};
+
+        if (search) {
+            where.name = {
+                contains: search,
+                mode: 'insensitive',
+            };
+        }
 
         const [sizes, total] = await Promise.all([
             this.prisma.size.findMany({
                 skip,
-                take: limit,
-                orderBy: { sort_index: 'asc' },
+                take: size,
+                orderBy: { [orderBy]: orderDirection },
+                where,
             }),
-            this.prisma.size.count(),
+            this.prisma.size.count({ where }),
         ]);
 
         return {
@@ -31,11 +48,12 @@ export class SizesService {
             meta: {
                 total,
                 page,
-                limit,
-                totalPages: Math.ceil(total / limit),
+                size,
+                totalPages: Math.ceil(total / size),
             },
         };
     }
+
 
     async findOne(id: number) {
         const size = await this.prisma.size.findUnique({

@@ -55,6 +55,105 @@ async function main() {
     });
     console.log('Seeded owner user:', owner);
 
+    // 1. Category
+    const coffeeCategory = await prisma.category.create({
+        data: {
+            name: 'Coffee',
+            sort_index: 1,
+            is_parent_category: true,
+        },
+    });
+
+    const teaCategory = await prisma.category.create({
+        data: {
+            name: 'Tea',
+            sort_index: 2,
+            is_parent_category: true,
+        },
+    });
+
+    // 2. Size
+    const sizeS = await prisma.size.create({ data: { name: 'Small', sort_index: 1 } });
+    const sizeM = await prisma.size.create({ data: { name: 'Medium', sort_index: 2 } });
+    const sizeL = await prisma.size.create({ data: { name: 'Large', sort_index: 3 } });
+
+    // 3. OptionGroup + OptionValues (ví dụ: Đường, Đá)
+    const sugarGroup = await prisma.optionGroup.create({
+        data: {
+            name: 'Sugar Level',
+            values: {
+                create: [
+                    { name: '0%', sort_index: 1 },
+                    { name: '50%', sort_index: 2 },
+                    { name: '100%', sort_index: 3 },
+                ],
+            },
+        },
+    });
+
+    const iceGroup = await prisma.optionGroup.create({
+        data: {
+            name: 'Ice Level',
+            values: {
+                create: [
+                    { name: 'No Ice', sort_index: 1 },
+                    { name: 'Less Ice', sort_index: 2 },
+                    { name: 'Normal Ice', sort_index: 3 },
+                ],
+            },
+        },
+    });
+
+    // 4. Toppings
+    const pearl = await prisma.topping.create({
+        data: { name: 'Pearl', price: 5000, sort_index: 1 },
+    });
+
+    const cheeseFoam = await prisma.topping.create({
+        data: { name: 'Cheese Foam', price: 10000, sort_index: 2 },
+    });
+
+    // 5. Product
+    const latte = await prisma.product.create({
+        data: {
+            name: 'Latte',
+            is_multi_size: true,
+            product_detail: 'Hot or iced latte with espresso and milk',
+            category_id: coffeeCategory.id,
+            price: 35000, // default price (size M)
+            sizes: {
+                create: [
+                    { size_id: sizeS.id, price: 30000 },
+                    { size_id: sizeM.id, price: 35000 },
+                    { size_id: sizeL.id, price: 40000 },
+                ],
+            },
+            optionValues: {
+                create: [
+                    { option_value_id: sugarGroup.id }, // ví dụ 50%
+                    { option_value_id: iceGroup.id },   // Normal Ice
+                ],
+            },
+            toppings: {
+                create: [
+                    { topping_id: pearl.id },
+                    { topping_id: cheeseFoam.id },
+                ],
+            },
+            images: {
+                create: [
+                    { image_name: 'latte1.png', sort_index: 1 },
+                    { image_name: 'latte2.png', sort_index: 2 },
+                ],
+            },
+        },
+        include: {
+            sizes: true,
+            optionValues: true,
+            toppings: true,
+            images: true,
+        },
+    });
 }
 main()
     .then(async () => {

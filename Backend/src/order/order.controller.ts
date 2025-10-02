@@ -1,20 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto } from './dto/create-order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { Role } from 'src/auth/decorator/role.decorator';
+import { RolesGuard } from 'src/auth/strategy/role.strategy';
+import { AuthGuard } from '@nestjs/passport';
+import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 
 @Controller('order')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService) { }
 
   @Post()
+  // @UseGuards(AuthGuard('jwt'), RolesGuard)
+  // @Role('owner', 'manager', 'cashier')
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
   }
 
   @Get()
-  findAll() {
-    return this.orderService.findAll();
+  findAll(@Query() dto: GetAllOrderDto) {
+    return this.orderService.findAll(dto);
   }
 
   @Get(':id')

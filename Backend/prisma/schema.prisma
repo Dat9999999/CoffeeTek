@@ -26,6 +26,10 @@ model User {
   roles      Role[]      @relation("UserRoles")
   detail     UserDetail?
 
+  customerOrders Order[] @relation("CustomerOrders")
+
+  staffOrders Order[] @relation("StaffOrders")
+
   @@map("users")
 }
 
@@ -73,6 +77,7 @@ model Size {
   id          Int           @id @default(autoincrement())
   name        String        @unique
   sort_index  Int
+  OrderDetail OrderDetail[]
   ProductSize ProductSize[]
 
   @@map("sizes")
@@ -94,12 +99,13 @@ model Category {
 }
 
 model Topping {
-  id             Int              @id @default(autoincrement())
-  name           String
-  price          Float
-  image_name     String?
-  sort_index     Int
-  ProductTopping ProductTopping[]
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  price              Float
+  image_name         String?
+  sort_index         Int
+  ProductTopping     ProductTopping[]
+  ToppingOrderDetail ToppingOrderDetail[]
 
   @@map("toppings")
 }
@@ -118,6 +124,7 @@ model Product {
   optionValues ProductOptionValue[] // 1 product có nhiều option value
   toppings     ProductTopping[] // 1 product có nhiều topping
   images       ProductImage[]
+  orderDetails OrderDetail[]
 
   @@map("products")
 }
@@ -168,4 +175,78 @@ model ProductImage {
   product    Product @relation(fields: [product_id], references: [id])
 
   @@map("product_images")
+}
+
+model Order {
+  id             Int           @id @default(autoincrement())
+  note           String?
+  original_price Float
+  final_price    Float
+  created_at     DateTime      @default(now())
+  order_details  OrderDetail[]
+  status         String        @default("pending") // pending, confirmed, preparing, delivered, cancelled
+
+  customerPhone String?
+  Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
+
+  staffId         Int
+  Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
+  paymentDetailId Int?           @unique
+  PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+
+  @@map("orders")
+}
+
+model OrderDetail {
+  id         Int   @id @default(autoincrement())
+  quantity   Int
+  unit_price Float
+
+  order_id Int
+  order    Order @relation(fields: [order_id], references: [id])
+
+  product_id         Int
+  product            Product              @relation(fields: [product_id], references: [id])
+  size_id            Int?
+  size               Size?                @relation(fields: [size_id], references: [id])
+  ToppingOrderDetail ToppingOrderDetail[]
+
+  @@map("order_details")
+}
+
+model ToppingOrderDetail {
+  id         Int   @id @default(autoincrement())
+  quantity   Int
+  unit_price Float
+
+  order_detail_id Int
+  order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id])
+
+  topping_id Int
+  topping    Topping @relation(fields: [topping_id], references: [id])
+
+  @@map("topping_order_details")
+}
+
+model PaymentModel {
+  id            Int             @id @default(autoincrement())
+  name          String
+  is_active     Boolean         @default(true)
+  created_at    DateTime        @default(now())
+  PaymentDetail PaymentDetail[]
+
+  @@map("payment_models")
+}
+
+model PaymentDetail {
+  id               Int          @id @default(autoincrement())
+  payment_model    PaymentModel @relation(fields: [payment_model_id], references: [id])
+  payment_model_id Int
+  amount           Float
+  paymentcode      String?
+  payment_time     DateTime     @default(now())
+  status           String       @default("completed") // completed, failed, pending
+  Order            Order?       @relation("OrderPaymentDetail")
+
+  @@map("payment_details")
 }

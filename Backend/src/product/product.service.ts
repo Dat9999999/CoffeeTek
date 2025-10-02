@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDto } from './dto/get-all-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ProductsService {
@@ -98,7 +99,7 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    return {
+    const res: ResponseGetAllDto<any> = {
       data,
       meta: {
         total,
@@ -107,6 +108,7 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+    return res;
   }
 
 

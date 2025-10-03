@@ -3,6 +3,7 @@ import { CreateOrderDto } from './dto/create-order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
+import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 // import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -132,8 +133,34 @@ export class OrderService {
     return createOrderDto;
   }
 
-  findAll(dto: GetAllOrderDto) {
-    return `This action returns all order`;
+  async findAll(query: GetAllOrderDto) {
+    const { page, size, searchName, searchStatus, orderBy } = query;
+    if (!page || !size) {
+      throw new Error("page and size are required");
+    }
+    const skip = (page - 1) * size;
+
+
+    const [data, total] = await Promise.all([this.prisma.order.findMany({
+      skip,
+      take: size,
+      where: {
+        status: searchStatus ?? {},
+        //for search by name, this name is customer's phone
+        customerPhone: searchName ?? {}
+      },
+      orderBy: { id: orderBy }
+    }), this.prisma.order.count()]);
+    const res: ResponseGetAllDto<any> = {
+      data: data,
+      meta: {
+        page: page,
+        size: size,
+        total: total,
+        totalPages: Math.ceil(total / size)
+      }
+    }
+    return res;
   }
 
   findOne(id: number) {

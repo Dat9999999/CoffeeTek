@@ -14,21 +14,21 @@ export class OrderService {
   async create(createOrderDto: CreateOrderDto) {
     const products = await this.prisma.product.findMany({
       where: {
-        id: { in: createOrderDto.orderItems.map(i => parseInt(i.productId)) }
+        id: { in: createOrderDto.order_details.map(i => parseInt(i.productId)) }
       }
     })
     const toppings = await this.prisma.topping.findMany({
       where: {
-        id: { in: createOrderDto.orderItems.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
+        id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
       }
     })
     const productSizePrice = await this.prisma.productSize.findMany({
       where: {
-        id: { in: createOrderDto.orderItems.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
+        id: { in: createOrderDto.order_details.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
       }
     })
-    const orderItems = await Promise.all(
-      createOrderDto.orderItems.map(async (item) => {
+    const order_details = await Promise.all(
+      createOrderDto.order_details.map(async (item) => {
         const product = await this.prisma.product.findUnique({
           where: { id: parseInt(item.productId) },
         });
@@ -61,7 +61,7 @@ export class OrderService {
       }, 0) || 0;
     };
 
-    const original_price = orderItems.reduce((sum, item) => {
+    const original_price = order_details.reduce((sum, item) => {
       const defaultProductPrice = item.product?.price || 0;
 
       // đảm bảo sizeId luôn có giá trị hợp lệ
@@ -89,10 +89,10 @@ export class OrderService {
         customerPhone: createOrderDto.customerPhone,
         original_price: 0,
         final_price: 0,
-        note: createOrderDto.notes,
+        note: createOrderDto.note,
         staffId: parseInt(createOrderDto.staffId),
         order_details: {
-          create: orderItems.map(item => ({
+          create: order_details.map(item => ({
             quantity: parseInt(item.quantity),
             unit_price: item.product?.price || 0,
 
@@ -179,11 +179,32 @@ export class OrderService {
     return order;
   }
 
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
+  async update(id: number, updateOrderDto: UpdateOrderDto) {
+    const upateOrder = await this.prisma.order.findUnique({
+      where: { id },
+    });
+
+    if (!upateOrder) {
+      throw new NotFoundException(`Order with id ${id} not found`);
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: {
+        customerPhone: updateOrderDto.customerPhone ?? upateOrder.customerPhone,
+        note: updateOrderDto.note ?? upateOrder.note,
+
+      },
+    });
+
+    return updatedOrder;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+  async remove(id: number) {
+    const deleteOrder = await this.prisma.order.delete({
+      where: { id }
+    })
+    if (!deleteOrder) throw new NotFoundException(`Notfound order id = ${id}`)
+    return deleteOrder
   }
 }

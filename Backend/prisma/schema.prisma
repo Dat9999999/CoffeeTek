@@ -203,10 +203,10 @@ model OrderDetail {
   unit_price Float
 
   order_id Int
-  order    Order @relation(fields: [order_id], references: [id])
+  order    Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   product_id         Int
-  product            Product              @relation(fields: [product_id], references: [id])
+  product            Product              @relation(fields: [product_id], references: [id], onDelete: Cascade)
   size_id            Int?
   size               Size?                @relation(fields: [size_id], references: [id])
   ToppingOrderDetail ToppingOrderDetail[]
@@ -220,10 +220,10 @@ model ToppingOrderDetail {
   unit_price Float
 
   order_detail_id Int
-  order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id])
+  order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id], onDelete: Cascade)
 
   topping_id Int
-  topping    Topping @relation(fields: [topping_id], references: [id])
+  topping    Topping @relation(fields: [topping_id], references: [id], onDelete: Cascade)
 
   @@map("topping_order_details")
 }

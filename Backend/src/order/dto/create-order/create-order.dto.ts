@@ -5,7 +5,7 @@ import { Type } from "class-transformer";
 export class CreateOrderDto {
     //list produtc & quantity
     @IsNotEmpty()
-    orderItems: orderItemDTO[];
+    order_details: orderItemDTO[];
 
     @IsPhoneNumber('VN')
     customerPhone?: string
@@ -13,7 +13,7 @@ export class CreateOrderDto {
     @Type(() => Number)
     @IsNotEmpty()
     staffId: string
-    notes?: string
+    note?: string
 
     // paymentMethod: 'CASH' | 'CARD' | 'MOMO'
 

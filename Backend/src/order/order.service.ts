@@ -164,13 +164,17 @@ export class OrderService {
   }
 
   async findOne(id: number) {
-    const order = await this.prisma.order.findUnique(
-      {
-        where: {
-          id
-        }
-      }
-    )
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        order_details: {
+          include: {
+            product: true,
+            size: true
+          }
+        },
+      },
+    });
     if (order === null) throw new NotFoundException(`not found order id = ${id}`);
     return order;
   }

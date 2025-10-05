@@ -1,22 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 import { PaymentDTO } from './dto/payment.dto';
+import { OrderStatus } from 'src/common/enums/orderStatus.enum';
 // import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
-
-  constructor(
-    private prisma: PrismaService
-  ) { }
+  constructor(private prisma: PrismaService) { }
   async create(createOrderDto: CreateOrderDto) {
     const products = await this.prisma.product.findMany({
       where: {
-        id: { in: createOrderDto.order_details.map(i => parseInt(i.productId)) }
+        id: {
+          in: createOrderDto.order_details.map((i) => parseInt(i.productId)),
+        },
       }
     })
     const toppings = await this.prisma.topping.findMany({
@@ -83,14 +83,14 @@ export class OrderService {
 
 
 
+    // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
     const final_price = original_price;
-    // Tính toán giá gốc và giá cuối cùng
     //create order
     const order = await this.prisma.order.create({
       data: {
         customerPhone: createOrderDto.customerPhone,
-        original_price: 0,
-        final_price: 0,
+        original_price: original_price,
+        final_price: final_price,
         note: createOrderDto.note,
         staffId: parseInt(createOrderDto.staffId),
         order_details: {
@@ -209,7 +209,25 @@ export class OrderService {
     if (!deleteOrder) throw new NotFoundException(`Notfound order id = ${id}`)
     return deleteOrder
   }
-  payByCash(paymentDTO: PaymentDTO) {
-    return 'make a payment by cash';
+  async payByCash(paymentDTO: PaymentDTO) {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        id: paymentDTO.orderId,
+      },
+    });
+    if (!order) throw new NotFoundException("this order is not exist!");
+    if (paymentDTO.amount < order.final_price) throw new BadRequestException("Invalid amount, amount must greater or equal final price");
+    if (paymentDTO.amount - paymentDTO.recharge != order.final_price ||
+      paymentDTO.amount < paymentDTO.recharge
+    ) throw new BadRequestException("Change is invalid");
+    return await this.prisma.order.update({
+      where: {
+        id: paymentDTO.orderId
+      },
+      data: {
+        status: OrderStatus.PAID,
+        change: paymentDTO.amount - order.final_price
+      }
+    })
   }
 }

@@ -193,6 +193,7 @@ model Order {
   Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  change          Int?           @default(0)
 
   @@map("orders")
 }

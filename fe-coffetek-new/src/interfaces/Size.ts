@@ -5,7 +5,7 @@ export type Size = {
 }
 
 
-export interface SizeResponse {
+export interface SizeResponsePaging {
     data: Size[];
     meta: {
         total: number;

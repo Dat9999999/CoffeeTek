@@ -3,27 +3,26 @@
 import { useEffect, useState } from "react";
 import { DataTable } from "@/components/commons/table/DataTable";
 import { TableToolbar } from "@/components/commons/table/TableToolbar";
-import { sizeService } from "@/services/sizeService";
-import type { Size, SizeResponsePaging } from "@/interfaces";
+import { toppingService } from "@/services/toppingService";
+import type { Topping, ToppingResponsePaging } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
-import { CreateSizeModal, SizeDetailModal, EditSizeModal, DeleteSizeModal } from "@/components/features/sizes";
+import { CreateToppingModal, ToppingDetailModal, EditToppingModal, DeleteToppingModal } from "@/components/features/toppings";
 
-export default function SizePage() {
+export default function ToppingPage() {
     const { tableState, setTableState } = useTableState();
-    const [data, setData] = useState<Size[]>([]);
+    const [data, setData] = useState<Topping[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
 
     const [openAddModal, setOpenAddModal] = useState(false);
-
-    const [detailRecord, setDetailRecord] = useState<Size | null>(null);
-    const [editRecord, setEditRecord] = useState<Size | null>(null);
-    const [deleteRecord, setDeleteRecord] = useState<Size | null>(null);
+    const [detailRecord, setDetailRecord] = useState<Topping | null>(null);
+    const [editRecord, setEditRecord] = useState<Topping | null>(null);
+    const [deleteRecord, setDeleteRecord] = useState<Topping | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res: SizeResponsePaging = await sizeService.getAll({
+            const res: ToppingResponsePaging = await toppingService.getAll({
                 page: tableState.currentPage,
                 size: tableState.pageSize,
                 search: tableState.search,
@@ -43,7 +42,7 @@ export default function SizePage() {
 
     return (
         <>
-            <h1>Size Management</h1>
+            <h1>Topping Management</h1>
 
             <TableToolbar
                 search={tableState.search}
@@ -51,10 +50,10 @@ export default function SizePage() {
                     setTableState({ ...tableState, search: value })
                 }
                 onAdd={() => setOpenAddModal(true)}
-                addLabel="Add Size"
+                addLabel="Add Topping"
             />
 
-            <DataTable<Size>
+            <DataTable<Topping>
                 data={data}
                 total={total}
                 loading={loading}
@@ -63,37 +62,35 @@ export default function SizePage() {
                 columns={[
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
+                    { title: "Price", dataIndex: "price", sorter: true },
+                    { title: "Image Name", dataIndex: "image_name", sorter: true },
                     { title: "Sort Index", dataIndex: "sort_index", sorter: true },
                 ]}
-
                 onDetail={(record) => setDetailRecord(record)}
                 onEdit={(record) => setEditRecord(record)}
                 onDelete={(record) => setDeleteRecord(record)}
             />
 
-            {/* Modal create */}
-            <CreateSizeModal
+            <CreateToppingModal
                 open={openAddModal}
                 onClose={() => setOpenAddModal(false)}
                 onSuccess={() => fetchData()}
             />
 
-            {/* Modal detail */}
-            <SizeDetailModal
+            <ToppingDetailModal
                 open={!!detailRecord}
                 onClose={() => setDetailRecord(null)}
                 record={detailRecord}
             />
 
-            {/* Modal edit */}
-            <EditSizeModal
+            <EditToppingModal
                 open={!!editRecord}
                 onClose={() => setEditRecord(null)}
                 record={editRecord}
                 onSuccess={() => fetchData()}
             />
 
-            <DeleteSizeModal
+            <DeleteToppingModal
                 open={!!deleteRecord}
                 record={deleteRecord}
                 onClose={() => setDeleteRecord(null)}

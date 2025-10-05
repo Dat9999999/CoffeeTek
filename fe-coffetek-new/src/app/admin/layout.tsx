@@ -1,23 +1,21 @@
-import AppSidebar from "@/components/layouts/AppSidebar";
-import Navbar from "@/components/layouts/Navbar";
-import PublicFooter from "@/components/layouts/public-footer";
-import PublicHeader from "@/components/layouts/public-header";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { cookies } from "next/headers";
+"use client";
+import 'antd/dist/reset.css'; // CSS reset mới của Antd
+import type { ReactNode } from 'react';
+import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { AntConfigProvider, DarkModeProvider } from '@/components/providers';
+import { AdminShell } from '@/components/layouts';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar />
-        <main className="w-full  max-w-full">
-          <Navbar />
-          <div className="px-4 ">{children}</div>
-        </main>
-      </SidebarProvider>
-    </>
+    <AntdRegistry>
+      <DarkModeProvider>
+        <AntConfigProvider>
 
-  )
+          <AdminShell>{children}</AdminShell>
+
+        </AntConfigProvider>
+      </DarkModeProvider>
+    </AntdRegistry>
+
+  );
 }

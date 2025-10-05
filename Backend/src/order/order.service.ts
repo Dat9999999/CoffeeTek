@@ -233,6 +233,12 @@ export class OrderService {
     })
   }
   updateStatus(dto: UpdateOrderStatusDTO) {
+    const order = this.prisma.order.findUnique({
+      where: {
+        id: dto.orderId
+      }
+    })
+    if (!order) throw new NotFoundException("this order is not exist!");
     return 'update status of order';
   }
 }

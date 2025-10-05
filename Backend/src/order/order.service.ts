@@ -6,10 +6,12 @@ import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 import { PaymentDTO } from './dto/payment.dto';
 import { OrderStatus } from 'src/common/enums/orderStatus.enum';
+import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 // import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
+
   constructor(private prisma: PrismaService) { }
   async create(createOrderDto: CreateOrderDto) {
     const products = await this.prisma.product.findMany({
@@ -229,5 +231,8 @@ export class OrderService {
         change: paymentDTO.amount - order.final_price
       }
     })
+  }
+  updateStatus(dto: UpdateOrderStatusDTO) {
+    return 'update status of order';
   }
 }

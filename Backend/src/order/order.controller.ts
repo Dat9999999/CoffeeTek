@@ -7,6 +7,7 @@ import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 import { PaymentDTO } from './dto/payment.dto';
+import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 
 @Controller('order')
 export class OrderController {
@@ -28,14 +29,14 @@ export class OrderController {
   findOne(@Param('id') id: string) {
     return this.orderService.findOne(+id);
   }
+  @Patch('status')
+  updateStatus(@Body() dto: UpdateOrderStatusDTO) {
+    return this.orderService.updateStatus(dto);
+  }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.orderService.update(+id, updateOrderDto);
-  }
-  @Patch('status')
-  updateStatus(@Body() dto: any) {
-
   }
 
   @Delete(':id')

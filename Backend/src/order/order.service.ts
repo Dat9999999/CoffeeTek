@@ -216,6 +216,7 @@ export class OrderService {
       },
     });
     if (!order) throw new NotFoundException("this order is not exist!");
+    if (order.status != OrderStatus.PENDING) throw new BadRequestException("Can only make a payment with order status = pending");
     if (paymentDTO.amount < order.final_price) throw new BadRequestException("Invalid amount, amount must greater or equal final price");
     if (paymentDTO.amount - paymentDTO.recharge != order.final_price ||
       paymentDTO.amount < paymentDTO.recharge

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order/create-order.dto';
+import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
@@ -32,6 +32,10 @@ export class OrderController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.orderService.update(+id, updateOrderDto);
+  }
+  @Patch('status')
+  updateStatus(@Body() dto: any) {
+
   }
 
   @Delete(':id')

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order/create-order.dto';
+import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
@@ -195,7 +195,6 @@ export class OrderService {
       data: {
         customerPhone: updateOrderDto.customerPhone ?? upateOrder.customerPhone,
         note: updateOrderDto.note ?? upateOrder.note,
-
       },
     });
 
@@ -218,8 +217,8 @@ export class OrderService {
     if (!order) throw new NotFoundException("this order is not exist!");
     if (order.status != OrderStatus.PENDING) throw new BadRequestException("Can only make a payment with order status = pending");
     if (paymentDTO.amount < order.final_price) throw new BadRequestException("Invalid amount, amount must greater or equal final price");
-    if (paymentDTO.amount - paymentDTO.recharge != order.final_price ||
-      paymentDTO.amount < paymentDTO.recharge
+    if (paymentDTO.amount - paymentDTO.change != order.final_price ||
+      paymentDTO.amount < paymentDTO.change
     ) throw new BadRequestException("Change is invalid");
     return await this.prisma.order.update({
       where: {

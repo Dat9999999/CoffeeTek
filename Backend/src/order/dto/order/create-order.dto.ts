@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsPhoneNumber } from "class-validator";
-import { orderItemDTO } from "./create-item-order.dto";
+import { orderItemDTO } from "./item-order.dto";
 import { Type } from "class-transformer";
 
 export class CreateOrderDto {

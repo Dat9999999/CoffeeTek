@@ -12,5 +12,5 @@ export class PaymentDTO {
 
     @IsNotEmpty()
     @Type(() => Number)
-    recharge: number;
+    change: number;
 }

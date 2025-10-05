@@ -32,7 +32,7 @@ async function main() {
     // =======================
     // 2. Seed Owner User
     // =======================
-    const ownerEmail = process.env.OWNER_EMAIL || '';
+    const ownerEmail = process.env.OWNER_EMAIL || 'huynhtandat184@gmail.com';
     const existingOwner = await prisma.user.findUnique({
         where: { email: ownerEmail },
     });

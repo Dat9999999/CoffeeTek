@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
@@ -21,10 +21,10 @@ export class MailService {
             html,
         }, (err, info) => {
             if (err) {
-                console.log('Error occurred. ' + err.message);
+                Logger.error('Error occurred. ' + err.message);
                 return;
             }
-            console.log('Message sent: %s', info.messageId);
+            Logger.log('Message sent: %s', info.messageId);
         });
     }
 }

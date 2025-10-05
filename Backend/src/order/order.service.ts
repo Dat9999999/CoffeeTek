@@ -4,10 +4,12 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
+import { PaymentDTO } from './dto/payment.dto';
 // import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
+
   constructor(
     private prisma: PrismaService
   ) { }
@@ -206,5 +208,8 @@ export class OrderService {
     })
     if (!deleteOrder) throw new NotFoundException(`Notfound order id = ${id}`)
     return deleteOrder
+  }
+  payByCash(paymentDTO: PaymentDTO) {
+    return 'make a payment by cash';
   }
 }

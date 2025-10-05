@@ -6,6 +6,7 @@ import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
+import { PaymentDTO } from './dto/payment.dto';
 
 @Controller('order')
 export class OrderController {
@@ -36,5 +37,13 @@ export class OrderController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.orderService.remove(+id);
+  }
+  @Patch('paid/cash')
+  paid(@Body() paymentDTO: PaymentDTO) {
+    return this.orderService.payByCash(paymentDTO);
+  }
+  @Patch('paid/online')
+  paidOnline(@Body() paymentDTO: any) {
+    return
   }
 }

@@ -1,11 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order/create-order.dto';
+import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
+import { PaymentDTO } from './dto/payment.dto';
+import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 
 @Controller('order')
 export class OrderController {
@@ -27,6 +29,10 @@ export class OrderController {
   findOne(@Param('id') id: string) {
     return this.orderService.findOne(+id);
   }
+  @Patch('status')
+  updateStatus(@Body() dto: UpdateOrderStatusDTO) {
+    return this.orderService.updateStatus(dto);
+  }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
@@ -36,5 +42,13 @@ export class OrderController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.orderService.remove(+id);
+  }
+  @Patch('paid/cash')
+  paid(@Body() paymentDTO: PaymentDTO) {
+    return this.orderService.payByCash(paymentDTO);
+  }
+  @Patch('paid/online')
+  paidOnline(@Body() paymentDTO: any) {
+    return
   }
 }

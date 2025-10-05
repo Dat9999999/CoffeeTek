@@ -33,7 +33,7 @@ async function main() {
         where: { phone_number: process.env.OWNER_PHONE || '0123456789' },
         update: {},
         create: {
-            phone_number: process.env.OWNER_PHONE || '0123456789',
+            phone_number: process.env.OWNER_PHONE || '0985954486',
             email: process.env.OWNER_EMAIL || '',
             first_name: process.env.OWNER_FISRTNAME || 'Dat',
             last_name: process.env.OWNER_LASTNAME || 'Huynh',

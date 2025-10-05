@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ChangeSensitiveInfoDTO, UserUpdateDTO } from "./dto";
 import { PrismaService } from "src/prisma/prisma.service";
-import { GetAllDto } from "src/common/dto/pagination.dto";
+import { GetAllDto, ResponseGetAllDto } from "src/common/dto/pagination.dto";
 import { Order } from "src/common/enums/order.enum";
 
 @Injectable()
@@ -53,7 +53,17 @@ export class UserService {
             this.prisma.user.count(),
         ]);
 
-        return { data, total, page, size };
+        const res: ResponseGetAllDto<any> = {
+            data: data,
+            meta: {
+                page: page,
+                size: size,
+                total: total,
+                totalPages: Math.ceil(total / size)
+            }
+        }
+        return res;
+
     }
     async lockUser(id: number) {
         const user = await this.prisma.user.update({

@@ -17,3 +17,13 @@ export class GetAllDto {
     @IsEnum(Order, { message: "orderBy must be 'asc' or 'desc'" })
     orderBy?: Order = Order.ASC;
 }
+
+export class ResponseGetAllDto<T> {
+    data: T[];
+    meta: {
+        total: number,
+        page: number,
+        size: number,
+        totalPages: number
+    }
+}

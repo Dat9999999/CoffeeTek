@@ -49,7 +49,7 @@ export class OrderController {
   }
   @Patch('paid/online')
   paidOnline(@Body() paymentDTO: any) {
-    return
+    return this.orderService.paydOnline(paymentDTO);
   }
   @Put(':id')
   updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {

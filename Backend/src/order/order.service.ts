@@ -13,6 +13,7 @@ import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 export class OrderService {
 
 
+
   constructor(private prisma: PrismaService) { }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
@@ -354,5 +355,8 @@ export class OrderService {
       });
     })
     return order_details;
+  }
+  paydOnline(paymentDTO: any) {
+    return 'this create url payment';
   }
 }

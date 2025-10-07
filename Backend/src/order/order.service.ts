@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -8,10 +8,11 @@ import { PaymentDTO } from './dto/payment.dto';
 import { OrderStatus } from 'src/common/enums/orderStatus.enum';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { VnpayService } from 'nestjs-vnpay';
-import { dateFormat, ProductCode, VnpLocale } from 'vnpay';
+import { dateFormat, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
 
 @Injectable()
 export class OrderService {
+
   constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService) { }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
@@ -357,19 +358,37 @@ export class OrderService {
   async payOnline(paymentDTO: PaymentDTO) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const order = await this.prisma.order.findUnique({
+      where: { id: paymentDTO.orderId }
+    })
+    if (!order) throw new NotFoundException();
 
     const paymentUrl = this.vnpayService.buildPaymentUrl({
-      vnp_Amount: paymentDTO.amount,
+      vnp_Amount: order.final_price,
+      //ip of client
       vnp_IpAddr: '127.0.0.1',
       vnp_TxnRef: paymentDTO.orderId.toString(),
       vnp_OrderInfo: `Thanh toan don hang ${paymentDTO.orderId}`,
       vnp_OrderType: ProductCode.Other,
-      vnp_ReturnUrl: 'http://localhost:3001/vnpay-return',
+      vnp_ReturnUrl: 'http://localhost:3001/api/order/vnpay-return',
       vnp_Locale: VnpLocale.VN, // 'vn' hoặc 'en'
       vnp_CreateDate: dateFormat(new Date()), // tùy chọn, mặc định là thời gian hiện tại
       vnp_ExpireDate: dateFormat(tomorrow), // tùy chọn
-      vnp_BankCode: 'VNBANK'
     });
     return paymentUrl;
+  }
+  async vnpayResponse(query: any) {
+
+    let verify: VerifyReturnUrl;
+    try {
+      verify = await this.vnpayService.verifyReturnUrl(query);
+      if (!verify.isVerified) throw new BadRequestException("authenticate valid data failurely");
+      if (!verify.isSuccess) throw new BadRequestException("Payment failure")
+    } catch (error) {
+      Logger.error(`Invalid data response VNpay ${error}`);
+    }
+
+    //handle UI 
+    return { message: "Payment successfully" }
   }
 }

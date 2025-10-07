@@ -8,6 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { PaymentDTO } from './dto/payment.dto';
+import { VerifyReturnUrl } from 'vnpay';
 
 @Controller('order')
 export class OrderController {
@@ -24,10 +25,14 @@ export class OrderController {
   findAll(@Query() dto: GetAllOrderDto) {
     return this.orderService.findAll(dto);
   }
+  @Get('vnpay-return')
+  vnpayResponse(@Query() query: any) {
+    return this.orderService.vnpayResponse(query);
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id);
+    return this.orderService.findOne(Number(id));
   }
   @Patch('status')
   updateStatus(@Body() dto: UpdateOrderStatusDTO) {
@@ -55,4 +60,7 @@ export class OrderController {
   updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {
     return this.orderService.updateItems(+id, updateItemsDto)
   }
+
+
+
 }

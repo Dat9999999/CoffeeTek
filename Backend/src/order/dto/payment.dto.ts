@@ -6,7 +6,7 @@ export class PaymentDTO {
     @Type(() => Number)
     orderId: number;
 
-    @IsNotEmpty()
+    @IsOptional()
     @Type(() => Number)
     amount: number;
 

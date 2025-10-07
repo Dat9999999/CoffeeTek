@@ -47,7 +47,7 @@ export class OrderController {
   paid(@Body() paymentDTO: PaymentDTO) {
     return this.orderService.payByCash(paymentDTO);
   }
-  @Patch('paid/online')
+  @Post('paid/online')
   paidOnline(@Body() paymentDTO: any) {
     return this.orderService.paydOnline(paymentDTO);
   }

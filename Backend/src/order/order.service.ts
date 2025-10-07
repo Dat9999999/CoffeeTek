@@ -214,8 +214,8 @@ export class OrderService {
     if (!order) throw new NotFoundException("this order is not exist!");
     if (order.status != OrderStatus.PENDING) throw new BadRequestException("Can only make a payment with order status = pending");
     if (paymentDTO.amount < order.final_price) throw new BadRequestException("Invalid amount, amount must greater or equal final price");
-    if (paymentDTO.amount - paymentDTO.change != order.final_price ||
-      paymentDTO.amount < paymentDTO.change
+    if (paymentDTO.amount - (paymentDTO.change ?? 0) != order.final_price ||
+      paymentDTO.amount < (paymentDTO.change ?? 0)
     ) throw new BadRequestException("Change is invalid");
     return await this.prisma.order.update({
       where: {
@@ -356,7 +356,7 @@ export class OrderService {
     })
     return order_details;
   }
-  paydOnline(paymentDTO: any) {
+  paydOnline(paymentDTO: PaymentDTO) {
     return 'this create url payment';
   }
 }

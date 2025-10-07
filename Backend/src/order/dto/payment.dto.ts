@@ -10,7 +10,6 @@ export class PaymentDTO {
     @Type(() => Number)
     amount: number;
 
-    @IsNotEmpty()
     @Type(() => Number)
-    change: number;
+    change?: number;
 }

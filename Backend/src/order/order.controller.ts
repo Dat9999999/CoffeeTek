@@ -52,7 +52,7 @@ export class OrderController {
     return
   }
   @Put(':id')
-  updateOrderItems(@Body() updateItemsDto: UpdateOrderDto) {
-    return this.orderService.updateItems(updateItemsDto)
+  updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {
+    return this.orderService.updateItems(+id, updateItemsDto)
   }
 }

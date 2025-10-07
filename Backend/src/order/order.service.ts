@@ -11,19 +11,10 @@ import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 
 @Injectable()
 export class OrderService {
-  updateItems(updateItemsDto: UpdateOrderDto) {
-    return updateItemsDto;
-  }
+
 
   constructor(private prisma: PrismaService) { }
   async create(createOrderDto: CreateOrderDto) {
-    const products = await this.prisma.product.findMany({
-      where: {
-        id: {
-          in: createOrderDto.order_details.map((i) => parseInt(i.productId)),
-        },
-      }
-    })
     const toppings = await this.prisma.topping.findMany({
       where: {
         id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
@@ -115,7 +106,7 @@ export class OrderService {
               ? {
                 create: item.toppingItems.map(t => ({
                   quantity: parseInt(t.quantity),
-                  unit_price: 0, // TODO: lấy từ topping.price
+                  unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
                   topping: { connect: { id: parseInt(t.toppingId) } }
                 }))
               }
@@ -235,8 +226,8 @@ export class OrderService {
       }
     })
   }
-  updateStatus(dto: UpdateOrderStatusDTO) {
-    const order = this.prisma.order.update({
+  async updateStatus(dto: UpdateOrderStatusDTO) {
+    const order = await this.prisma.order.update({
       where: {
         id: dto.orderId
       },
@@ -245,5 +236,123 @@ export class OrderService {
       }
     })
     return order;
+  }
+  async updateItems(id: number, updateItemsDto: UpdateOrderDto) {
+    const toppings = await this.prisma.topping.findMany({
+      where: {
+        id: { in: updateItemsDto.order_details?.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
+      }
+    })
+    const productSizePrice = await this.prisma.productSize.findMany({
+      where: {
+        id: { in: updateItemsDto.order_details?.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
+      }
+    })
+    const order_details = await Promise.all(
+      (updateItemsDto.order_details ?? []).map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: parseInt(item.productId) },
+        });
+
+        const toppings = item.toppingItems?.length
+          ? await this.prisma.topping.findMany({
+            where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
+          })
+          : [];
+
+        const size = item.sizeId
+          ? await this.prisma.size.findUnique({
+            where: { id: parseInt(item.sizeId) },
+          })
+          : null;
+
+        return {
+          ...item, // giữ lại quantity, productId, toppingItems, sizeId...
+          product,
+          toppings,
+          size,
+        };
+      })
+    );
+    const toppingPrice = (item) => {
+      return item.toppingItems?.reduce((sum, t) => {
+        const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
+        return sum + (topping ? topping.price * parseInt(t.quantity) : 0);
+      }, 0) || 0;
+    };
+
+    const original_price = order_details.reduce((sum, item) => {
+      const defaultProductPrice = item.product?.price || 0;
+
+      // đảm bảo sizeId luôn có giá trị hợp lệ
+      const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
+      const sizePrice = sizeId
+        ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
+        : 0;
+
+      // đảm bảo quantity là số
+      const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
+
+      // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
+      const toppingTotal = toppingPrice(item) * quantity;
+
+      return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
+    }, 0);
+
+
+
+    // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
+    const final_price = original_price;
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.prisma.orderDetail.deleteMany({
+        where: { id }
+      });
+      const order = await this.prisma.order.update({
+        where: { id },
+        data: {
+          original_price: original_price,
+          final_price: final_price,
+          order_details: {
+            create: order_details.map(item => ({
+              quantity: parseInt(item.quantity),
+              unit_price: item.product?.price || 0,
+
+              product: {
+                connect: { id: parseInt(item.productId) }
+              },
+
+              size: item.sizeId
+                ? { connect: { id: parseInt(item.sizeId) } }
+                : undefined,
+
+              ToppingOrderDetail: item.toppingItems?.length
+                ? {
+                  create: item.toppingItems.map(t => ({
+                    quantity: parseInt(t.quantity),
+                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
+                    topping: { connect: { id: parseInt(t.toppingId) } }
+                  }))
+                }
+                : undefined,
+            }))
+          }
+        },
+        include: {
+          order_details: {
+            include: {
+              product: true,
+              size: true,
+              ToppingOrderDetail: {
+                include: {
+                  topping: true
+                }
+              }
+            }
+          }
+        }
+      });
+    })
+    return order_details;
   }
 }

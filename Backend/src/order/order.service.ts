@@ -7,14 +7,12 @@ import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 import { PaymentDTO } from './dto/payment.dto';
 import { OrderStatus } from 'src/common/enums/orderStatus.enum';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
-// import { PrismaClient } from '@prisma/client';
+import { VnpayService } from 'nestjs-vnpay';
+import { dateFormat, ProductCode, VnpLocale } from 'vnpay';
 
 @Injectable()
 export class OrderService {
-
-
-
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService) { }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
       where: {
@@ -356,7 +354,22 @@ export class OrderService {
     })
     return order_details;
   }
-  paydOnline(paymentDTO: PaymentDTO) {
-    return 'this create url payment';
+  async payOnline(paymentDTO: PaymentDTO) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const paymentUrl = this.vnpayService.buildPaymentUrl({
+      vnp_Amount: paymentDTO.amount,
+      vnp_IpAddr: '127.0.0.1',
+      vnp_TxnRef: paymentDTO.orderId.toString(),
+      vnp_OrderInfo: `Thanh toan don hang ${paymentDTO.orderId}`,
+      vnp_OrderType: ProductCode.Other,
+      vnp_ReturnUrl: 'http://localhost:3001/vnpay-return',
+      vnp_Locale: VnpLocale.VN, // 'vn' hoặc 'en'
+      vnp_CreateDate: dateFormat(new Date()), // tùy chọn, mặc định là thời gian hiện tại
+      vnp_ExpireDate: dateFormat(tomorrow), // tùy chọn
+      vnp_BankCode: 'VNBANK'
+    });
+    return paymentUrl;
   }
 }

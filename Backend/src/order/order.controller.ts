@@ -6,8 +6,8 @@ import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
-import { PaymentDTO } from './dto/payment.dto';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
+import { PaymentDTO } from './dto/payment.dto';
 
 @Controller('order')
 export class OrderController {
@@ -48,8 +48,8 @@ export class OrderController {
     return this.orderService.payByCash(paymentDTO);
   }
   @Post('paid/online')
-  paidOnline(@Body() paymentDTO: any) {
-    return this.orderService.paydOnline(paymentDTO);
+  paidOnline(@Body() paymentDTO: PaymentDTO) {
+    return this.orderService.payOnline(paymentDTO);
   }
   @Put(':id')
   updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {

@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsString } from "class-validator";
+import { OrderStatus } from "src/common/enums/orderStatus.enum";
 
 export class UpdateOrderStatusDTO {
     @IsNotEmpty()
@@ -8,6 +9,7 @@ export class UpdateOrderStatusDTO {
 
     @IsNotEmpty()
     @IsString()
-    status: String
+    @IsEnum(OrderStatus)
+    status: OrderStatus
 
 }

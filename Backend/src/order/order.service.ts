@@ -11,6 +11,9 @@ import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 
 @Injectable()
 export class OrderService {
+  updateItems(updateItemsDto: UpdateOrderDto) {
+    return updateItemsDto;
+  }
 
   constructor(private prisma: PrismaService) { }
   async create(createOrderDto: CreateOrderDto) {
@@ -233,12 +236,14 @@ export class OrderService {
     })
   }
   updateStatus(dto: UpdateOrderStatusDTO) {
-    const order = this.prisma.order.findUnique({
+    const order = this.prisma.order.update({
       where: {
         id: dto.orderId
+      },
+      data: {
+        status: dto.status
       }
     })
-    if (!order) throw new NotFoundException("this order is not exist!");
-    return 'update status of order';
+    return order;
   }
 }

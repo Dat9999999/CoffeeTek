@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Put } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -50,5 +50,9 @@ export class OrderController {
   @Patch('paid/online')
   paidOnline(@Body() paymentDTO: any) {
     return
+  }
+  @Put(':id')
+  updateOrderItems(@Body() updateItemsDto: UpdateOrderDto) {
+    return this.orderService.updateItems(updateItemsDto)
   }
 }

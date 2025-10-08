@@ -20,6 +20,10 @@ export class OrderController {
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
   }
+  @Get('vnpay-ipn')
+  vnpayIpn(@Query() query: any) {
+    return this.orderService.vnpayIpn(query);
+  }
 
   @Get()
   findAll(@Query() dto: GetAllOrderDto) {

@@ -8,7 +8,8 @@ import { PaymentDTO } from './dto/payment.dto';
 import { OrderStatus } from 'src/common/enums/orderStatus.enum';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { VnpayService } from 'nestjs-vnpay';
-import { dateFormat, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
+import { dateFormat, InpOrderAlreadyConfirmed, IpnFailChecksum, IpnInvalidAmount, IpnOrderNotFound, IpnSuccess, IpnUnknownError, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
+import { json } from 'express';
 
 @Injectable()
 export class OrderService {
@@ -391,4 +392,44 @@ export class OrderService {
     //handle UI 
     return { message: "Payment successfully" }
   }
+  async vnpayIpn(query: any) {
+    try {
+      let verify: VerifyReturnUrl = await this.vnpayService.verifyIpnCall(query);
+      if (!verify.isVerified) {
+        Logger.error(IpnFailChecksum);
+        return JSON.stringify(IpnFailChecksum);
+      }
+
+      if (!verify.isSuccess) {
+        Logger.error(IpnUnknownError);
+        return JSON.stringify(IpnUnknownError);
+      }
+      const foundOrder = await this.prisma.order.findUnique({ where: { id: parseInt(verify.vnp_TxnRef) } });
+      if (!foundOrder) {
+        Logger.error(IpnOrderNotFound);
+        return JSON.stringify(IpnOrderNotFound);
+      }
+      // Nếu số tiền thanh toán không khớp
+      if (verify.vnp_Amount !== foundOrder?.final_price) {
+        Logger.error(IpnInvalidAmount);
+        return JSON.stringify(IpnInvalidAmount);
+      }
+
+      // Nếu đơn hàng đã được xác nhận trước đó
+      if (foundOrder?.status === OrderStatus.PAID || foundOrder?.status === OrderStatus.COMPLETED) {
+        Logger.error(InpOrderAlreadyConfirmed);
+        return JSON.stringify(InpOrderAlreadyConfirmed);
+      }
+
+      //update order status to paid 
+      if (foundOrder) {
+        this.updateStatus({ orderId: foundOrder.id, status: OrderStatus.PAID });
+        Logger.log(IpnSuccess);
+      }
+      return JSON.stringify(IpnSuccess);
+    } catch (error) {
+      Logger.error(IpnUnknownError);
+    }
+  }
+
 }

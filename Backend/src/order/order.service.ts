@@ -448,5 +448,8 @@ export class OrderService {
       Logger.error(IpnUnknownError);
     }
   }
+  async createPaymentDetail(method: any, orderId: number) {
+
+  }
 
 }

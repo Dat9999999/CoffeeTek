@@ -217,17 +217,30 @@ export class OrderService {
     if (paymentDTO.amount - (paymentDTO.change ?? 0) != order.final_price ||
       paymentDTO.amount < (paymentDTO.change ?? 0)
     ) throw new BadRequestException("Change is invalid");
-    
-    //make payment detail 
-    
+
+    //create payment detail 
+    const paymentMethod = await this.prisma.paymentMethod.findUnique({
+      where: {
+        name: 'cash'
+      }
+    })
+    const paymentDetailData: any = {
+      amount: paymentDTO.amount,
+      change: paymentDTO.amount - order.final_price,
+    };
+    if (paymentMethod?.id !== undefined) {
+      paymentDetailData.payment_method_id = paymentMethod.id;
+    }
+    const paymentDetails = await this.prisma.paymentDetail.create({
+      data: paymentDetailData
+    })
 
     return await this.prisma.order.update({
       where: {
         id: paymentDTO.orderId
       },
       data: {
-        status: OrderStatus.PAID,
-        change: paymentDTO.amount - order.final_price
+        status: OrderStatus.PAID
       }
     })
   }

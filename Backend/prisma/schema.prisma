@@ -193,7 +193,6 @@ model Order {
   Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
-  change          Int?           @default(0)
 
   @@map("orders")
 }
@@ -244,6 +243,7 @@ model PaymentDetail {
   payment_method    PaymentMethod @relation(fields: [payment_method_id], references: [id])
   payment_method_id Int
   amount            Float
+  change            Int?          @default(0)
   paymentcode       String?
   payment_time      DateTime      @default(now())
   status            String        @default("completed") // completed, failed, pending

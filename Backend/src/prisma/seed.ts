@@ -229,11 +229,11 @@ async function main() {
         await prisma.paymentMethod.createMany({
             data: [
                 {
-                    name: 'Cash',
+                    name: 'cash',
                     is_active: true,
                 },
                 {
-                    name: 'VNPAY',
+                    name: 'vnpay',
                     is_active: true,
                 },
             ],

@@ -217,6 +217,10 @@ export class OrderService {
     if (paymentDTO.amount - (paymentDTO.change ?? 0) != order.final_price ||
       paymentDTO.amount < (paymentDTO.change ?? 0)
     ) throw new BadRequestException("Change is invalid");
+    
+    //make payment detail 
+    
+
     return await this.prisma.order.update({
       where: {
         id: paymentDTO.orderId

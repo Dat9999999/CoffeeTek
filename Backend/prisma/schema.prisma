@@ -231,7 +231,7 @@ model ToppingOrderDetail {
 
 model PaymentMethod {
   id            Int             @id @default(autoincrement())
-  name          String
+  name          String          @unique
   is_active     Boolean         @default(true)
   created_at    DateTime        @default(now())
   PaymentDetail PaymentDetail[]

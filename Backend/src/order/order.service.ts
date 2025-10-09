@@ -232,13 +232,14 @@ export class OrderService {
       }
     })
   }
-  async updateStatus(dto: UpdateOrderStatusDTO) {
+  async updateStatus(dto: UpdateOrderStatusDTO, paymentDetailId?: number) {
     const order = await this.prisma.order.update({
       where: {
         id: dto.orderId
       },
       data: {
-        status: dto.status
+        status: dto.status,
+        paymentDetailId: paymentDetailId
       }
     })
     return order;
@@ -428,7 +429,10 @@ export class OrderService {
 
       //update order status to paid 
       if (foundOrder) {
-        this.updateStatus({ orderId: foundOrder.id, status: OrderStatus.PAID });
+
+        //create payment detail 
+        const paymentDetail = await this.createPaymentDetail(PaymentMethod.VNPAY, foundOrder.id, verify.vnp_Amount, foundOrder.final_price)
+        this.updateStatus({ orderId: foundOrder.id, status: OrderStatus.PAID }, paymentDetail.id);
         Logger.log(IpnSuccess);
       }
       return JSON.stringify(IpnSuccess);
@@ -452,8 +456,5 @@ export class OrderService {
     return await this.prisma.paymentDetail.create({
       data: paymentDetailData
     })
-
-
   }
-
 }

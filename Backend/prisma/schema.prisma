@@ -247,6 +247,7 @@ model PaymentDetail {
   paymentcode       String?
   payment_time      DateTime      @default(now())
   status            String        @default("completed") // completed, failed, pending
+  orderId           Int
   Order             Order?        @relation("OrderPaymentDetail")
 
   @@map("payment_details")

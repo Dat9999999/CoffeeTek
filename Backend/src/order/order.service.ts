@@ -10,6 +10,7 @@ import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { VnpayService } from 'nestjs-vnpay';
 import { dateFormat, InpOrderAlreadyConfirmed, IpnFailChecksum, IpnInvalidAmount, IpnOrderNotFound, IpnSuccess, IpnUnknownError, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
 import { json } from 'express';
+import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 
 @Injectable()
 export class OrderService {
@@ -218,29 +219,16 @@ export class OrderService {
       paymentDTO.amount < (paymentDTO.change ?? 0)
     ) throw new BadRequestException("Change is invalid");
 
-    //create payment detail 
-    const paymentMethod = await this.prisma.paymentMethod.findUnique({
-      where: {
-        name: 'cash'
-      }
-    })
-    const paymentDetailData: any = {
-      amount: paymentDTO.amount,
-      change: paymentDTO.amount - order.final_price,
-    };
-    if (paymentMethod?.id !== undefined) {
-      paymentDetailData.payment_method_id = paymentMethod.id;
-    }
-    const paymentDetails = await this.prisma.paymentDetail.create({
-      data: paymentDetailData
-    })
+    //create payment detail
+    const paymentDetail = await this.createPaymentDetail(PaymentMethod.CASH, order.id, paymentDTO.amount, order.final_price);
 
     return await this.prisma.order.update({
       where: {
         id: paymentDTO.orderId
       },
       data: {
-        status: OrderStatus.PAID
+        status: OrderStatus.PAID,
+        paymentDetailId: paymentDetail.id
       }
     })
   }
@@ -448,7 +436,23 @@ export class OrderService {
       Logger.error(IpnUnknownError);
     }
   }
-  async createPaymentDetail(method: any, orderId: number) {
+  async createPaymentDetail(method: PaymentMethod, orderId: number, amount: number, final_price: number) {
+    const paymentMethod = await this.prisma.paymentMethod.findUnique({
+      where: {
+        name: method
+      }
+    })
+    const paymentDetailData: any = {
+      amount,
+      change: amount - final_price
+    };
+    if (paymentMethod?.id !== undefined) {
+      paymentDetailData.payment_method_id = paymentMethod.id;
+    }
+    return await this.prisma.paymentDetail.create({
+      data: paymentDetailData
+    })
+
 
   }
 

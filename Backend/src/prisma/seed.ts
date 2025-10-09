@@ -220,6 +220,29 @@ async function main() {
     } else {
         Logger.warn('⚠️ Products already exist, skipping...');
     }
+
+    // payment method
+    const paymeyMethodCount = await prisma.paymentMethod.count();
+    if (paymeyMethodCount == 0) {
+        Logger.log('🪄 Seeding payment methods...');
+
+        await prisma.paymentMethod.createMany({
+            data: [
+                {
+                    name: 'Cash',
+                    is_active: true,
+                },
+                {
+                    name: 'VNPAY',
+                    is_active: true,
+                },
+            ],
+        });
+
+        Logger.log('✅ Payment methods seeded successfully!');
+    } else {
+        Logger.warn('⚠️ Payment method already exist, skipping...');
+    }
 }
 
 main()

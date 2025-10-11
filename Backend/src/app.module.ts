@@ -12,11 +12,17 @@ import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
-import { UploadModule } from './upload/upload.module';
+import { UploadModule } from './upload-product-img/upload.module';
 import { VnpayModule } from 'nestjs-vnpay';
 import { ignoreLogger } from 'vnpay';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
+  ServeStaticModule.forRoot({
+    rootPath: join(__dirname, '..', 'uploads'),
+    serveRoot: '/files'
+  }),
     AuthModule, UserModule, PrismaModule, OrderModule,
     MailModule, RedisModule, OptionGroupsModule, OptionValuesModule,
     SizesModule, CategoriesModule, ToppingsModule, ProductsModule, UploadModule],

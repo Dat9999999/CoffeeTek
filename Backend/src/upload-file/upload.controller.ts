@@ -6,22 +6,20 @@ import {
     UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname, parse } from 'path';
+import { B2Service } from 'src/storage-file/b2.service';
 import { v4 as uuid } from 'uuid';
 
 @Controller('upload')
 export class UploadController {
+    constructor(private readonly b2Service: B2Service) {
+
+    }
     @Post('images')
     @UseInterceptors(
         FilesInterceptor('images', 20, {
-            storage: diskStorage({
-                destination: './uploads',
-                filename: (req, file, cb) => {
-                    const name = parse(file.originalname).name;
-                    cb(null, `${name}__${uuid()}${extname(file.originalname)}`);
-                },
-            }),
+            storage: memoryStorage(),
             fileFilter: (req, file, cb) => {
                 if (!file.mimetype.startsWith('image/')) {
                     return cb(new Error('Only image files are allowed!'), false);
@@ -32,8 +30,14 @@ export class UploadController {
         }),
     )
     async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
-        // Trả về danh sách tên file mới
-        return files.map((file) => file.filename);
+        const results = await Promise.all(
+            files.map(async (file) => {
+                const key = `${uuid()}__${file.originalname}`;
+                return this.b2Service.uploadFile(key, file.buffer, file.mimetype);
+            }),
+        );
+
+        return results;
     }
 
 }

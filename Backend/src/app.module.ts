@@ -12,12 +12,13 @@ import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
-import { UploadModule } from './upload-product-img/upload.module';
+import { UploadModule } from './upload-file/upload.module';
 import { VnpayModule } from 'nestjs-vnpay';
 import { ignoreLogger } from 'vnpay';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { B2Service } from './b2/b2.service';
+import { StorageFileModule } from './storage-file/storage-file.module';
+
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
   ServeStaticModule.forRoot({
@@ -26,7 +27,6 @@ import { B2Service } from './b2/b2.service';
   }),
     AuthModule, UserModule, PrismaModule, OrderModule,
     MailModule, RedisModule, OptionGroupsModule, OptionValuesModule,
-    SizesModule, CategoriesModule, ToppingsModule, ProductsModule, UploadModule],
-  providers: [B2Service],
+    SizesModule, CategoriesModule, ToppingsModule, ProductsModule, UploadModule, StorageFileModule],
 })
 export class AppModule { }

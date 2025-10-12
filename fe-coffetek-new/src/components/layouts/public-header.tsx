@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, User } from 'lucide-react'  // ✅ Thêm icon User
 import { ModeToggle } from '@/components/commons/mode-toggle'
 import { STORAGE_KEYS } from '@/lib/constant/storageKey.constant'
 
@@ -17,7 +17,7 @@ const PublicHeader = () => {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
     setIsLoggedIn(!!token)
 
-    // ✅ Nếu cần tự động cập nhật trạng thái khi login/logout ở nơi khác
+    // ✅ Cập nhật trạng thái khi login/logout ở nơi khác
     const handleStorageChange = () => {
       const newToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
       setIsLoggedIn(!!newToken)
@@ -74,7 +74,15 @@ const PublicHeader = () => {
               </>
             ) : (
               <>
-                <span className="text-foreground font-medium">Hello 👋</span>
+                {/* ✅ Thêm icon user */}
+                <Link
+                  href="/profile"
+                  className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition"
+                  title="Trang cá nhân"
+                >
+                  <User className="h-6 w-6 text-coffee-600" />
+                </Link>
+
                 <Button variant="destructive" onClick={handleLogout}>
                   Logout
                 </Button>
@@ -118,9 +126,24 @@ const PublicHeader = () => {
                   </Button>
                 </>
               ) : (
-                <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                  Logout
-                </Button>
+                <>
+                  {/* ✅ Thêm icon user ở menu mobile */}
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50"
+                  >
+                    <User className="h-5 w-5 text-coffee-600" />
+                    <span>Trang cá nhân</span>
+                  </Link>
+
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                </>
               )}
             </div>
           </div>

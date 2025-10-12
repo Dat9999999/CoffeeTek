@@ -18,7 +18,7 @@ export default function FormContainer({
   footer,
 }: any) {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-[url(/image/login_background.jpg)] bg-cover">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-[url(/image/login-background-1.jpg)] bg-cover">
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

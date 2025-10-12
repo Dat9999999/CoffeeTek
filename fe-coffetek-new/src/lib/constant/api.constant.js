@@ -12,6 +12,10 @@ export const API_ENDPOINTS = {
     SIGNUP: `${process.env.NEXT_PUBLIC_ENDPOINT_API}/auth/signup`,
     CHANGE_PASSWORD: `${process.env.NEXT_PUBLIC_ENDPOINT_API}/auth/change-password`,
   },
+
+  USER: {
+    PROFILE: `${process.env.NEXT_PUBLIC_ENDPOINT_API}/user/me`,
+  },
 };
 
 

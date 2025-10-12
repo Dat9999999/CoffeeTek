@@ -1,16 +1,16 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsOptional } from "class-validator";
 
 export class PaymentDTO {
     @IsNotEmpty()
     @Type(() => Number)
     orderId: number;
 
-    @IsNotEmpty()
+    @IsOptional()
     @Type(() => Number)
     amount: number;
 
-    @IsNotEmpty()
+    @IsOptional()
     @Type(() => Number)
     change: number;
 }

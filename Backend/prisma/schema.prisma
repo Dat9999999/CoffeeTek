@@ -193,7 +193,6 @@ model Order {
   Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
-  change          Int?           @default(0)
 
   @@map("orders")
 }
@@ -229,25 +228,26 @@ model ToppingOrderDetail {
   @@map("topping_order_details")
 }
 
-model PaymentModel {
+model PaymentMethod {
   id            Int             @id @default(autoincrement())
-  name          String
+  name          String          @unique
   is_active     Boolean         @default(true)
   created_at    DateTime        @default(now())
   PaymentDetail PaymentDetail[]
 
-  @@map("payment_models")
+  @@map("payment_methods")
 }
 
 model PaymentDetail {
-  id               Int          @id @default(autoincrement())
-  payment_model    PaymentModel @relation(fields: [payment_model_id], references: [id])
-  payment_model_id Int
-  amount           Float
-  paymentcode      String?
-  payment_time     DateTime     @default(now())
-  status           String       @default("completed") // completed, failed, pending
-  Order            Order?       @relation("OrderPaymentDetail")
+  id                Int           @id @default(autoincrement())
+  payment_method    PaymentMethod @relation(fields: [payment_method_id], references: [id])
+  payment_method_id Int
+  amount            Float
+  change            Int?          @default(0)
+  paymentcode       String?
+  payment_time      DateTime      @default(now())
+  status            String        @default("completed") // completed, failed, pending
+  Order             Order?        @relation("OrderPaymentDetail")
 
   @@map("payment_details")
 }

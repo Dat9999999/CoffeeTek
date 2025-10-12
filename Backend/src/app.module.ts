@@ -12,7 +12,7 @@ import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
-import { UploadModule } from './upload/upload.module';
+import { UploadModule } from './upload-file/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 

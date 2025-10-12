@@ -28,6 +28,6 @@ export class B2Service {
             ContentType: contentType || 'application/octet-stream'
         })
         await this.s3.send(command);
-        return `${process.env.B2_PUBLIC_URL}/${key}`;
+        return `${key}`;
     }
 }

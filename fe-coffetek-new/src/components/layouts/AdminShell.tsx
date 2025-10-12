@@ -26,8 +26,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const items = [
         { key: "/admin/dashboard", icon: <PieChartOutlined />, label: "Dashboard" },
         { key: "/admin/users", icon: <UserOutlined />, label: "Users" },
-        { key: "/admin/sizes", icon: <DesktopOutlined />, label: "Sizes" },
-        { key: "/admin/files", icon: <FileOutlined />, label: "Files" },
+        { key: "/admin/sizes", icon: <DesktopOutlined />, label: "Size" },
+        { key: "/admin/toppings", icon: <FileOutlined />, label: "Topping" },
+        { key: "/admin/categories", icon: <FileOutlined />, label: "Category" },
+        { key: "/admin/option-groups", icon: <FileOutlined />, label: "Option group" },
+        { key: "/admin/products", icon: <FileOutlined />, label: "Product" },
+
     ];
 
     const pathname = usePathname();

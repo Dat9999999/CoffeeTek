@@ -8,9 +8,7 @@ export class CreateSizeDto {
     @MinLength(1)
     name: string;
 
-    @IsInt()
-    @Type(() => Number)
-    sort_index: number;
+
 }
 
 export class UpdateSizeDto {
@@ -20,9 +18,7 @@ export class UpdateSizeDto {
     @IsOptional()
     name?: string;
 
-    @IsInt()
-    @IsOptional()
-    sort_index?: number;
+
 }
 
 export class PaginationDto {

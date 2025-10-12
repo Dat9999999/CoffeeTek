@@ -6,19 +6,26 @@ import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { sizeService } from "@/services/sizeService";
 import type { Size, SizeResponsePaging } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
-import { CreateSizeModal, SizeDetailModal, EditSizeModal, DeleteSizeModal } from "@/components/features/sizes";
+import {
+    CreateSizeModal,
+    SizeDetailModal,
+    EditSizeModal,
+    DeleteSizeModal,
+    DeleteManySizesModal,
+} from "@/components/features/sizes";
 
 export default function SizePage() {
     const { tableState, setTableState } = useTableState();
     const [data, setData] = useState<Size[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
 
     const [openAddModal, setOpenAddModal] = useState(false);
-
     const [detailRecord, setDetailRecord] = useState<Size | null>(null);
     const [editRecord, setEditRecord] = useState<Size | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Size | null>(null);
+    const [openDeleteManyModal, setOpenDeleteManyModal] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -41,6 +48,18 @@ export default function SizePage() {
         fetchData();
     }, [tableState]);
 
+    const handleDeleteMany = () => setOpenDeleteManyModal(true);
+
+    const handleDeleteSuccess = (isDeleteMany: boolean, newPage?: number) => {
+        if (newPage && newPage !== tableState.currentPage) {
+            setTableState({ ...tableState, currentPage: newPage });
+        } else {
+            fetchData();
+        }
+        isDeleteMany ? setSelectedRowKeys([]) : setDeleteRecord(null);
+    };
+
+
     return (
         <>
             <h1>Size Management</h1>
@@ -51,7 +70,9 @@ export default function SizePage() {
                     setTableState({ ...tableState, search: value })
                 }
                 onAdd={() => setOpenAddModal(true)}
-                addLabel="Add Size"
+                addLabel="Add"
+                onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
+                deleteManyLabel="Delete"
             />
 
             <DataTable<Size>
@@ -63,41 +84,55 @@ export default function SizePage() {
                 columns={[
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
-                    { title: "Sort Index", dataIndex: "sort_index", sorter: true },
                 ]}
-
                 onDetail={(record) => setDetailRecord(record)}
                 onEdit={(record) => setEditRecord(record)}
                 onDelete={(record) => setDeleteRecord(record)}
+                onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
+                enableRowSelection={true}
             />
 
-            {/* Modal create */}
+            {/* CREATE */}
             <CreateSizeModal
                 open={openAddModal}
                 onClose={() => setOpenAddModal(false)}
-                onSuccess={() => fetchData()}
+                onSuccess={fetchData}
             />
 
-            {/* Modal detail */}
+            {/* DETAIL */}
             <SizeDetailModal
                 open={!!detailRecord}
                 onClose={() => setDetailRecord(null)}
                 record={detailRecord}
             />
 
-            {/* Modal edit */}
+            {/* EDIT */}
             <EditSizeModal
                 open={!!editRecord}
                 onClose={() => setEditRecord(null)}
                 record={editRecord}
-                onSuccess={() => fetchData()}
+                onSuccess={fetchData}
             />
 
+            {/* DELETE ONE */}
             <DeleteSizeModal
                 open={!!deleteRecord}
                 record={deleteRecord}
                 onClose={() => setDeleteRecord(null)}
-                onSuccess={fetchData}
+                onSuccess={handleDeleteSuccess}
+                totalItems={total}
+
+                tableState={tableState}
+            />
+
+            {/* DELETE MANY */}
+            <DeleteManySizesModal
+                open={openDeleteManyModal}
+                selectedRowKeys={selectedRowKeys}
+                onClose={() => setOpenDeleteManyModal(false)}
+                onSuccess={handleDeleteSuccess}
+                totalItems={total}
+                tableState={tableState}
             />
         </>
     );

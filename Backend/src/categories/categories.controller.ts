@@ -10,11 +10,10 @@ export class CategoriesController {
     @Post()
     create(
         @Body('name') name: string,
-        @Body('sort_index') sort_index: number,
         @Body('is_parent_category') is_parent_category: boolean,
         @Body('parent_category_id') parent_category_id?: number,
     ) {
-        return this.categoriesService.create(name, sort_index, is_parent_category, parent_category_id);
+        return this.categoriesService.create(name, is_parent_category, parent_category_id);
     }
 
     @Get()
@@ -32,15 +31,19 @@ export class CategoriesController {
     update(
         @Param('id') id: string,
         @Body('name') name: string,
-        @Body('sort_index') sort_index: number,
         @Body('is_parent_category') is_parent_category: boolean,
         @Body('parent_category_id') parent_category_id?: number,
     ) {
-        return this.categoriesService.update(+id, name, sort_index, is_parent_category, parent_category_id);
+        return this.categoriesService.update(+id, name, is_parent_category, parent_category_id);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string) {
         return this.categoriesService.remove(+id);
+    }
+
+    @Delete()
+    removeMany(@Body() body: { ids: number[] }) {
+        return this.categoriesService.removeMany(body.ids);
     }
 }

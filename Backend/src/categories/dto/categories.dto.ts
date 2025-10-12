@@ -1,8 +1,6 @@
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { OrderDirection } from 'src/common/enums/order.enum';
-
-
 
 export class GetAllCategoriesDto {
     @Type(() => Number)
@@ -21,9 +19,18 @@ export class GetAllCategoriesDto {
 
     @IsOptional()
     @IsString()
-    orderBy: string = 'name'; // cột muốn sort (name, sort_index,...)
+    orderBy: string = 'id';
 
     @IsOptional()
     @IsEnum(OrderDirection, { message: "orderDirection must be 'asc' or 'desc'" })
     orderDirection: OrderDirection = OrderDirection.ASC;
+
+    @IsOptional()
+    @Transform(({ value }) => {
+        if (value === 'true' || value === true) return true;
+        if (value === 'false' || value === false) return false;
+        return undefined;
+    })
+    @IsBoolean()
+    isParentCategory?: boolean;
 }

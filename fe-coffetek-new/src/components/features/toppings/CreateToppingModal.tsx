@@ -134,7 +134,7 @@ export function CreateToppingModal({ open, onClose, onSuccess }: CreateToppingMo
                         onChange={handleUploadChange}
                         beforeUpload={() => false}
                         accept="image/*"
-                        listType="picture"
+                        listType="text"
                         maxCount={1}
                     >
                         <Button icon={<UploadOutlined />}>Select Image</Button>
@@ -146,13 +146,17 @@ export function CreateToppingModal({ open, onClose, onSuccess }: CreateToppingMo
                         <Image
                             src={previewImage}
                             alt="Image Preview"
-                            style={{ maxWidth: '100%', maxHeight: 200 }}
+                            width={120}
+                            height={120}
+                            style={{
+                                objectFit: 'cover',
+
+                            }}
                             preview={{
-                                onVisibleChange: (visible) => {
-                                    if (!visible) handlePreviewCancel();
-                                },
+
                             }}
                         />
+
                     </Form.Item>
                 )}
             </Form>

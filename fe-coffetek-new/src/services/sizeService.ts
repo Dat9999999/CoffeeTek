@@ -27,4 +27,9 @@ export const sizeService = {
         const res = await api.delete(`/sizes/${id}`)
         return res.data
     },
+
+    async deleteMany(ids: number[]) {
+        const res = await api.delete("/sizes", { data: { ids } });
+        return res.data;
+    },
 }

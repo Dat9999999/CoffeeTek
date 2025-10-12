@@ -6,18 +6,22 @@ import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { toppingService } from "@/services/toppingService";
 import type { Topping, ToppingResponsePaging } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
-import { CreateToppingModal, ToppingDetailModal, EditToppingModal, DeleteToppingModal } from "@/components/features/toppings";
+import { CreateToppingModal, ToppingDetailModal, EditToppingModal, DeleteToppingModal, DeleteManyToppingsModal } from "@/components/features/toppings";
+import { formatPrice } from "@/utils";
+
 
 export default function ToppingPage() {
     const { tableState, setTableState } = useTableState();
     const [data, setData] = useState<Topping[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
 
     const [openAddModal, setOpenAddModal] = useState(false);
     const [detailRecord, setDetailRecord] = useState<Topping | null>(null);
     const [editRecord, setEditRecord] = useState<Topping | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Topping | null>(null);
+    const [openDeleteManyModal, setOpenDeleteManyModal] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -40,9 +44,24 @@ export default function ToppingPage() {
         fetchData();
     }, [tableState]);
 
+    const handleDeleteMany = () => {
+        setOpenDeleteManyModal(true);
+    };
+
+    const handleDeleteSuccess = (isDeleteMany: boolean, newPage?: number) => {
+        if (newPage && newPage !== tableState.currentPage) {
+            setTableState({ ...tableState, currentPage: newPage });
+        } else {
+            fetchData();
+        }
+        isDeleteMany ? setSelectedRowKeys([]) : setDeleteRecord(null);
+    };
+
     return (
         <>
             <h1>Topping Management</h1>
+
+
 
             <TableToolbar
                 search={tableState.search}
@@ -50,7 +69,9 @@ export default function ToppingPage() {
                     setTableState({ ...tableState, search: value })
                 }
                 onAdd={() => setOpenAddModal(true)}
-                addLabel="Add Topping"
+                addLabel="Add"
+                onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
+                deleteManyLabel="Delete"
             />
 
             <DataTable<Topping>
@@ -62,13 +83,18 @@ export default function ToppingPage() {
                 columns={[
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
-                    { title: "Price", dataIndex: "price", sorter: true },
-                    { title: "Image Name", dataIndex: "image_name", sorter: true },
-                    { title: "Sort Index", dataIndex: "sort_index", sorter: true },
+                    {
+                        title: "Price",
+                        dataIndex: "price",
+                        sorter: true,
+                        render: (value: number) => formatPrice(value, { includeSymbol: true }),
+                    },
                 ]}
                 onDetail={(record) => setDetailRecord(record)}
                 onEdit={(record) => setEditRecord(record)}
                 onDelete={(record) => setDeleteRecord(record)}
+                onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
+                enableRowSelection={true}
             />
 
             <CreateToppingModal
@@ -94,7 +120,19 @@ export default function ToppingPage() {
                 open={!!deleteRecord}
                 record={deleteRecord}
                 onClose={() => setDeleteRecord(null)}
-                onSuccess={fetchData}
+                onSuccess={handleDeleteSuccess}
+                totalItems={total}
+
+                tableState={tableState}
+            />
+
+            <DeleteManyToppingsModal
+                open={openDeleteManyModal}
+                selectedRowKeys={selectedRowKeys}
+                onClose={() => setOpenDeleteManyModal(false)}
+                onSuccess={handleDeleteSuccess}
+                totalItems={total}
+                tableState={tableState}
             />
         </>
     );

@@ -7,9 +7,14 @@ export class SizesService {
     constructor(private prisma: PrismaService) { }
 
     async create(createSizeDto: CreateSizeDto) {
-        const { name, sort_index } = createSizeDto;
+        const lastTopping = await this.prisma.size.findFirst({
+            orderBy: { sort_index: 'desc' },
+            select: { sort_index: true },
+        });
+
+        const nextSortIndex = lastTopping ? lastTopping.sort_index + 1 : 1;
         return this.prisma.size.create({
-            data: { name, sort_index },
+            data: { ...createSizeDto, sort_index: nextSortIndex },
         });
     }
 
@@ -84,5 +89,22 @@ export class SizesService {
         return this.prisma.size.delete({
             where: { id },
         });
+    }
+
+    async removeMany(ids: number[]) {
+
+
+        const deleted = await this.prisma.size.deleteMany({
+            where: {
+                id: {
+                    in: ids,
+                },
+            },
+        });
+
+        return {
+            message: `Successfully deleted ${deleted.count} sizes`,
+            count: deleted.count,
+        };
     }
 }

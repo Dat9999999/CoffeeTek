@@ -26,4 +26,9 @@ export const toppingService = {
         const res = await api.delete(`/toppings/${id}`);
         return res.data;
     },
+
+    async deleteMany(ids: number[]) {
+        const res = await api.delete("/toppings", { data: { ids } });
+        return res.data;
+    },
 }

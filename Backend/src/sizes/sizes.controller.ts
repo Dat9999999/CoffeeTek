@@ -31,4 +31,9 @@ export class SizesController {
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.sizesService.remove(id);
     }
+
+    @Delete()
+    removeMany(@Body() body: { ids: number[] }) {
+        return this.sizesService.removeMany(body.ids);
+    }
 }

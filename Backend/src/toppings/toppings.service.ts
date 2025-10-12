@@ -9,9 +9,22 @@ import { Prisma } from '@prisma/client';
 export class ToppingsService {
     constructor(private prisma: PrismaService) { }
 
-    create(dto: CreateToppingDto) {
-        return this.prisma.topping.create({ data: dto });
+    async create(dto: CreateToppingDto) {
+        const lastTopping = await this.prisma.topping.findFirst({
+            orderBy: { sort_index: 'desc' },
+            select: { sort_index: true },
+        });
+
+        const nextSortIndex = lastTopping ? lastTopping.sort_index + 1 : 1;
+
+        return this.prisma.topping.create({
+            data: {
+                ...dto,
+                sort_index: nextSortIndex,
+            },
+        });
     }
+
 
     async findAll(query: GetAllToppingsDto) {
         const { page, size, search, orderBy = 'id', orderDirection = 'asc' } = query;
@@ -66,4 +79,29 @@ export class ToppingsService {
             where: { id },
         });
     }
+
+    async removeMany(ids: number[]) {
+        await this.prisma.productTopping.deleteMany({
+            where: {
+                topping_id: {
+                    in: ids,
+                },
+            },
+        });
+
+        const deleted = await this.prisma.topping.deleteMany({
+            where: {
+                id: {
+                    in: ids,
+                },
+            },
+        });
+
+        return {
+            message: `Successfully deleted ${deleted.count} toppings`,
+            count: deleted.count,
+        };
+    }
+
+
 }

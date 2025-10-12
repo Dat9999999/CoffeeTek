@@ -32,4 +32,9 @@ export class ToppingsController {
     remove(@Param('id') id: string) {
         return this.toppingsService.remove(+id);
     }
+
+    @Delete()
+    removeMany(@Body() body: { ids: number[] }) {
+        return this.toppingsService.removeMany(body.ids);
+    }
 }

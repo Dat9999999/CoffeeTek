@@ -1,18 +1,14 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
 import { OptionValuesService } from './option-values.service';
-import { PaginationDto } from './dto/option-value.dto';
+import { PaginationDto, CreateOptionValueDto, UpdateOptionValueDto } from './dto/option-value.dto';
 
 @Controller('option-values')
 export class OptionValuesController {
     constructor(private readonly optionValuesService: OptionValuesService) { }
 
     @Post()
-    create(
-        @Body('name') name: string,
-        @Body('sort_index') sort_index: number,
-        @Body('option_group_id') option_group_id: number,
-    ) {
-        return this.optionValuesService.create(name, sort_index, option_group_id);
+    create(@Body() createDto: CreateOptionValueDto) {
+        return this.optionValuesService.create(createDto.name, createDto.option_group_id, createDto.sort_index);
     }
 
     @Get()
@@ -26,13 +22,8 @@ export class OptionValuesController {
     }
 
     @Put(':id')
-    update(
-        @Param('id') id: string,
-        @Body('name') name: string,
-        @Body('sort_index') sort_index: number,
-        @Body('option_group_id') option_group_id: number,
-    ) {
-        return this.optionValuesService.update(+id, name, sort_index, option_group_id);
+    update(@Param('id') id: string, @Body() updateDto: UpdateOptionValueDto) {
+        return this.optionValuesService.update(+id, updateDto.name, updateDto.option_group_id, updateDto.sort_index);
     }
 
     @Delete(':id')

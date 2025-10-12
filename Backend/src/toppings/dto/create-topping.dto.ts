@@ -11,6 +11,4 @@ export class CreateToppingDto {
     @IsString()
     image_name?: string;
 
-    @IsNumber()
-    sort_index: number;
 }

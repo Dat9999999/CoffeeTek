@@ -18,7 +18,8 @@ interface DataTableProps<T> {
     onDetail?: (record: T) => void;
     onEdit?: (record: T) => void;
     onDelete?: (record: T) => void;
-    onCreate?: () => void;
+    onRowSelectionChange?: (selectedRowKeys: number[]) => void;
+    enableRowSelection?: boolean; // Thêm prop mới để bật/tắt rowSelection
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -31,6 +32,8 @@ export function DataTable<T extends { id: number | string }>({
     onDetail,
     onEdit,
     onDelete,
+    onRowSelectionChange,
+    enableRowSelection = false, // Mặc định tắt rowSelection
 }: DataTableProps<T>) {
     const handleChange = (
         newPagination: TablePaginationConfig,
@@ -57,41 +60,48 @@ export function DataTable<T extends { id: number | string }>({
     };
 
     return (
-        <>
-
-            <Table<T>
-                rowKey="id"
-                columns={[
-                    ...columns,
-                    {
-                        title: "Actions",
-                        key: "actions",
-                        width: 40,
-                        fixed: "right",
-                        align: "center",
-                        render: (_, record) => (
-                            <TableActions
-                                record={record}
-                                onDetail={onDetail}
-                                onEdit={onEdit}
-                                onDelete={onDelete}
-                            />
-                        ),
-                    },
-                ]}
-                dataSource={data}
-                loading={loading}
-                pagination={{
-                    current: tableState.currentPage,
-                    pageSize: tableState.pageSize,
-                    total: total,
-                    showTotal: (t, r) => `${r[0]}-${r[1]} of ${t}`,
-                    showSizeChanger: true,
-                    pageSizeOptions: ["10", "15", "20"],
-                }}
-                onChange={handleChange}
-                scroll={data && data.length > 0 ? { x: "max-content" } : undefined}
-            />
-        </>
+        <Table<T>
+            rowKey="id"
+            rowSelection={
+                enableRowSelection
+                    ? {
+                        type: "checkbox",
+                        onChange: (selectedRowKeys) => {
+                            onRowSelectionChange?.(selectedRowKeys as number[]);
+                        },
+                    }
+                    : undefined
+            }
+            columns={[
+                ...columns,
+                {
+                    title: "Actions",
+                    key: "actions",
+                    width: 40,
+                    fixed: "right",
+                    align: "center",
+                    render: (_, record) => (
+                        <TableActions
+                            record={record}
+                            onDetail={onDetail}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                        />
+                    ),
+                },
+            ]}
+            dataSource={data}
+            loading={loading}
+            pagination={{
+                current: tableState.currentPage,
+                pageSize: tableState.pageSize,
+                total: total,
+                showTotal: (t, r) => `${r[0]}-${r[1]} of ${t}`,
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "15", "20"],
+            }}
+            onChange={handleChange}
+            scroll={data && data.length > 0 ? { x: "max-content" } : undefined}
+        />
     );
 }

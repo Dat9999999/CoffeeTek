@@ -13,7 +13,29 @@ import { CategoriesModule } from './categories/categories.module';
 import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
 import { UploadModule } from './upload/upload.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, PrismaModule, OrderModule, MailModule, RedisModule, OptionGroupsModule, OptionValuesModule, SizesModule, CategoriesModule, ToppingsModule, ProductsModule, UploadModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    AuthModule,
+    UserModule,
+    PrismaModule,
+    OrderModule,
+    MailModule,
+    RedisModule,
+    OptionGroupsModule,
+    OptionValuesModule,
+    SizesModule,
+    CategoriesModule,
+    ToppingsModule,
+    ProductsModule,
+    UploadModule,
+  ],
 })
 export class AppModule { }

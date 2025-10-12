@@ -1,5 +1,10 @@
-import { IsString, IsInt, MinLength, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsString, IsInt, MinLength, IsNotEmpty, IsOptional, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export enum OrderDirection {
+    ASC = 'asc',
+    DESC = 'desc',
+}
 
 export class CreateOptionValueDto {
     @IsString()
@@ -8,26 +13,27 @@ export class CreateOptionValueDto {
     name: string;
 
     @IsInt()
-    sort_index: number;
-
-    @IsInt()
-    option_group_id: number;
-}
-
-export class UpdateOptionValueDto {
-    @IsString()
     @IsNotEmpty()
-    @MinLength(1)
-    @IsOptional()
-    name?: string;
+    option_group_id: number;
 
     @IsInt()
     @IsOptional()
     sort_index?: number;
+}
+
+export class UpdateOptionValueDto {
+    @IsString()
+    @IsOptional()
+    @MinLength(1)
+    name?: string;
 
     @IsInt()
     @IsOptional()
     option_group_id?: number;
+
+    @IsInt()
+    @IsOptional()
+    sort_index?: number;
 }
 
 export class PaginationDto {
@@ -39,5 +45,17 @@ export class PaginationDto {
     @IsInt()
     @Min(1)
     @Type(() => Number)
-    limit: number = 10;
+    size: number = 10;
+
+    @IsOptional()
+    @IsString()
+    search?: string;
+
+    @IsOptional()
+    @IsString()
+    orderBy?: string = 'id';
+
+    @IsEnum(OrderDirection)
+    @IsOptional()
+    orderDirection?: OrderDirection = OrderDirection.ASC;
 }

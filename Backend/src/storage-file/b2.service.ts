@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 
@@ -28,6 +28,7 @@ export class B2Service {
             ContentType: contentType || 'application/octet-stream'
         })
         await this.s3.send(command);
+        Logger.log(`upload file to bucket, url file = ${process.env.B2_PUBLIC_URL}/${key}`);
         return `${key}`;
     }
 }

@@ -4,11 +4,13 @@ import { GetUser } from '../auth/decorator';
 import * as client from '@prisma/client';
 import { UserService } from './user.service';
 import { ChangeSensitiveInfoDTO, UserUpdateDTO } from './dto';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetAllDto } from 'src/common/dto/pagination.dto';
 import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
+import { v4 as uuid } from 'uuid';
+import { B2Service } from 'src/storage-file/b2.service';
 
 @Controller('user')
 
@@ -16,21 +18,14 @@ import { RolesGuard } from 'src/auth/strategy/role.strategy';
 @UseGuards(AuthGuard('jwt'))
 
 export class UserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService, private readonly b2Service: B2Service) { }
     @Get('me')
     getUsers(@GetUser() user: client.User) {
         return user;
     }
     @Patch('update/:id')
     @UseInterceptors(FileInterceptor('avatar', {
-        storage: diskStorage({
-            destination: './uploads',
-            filename: (req, file, cb) => {
-                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                const extension = file.originalname.split('.').pop();
-                cb(null, `${file.fieldname}-${uniqueSuffix}.${extension}`);
-            },
-        }),
+        storage: memoryStorage(),
         fileFilter: (req, file, cb) => {
             if (!file.mimetype.startsWith('image/')) cb(new Error("only img"), false)
             else cb(null, true);
@@ -40,7 +35,9 @@ export class UserController {
     async updateInfo(@Param('id', ParseIntPipe) id: number,
         @UploadedFile() avatar: Express.Multer.File,
         @Body() updateDto: UserUpdateDTO): Promise<string> {
-        return await this.userService.updateInfo(id, updateDto, avatar?.filename);
+        const key = `${uuid()}_${avatar.originalname}`
+        const url_avt = await this.b2Service.uploadFile(key, avatar.buffer, avatar.mimetype);
+        return await this.userService.updateInfo(id, updateDto, url_avt);
     }
 
 
@@ -71,3 +68,5 @@ export class UserController {
         return await this.userService.changeSensitiveInfo(id, body);
     }
 }
+
+

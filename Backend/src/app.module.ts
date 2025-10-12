@@ -17,6 +17,7 @@ import { VnpayModule } from 'nestjs-vnpay';
 import { ignoreLogger } from 'vnpay';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { B2Service } from './b2/b2.service';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
   ServeStaticModule.forRoot({
@@ -26,5 +27,6 @@ import { join } from 'path';
     AuthModule, UserModule, PrismaModule, OrderModule,
     MailModule, RedisModule, OptionGroupsModule, OptionValuesModule,
     SizesModule, CategoriesModule, ToppingsModule, ProductsModule, UploadModule],
+  providers: [B2Service],
 })
 export class AppModule { }

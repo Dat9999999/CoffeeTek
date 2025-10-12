@@ -4,7 +4,7 @@ import { GetUser } from '../auth/decorator';
 import * as client from '@prisma/client';
 import { UserService } from './user.service';
 import { ChangeSensitiveInfoDTO, UserUpdateDTO } from './dto';
-import { diskStorage, memoryStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetAllDto } from 'src/common/dto/pagination.dto';
 import { Role } from 'src/auth/decorator/role.decorator';

@@ -1,11 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ModeToggle } from "@/components/commons/mode-toggle";
-
-
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import Banner from "@/components/sections/Banner";
 import Explore from "@/components/sections/Explore";
@@ -14,12 +10,31 @@ import SellingCoffee from "@/components/sections/SellingCoffee";
 import InstantCoffee from "@/components/sections/InstantCoffee";
 import Testimonial from "@/components/sections/Testimonial";
 
-
 export default function Home() {
-  const [dark, setDark] = useState(false);
+  const searchParams = useSearchParams();
+  const loginSuccess = searchParams.get("login");
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    if (loginSuccess === "success") {
+      setShowBanner(true);
+
+      const timer = setTimeout(() => {
+        setShowBanner(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess]);
 
   return (
-    <div>
+    <div className="relative">
+      {showBanner && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeIn z-50">
+          You have successfully logged in
+        </div>
+      )}
+
       <Banner />
       <Explore />
       <OrderCoffee />

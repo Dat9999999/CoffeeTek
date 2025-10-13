@@ -199,9 +199,10 @@ model Order {
 }
 
 model OrderDetail {
-  id         Int   @id @default(autoincrement())
-  quantity   Int
-  unit_price Float
+  id           Int     @id @default(autoincrement())
+  quantity     Int
+  unit_price   Float
+  product_name String?
 
   order_id Int
   order    Order @relation(fields: [order_id], references: [id], onDelete: Cascade)

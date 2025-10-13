@@ -96,6 +96,7 @@ export class OrderService {
         staffId: parseInt(createOrderDto.staffId),
         order_details: {
           create: order_details.map(item => ({
+            product_name: item.product?.name,
             quantity: parseInt(item.quantity),
             unit_price: item.product?.price || 0,
 

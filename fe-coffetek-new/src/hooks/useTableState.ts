@@ -48,30 +48,54 @@ export function useTableState(initial?: Partial<TableState>) {
     const [tableState, setTableState] = useState<TableState>(parsedState);
 
     // Khi tableState thay đổi => cập nhật URL
+    // useEffect(() => {
+    //     const params = new URLSearchParams();
+    //     // Các field cơ bản
+    //     params.set("page", String(tableState.currentPage));
+    //     params.set("pageSize", String(tableState.pageSize));
+    //     if (tableState.orderBy) params.set("orderBy", tableState.orderBy);
+    //     if (tableState.orderDirection)
+    //         params.set("orderDirection", tableState.orderDirection);
+    //     if (tableState.search) params.set("search", tableState.search);
+    //     // Các field bổ sung (vd: filterType)
+    //     Object.keys(tableState).forEach((key) => {
+    //         if (
+    //             !["currentPage", "pageSize", "orderBy", "orderDirection", "search"].includes(
+    //                 key
+    //             )
+    //         ) {
+    //             const value = tableState[key];
+    //             if (value !== undefined && value !== null && value !== "")
+    //                 params.set(key, String(value));
+    //         }
+    //     });
+    //     // Cập nhật URL mà không reload trang
+    //     router.replace(`${pathname}?${params.toString()}`);
+    // }, [tableState]);
+
     useEffect(() => {
         const params = new URLSearchParams();
-        // Các field cơ bản
         params.set("page", String(tableState.currentPage));
         params.set("pageSize", String(tableState.pageSize));
         if (tableState.orderBy) params.set("orderBy", tableState.orderBy);
         if (tableState.orderDirection)
             params.set("orderDirection", tableState.orderDirection);
         if (tableState.search) params.set("search", tableState.search);
-        // Các field bổ sung (vd: filterType)
+
         Object.keys(tableState).forEach((key) => {
-            if (
-                !["currentPage", "pageSize", "orderBy", "orderDirection", "search"].includes(
-                    key
-                )
-            ) {
+            if (!["currentPage", "pageSize", "orderBy", "orderDirection", "search"].includes(key)) {
                 const value = tableState[key];
                 if (value !== undefined && value !== null && value !== "")
                     params.set(key, String(value));
             }
         });
-        // Cập nhật URL mà không reload trang
-        router.replace(`${pathname}?${params.toString()}`);
-    }, [tableState]);
+
+        const newUrl = `${pathname}?${params.toString()}`;
+        if (newUrl !== `${pathname}?${searchParams.toString()}`) {
+            router.replace(newUrl);
+        }
+    }, [tableState, pathname, router]);
+
 
     return { tableState, setTableState };
 }

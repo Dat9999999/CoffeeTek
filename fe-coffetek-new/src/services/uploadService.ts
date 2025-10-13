@@ -9,7 +9,7 @@ export const uploadImages = async (files: File[]): Promise<string[]> => {
 
     try {
         const res = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/upload/images`,
+            `${process.env.NEXT_PUBLIC_API_URL}/upload/images`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' } }
         );

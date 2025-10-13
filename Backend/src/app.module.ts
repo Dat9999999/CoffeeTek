@@ -15,6 +15,7 @@ import { ProductsModule } from './product/product.module';
 import { UploadModule } from './upload-file/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { InvoiceModule } from './invoice/invoice.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { join } from 'path';
     ToppingsModule,
     ProductsModule,
     UploadModule,
+    InvoiceModule,
   ],
 })
 export class AppModule { }

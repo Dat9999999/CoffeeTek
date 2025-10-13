@@ -64,6 +64,10 @@ export class OrderController {
   updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {
     return this.orderService.updateItems(+id, updateItemsDto)
   }
+  // @Get('invoice')
+  // printInvoice() {
+
+  // }
 
 
 

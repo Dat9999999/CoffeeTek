@@ -11,11 +11,14 @@ import { VnpayService } from 'nestjs-vnpay';
 import { dateFormat, InpOrderAlreadyConfirmed, IpnFailChecksum, IpnInvalidAmount, IpnOrderNotFound, IpnSuccess, IpnUnknownError, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
 import { json } from 'express';
 import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
+import { InvoiceService } from 'src/invoice/invoice.service';
 
 @Injectable()
 export class OrderService {
 
-  constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService) { }
+  constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService,
+    private readonly invoiceService: InvoiceService
+  ) { }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
       where: {
@@ -222,15 +225,7 @@ export class OrderService {
     //create payment detail
     const paymentDetail = await this.createPaymentDetail(PaymentMethod.CASH, order.id, paymentDTO.amount, order.final_price);
 
-    return await this.prisma.order.update({
-      where: {
-        id: paymentDTO.orderId
-      },
-      data: {
-        status: OrderStatus.PAID,
-        paymentDetailId: paymentDetail.id
-      }
-    })
+    return this.updateStatus({ orderId: paymentDTO.orderId, status: OrderStatus.PAID }, paymentDetail.id);
   }
   async updateStatus(dto: UpdateOrderStatusDTO, paymentDetailId?: number) {
     const order = await this.prisma.order.update({
@@ -242,6 +237,11 @@ export class OrderService {
         paymentDetailId: paymentDetailId
       }
     })
+
+    //create invoice when user paid sucessfully
+    if (dto.status == OrderStatus.PAID) {
+      this.invoiceService.createInvoice(order)
+    }
     return order;
   }
   async updateItems(id: number, updateItemsDto: UpdateOrderDto) {

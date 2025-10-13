@@ -193,6 +193,7 @@ model Order {
   Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  invoiceFilePath String?
 
   @@map("orders")
 }

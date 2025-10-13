@@ -8,19 +8,22 @@ const PDFDocument = require('pdfkit'); // ✅ Use proper default import with nod
 export class InvoiceService {
   async createInvoice(order: Order, items?: OrderDetail[]) {
     const now = new Date();
+
+    //server bucket
     const dirPath = path.join(
       process.cwd(),
       'invoices',
       `${now.getFullYear()}`,
       `${now.getMonth() + 1}`,
     );
-
-    //get all product items 
-    const products =
-      fs.mkdirSync(dirPath, { recursive: true });
+    fs.mkdirSync(dirPath, { recursive: true });
 
     const fileName = `invoice-${order.id}.pdf`;
     const filePath = path.join(dirPath, fileName);
+    const invoice = {
+      order,
+      items: items ?? []
+    }
 
     // ✅ Create PDF Document
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -30,8 +33,8 @@ export class InvoiceService {
     Logger.log(`🧾 Creating invoice at: ${filePath}`);
 
     generateHeader(doc);
-    generateCustomerInformation(doc, order);
-    generateInvoiceTable(doc, order);
+    generateCustomerInformation(doc, invoice);
+    generateInvoiceTable(doc, invoice);
     generateFooter(doc);
 
     // ✅ End writing
@@ -53,7 +56,9 @@ export class InvoiceService {
 ============================ */
 
 function generateHeader(doc: any) {
+  const logoPath = path.join(process.cwd(), 'public', 'img', 'logo.jpg');
   doc
+    .image(logoPath, 50, 45, { width: 50 })
     .fillColor('#444444')
     .fontSize(20)
     .text('CoffeeTek', 110, 57)
@@ -64,7 +69,7 @@ function generateHeader(doc: any) {
     .moveDown();
 }
 
-function generateCustomerInformation(doc: any, invoice: Order) {
+function generateCustomerInformation(doc: any, invoice: { order: Order, items: OrderDetail[] }) {
   doc.fillColor('#444444').fontSize(20).text('Invoice', 50, 160);
   generateHr(doc, 185);
 
@@ -72,7 +77,7 @@ function generateCustomerInformation(doc: any, invoice: Order) {
   doc.fontSize(10)
     .text('Invoice Number:', 50, customerInformationTop)
     .font('Helvetica-Bold')
-    .text(invoice.id.toString(), 150, customerInformationTop)
+    .text(invoice.order.id.toString(), 150, customerInformationTop)
     .font('Helvetica')
     .text('Invoice Date:', 50, customerInformationTop + 15)
     .text(formatDate(new Date()), 150, customerInformationTop + 15);
@@ -80,7 +85,7 @@ function generateCustomerInformation(doc: any, invoice: Order) {
   generateHr(doc, 252);
 }
 
-function generateInvoiceTable(doc: any, invoice: any) {
+function generateInvoiceTable(doc: any, invoice: { order: Order, items: OrderDetail[] }) {
   const invoiceTableTop = 330;
   doc.font('Helvetica-Bold');
   generateTableRow(doc, invoiceTableTop, 'Item', 'Qty', 'Price', 'Total');
@@ -93,10 +98,10 @@ function generateInvoiceTable(doc: any, invoice: any) {
     generateTableRow(
       doc,
       position,
-      item.name,
+      item.product_name ?? '',
       item.quantity.toString(),
-      formatCurrency(item.price),
-      formatCurrency(item.price * item.quantity),
+      formatCurrency(item.unit_price),
+      formatCurrency(item.unit_price * item.quantity),
     );
     generateHr(doc, position + 20);
     i++;

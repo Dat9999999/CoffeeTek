@@ -241,7 +241,12 @@ export class OrderService {
 
     //create invoice when user paid sucessfully
     if (dto.status == OrderStatus.PAID) {
-      this.invoiceService.createInvoice(order)
+      const items = await this.prisma.orderDetail.findMany({
+        where: {
+          order_id: order.id
+        }
+      })
+      this.invoiceService.createInvoice(order, items)
     }
     return order;
   }

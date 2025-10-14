@@ -5,10 +5,10 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 @Injectable()
 export class B2Service {
     private s3: S3Client;
-    private bucket: string;
+    private defaultBucket: string;
     private endpoint: string;
     constructor() {
-        this.bucket = process.env.B2_BUCKET ?? 'Your bucket name';
+        this.defaultBucket = process.env.B2_DEFAULT_BUCKET ?? '';
         this.endpoint = process.env.B2_ENDPOINT ?? 'Your endpoint';
         this.s3 = new S3Client({
             region: process.env.B2_REGION,
@@ -20,15 +20,16 @@ export class B2Service {
         })
     }
 
-    async uploadFile(key: string, fileBuffer: Buffer, contentType?: string) {
+    async uploadFile(key: string, fileBuffer: Buffer, contentType?: string, bucketName?: string) {
+        const targetBucket = bucketName || this.defaultBucket;
         const command = new PutObjectCommand({
-            Bucket: this.bucket,
+            Bucket: targetBucket,
             Key: key,
             Body: fileBuffer,
             ContentType: contentType || 'application/octet-stream'
         })
         await this.s3.send(command);
-        Logger.log(`upload file to bucket, url file = ${process.env.B2_PUBLIC_URL}/${key}`);
+        Logger.log(`upload file to bucket = ${targetBucket} with name = ${key}`);
         return `${key}`;
     }
 }

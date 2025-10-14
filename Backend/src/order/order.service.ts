@@ -252,6 +252,16 @@ export class OrderService {
 
       // store this pdf to private bucket
       await this.b2Service.uploadFile(key, pdfBuffer, 'application/pdf', process.env.B2_PRIVATE_BUCKET);
+
+      // store invoice url into db 
+      await this.prisma.order.update({
+        where: {
+          id: dto.orderId
+        },
+        data: {
+          invoiceUrl: key
+        }
+      })
     }
     return order;
   }

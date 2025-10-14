@@ -24,7 +24,7 @@ export default function ForgotPasswordForm() {
     setSuccess("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_ENDPOINT_API}/auth/forget-password`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/forget-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -59,7 +59,7 @@ export default function ForgotPasswordForm() {
     setSuccess("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_ENDPOINT_API}/auth/reset-password`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -88,8 +88,8 @@ export default function ForgotPasswordForm() {
         step === 1
           ? "Nhập email của bạn để nhận mã OTP đặt lại mật khẩu."
           : step === 2
-          ? "Nhập mã OTP đã được gửi tới email của bạn."
-          : "Nhập mật khẩu mới để hoàn tất đặt lại."
+            ? "Nhập mã OTP đã được gửi tới email của bạn."
+            : "Nhập mật khẩu mới để hoàn tất đặt lại."
       }
     >
       <form
@@ -150,8 +150,8 @@ export default function ForgotPasswordForm() {
           {step === 1
             ? "Gửi OTP"
             : step === 2
-            ? "Xác nhận OTP"
-            : "Đặt lại mật khẩu"}
+              ? "Xác nhận OTP"
+              : "Đặt lại mật khẩu"}
         </FormButton>
       </form>
     </FormContainer>

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntConfigProvider, DarkModeProvider } from '@/components/providers';
 import { AdminShell } from '@/components/layouts';
+import { SuspenseWrapper } from '@/components/commons';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <DarkModeProvider>
         <AntConfigProvider>
 
-          <AdminShell>{children}</AdminShell>
+          <AdminShell>
+            <SuspenseWrapper>
+              {children}
+            </SuspenseWrapper>
+          </AdminShell>
 
         </AntConfigProvider>
       </DarkModeProvider>

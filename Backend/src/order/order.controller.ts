@@ -65,8 +65,8 @@ export class OrderController {
     return this.orderService.updateItems(+id, updateItemsDto)
   }
   @Get('invoice/:orderId')
-  downloadInvoice(@Param('orderId') orderId: string) {
-    return this.orderService.downloadInvoice(+orderId);
+  getInvoice(@Param('orderId') orderId: string) {
+    return this.orderService.getInvoice(+orderId);
   }
 
 

@@ -22,7 +22,7 @@ export class OrderService {
     private readonly invoiceService: InvoiceService,
     private readonly b2Service: B2Service
   ) { }
-  async downloadInvoice(orderId: number) {
+  async getInvoice(orderId: number) {
     const order = await this.prisma.order.findUnique({
       where: {
         id: orderId
@@ -30,7 +30,9 @@ export class OrderService {
     })
     if (!order) throw new NotFoundException(`Not found invoice of order ${orderId}`)
     if (!order.invoiceUrl) throw new BadRequestException(`order ${orderId} stills pending or canceled`)
-    return 'download invoice'
+    const key = order.invoiceUrl;
+
+    return this.b2Service.getSignedUrl(key)
 
   }
   async create(createOrderDto: CreateOrderDto) {

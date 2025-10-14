@@ -8,9 +8,11 @@ export class B2Service {
     private s3: S3Client;
     private defaultBucket: string;
     private endpoint: string;
+    private privateBucket: string
     constructor() {
         this.defaultBucket = process.env.B2_DEFAULT_BUCKET ?? '';
         this.endpoint = process.env.B2_ENDPOINT ?? 'Your endpoint';
+        this.privateBucket = process.env.B2_PRIVATE_BUCKET ?? '';
         this.s3 = new S3Client({
             region: process.env.B2_REGION,
             endpoint: this.endpoint,
@@ -33,10 +35,11 @@ export class B2Service {
         Logger.log(`upload file to bucket = ${targetBucket} with name = ${key}`);
         return `${key}`;
     }
+
     async getSignedUrl(key: string, expiresInSeconds = 60 * 5, bucketName?: string) {
         const command = new GetObjectCommand(
             {
-                Bucket: bucketName ?? this.defaultBucket,
+                Bucket: bucketName ?? this.privateBucket,
                 Key: key
             }
         )

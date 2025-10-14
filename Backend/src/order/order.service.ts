@@ -17,10 +17,22 @@ import { B2Service } from 'src/storage-file/b2.service';
 @Injectable()
 export class OrderService {
 
+
   constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService,
     private readonly invoiceService: InvoiceService,
     private readonly b2Service: B2Service
   ) { }
+  async downloadInvoice(orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        id: orderId
+      }
+    })
+    if (!order) throw new NotFoundException(`Not found invoice of order ${orderId}`)
+    if (!order.invoiceUrl) throw new BadRequestException(`order ${orderId} stills pending or canceled`)
+    return 'download invoice'
+
+  }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
       where: {

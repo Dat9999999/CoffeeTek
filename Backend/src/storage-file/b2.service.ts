@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 
 @Injectable()
@@ -31,5 +32,16 @@ export class B2Service {
         await this.s3.send(command);
         Logger.log(`upload file to bucket = ${targetBucket} with name = ${key}`);
         return `${key}`;
+    }
+    async getSignedUrl(key: string, expiresInSeconds = 60 * 5, bucketName?: string) {
+        const command = new GetObjectCommand(
+            {
+                Bucket: bucketName ?? this.defaultBucket,
+                Key: key
+            }
+        )
+        const signedUrl = await awsGetSignedUrl(this.s3, command, { expiresIn: expiresInSeconds })
+        return signedUrl;
+
     }
 }

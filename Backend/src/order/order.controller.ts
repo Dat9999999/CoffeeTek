@@ -64,10 +64,10 @@ export class OrderController {
   updateOrderItems(@Param('id') id: string, @Body() updateItemsDto: UpdateOrderDto) {
     return this.orderService.updateItems(+id, updateItemsDto)
   }
-  // @Get('invoice')
-  // printInvoice() {
-
-  // }
+  @Get('invoice/:orderId')
+  downloadInvoice(@Param('orderId') orderId: string) {
+    return this.orderService.downloadInvoice(+orderId);
+  }
 
 
 

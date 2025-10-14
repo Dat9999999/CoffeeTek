@@ -4,6 +4,8 @@ import { OrderController } from './order.controller';
 import { VnpayModule } from 'nestjs-vnpay';
 import { ignoreLogger } from 'vnpay';
 import { InvoiceModule } from 'src/invoice/invoice.module';
+import { B2Service } from 'src/storage-file/b2.service';
+import { StorageFileModule } from 'src/storage-file/storage-file.module';
 
 @Module({
   imports: [
@@ -18,7 +20,8 @@ import { InvoiceModule } from 'src/invoice/invoice.module';
       enableLog: true,               // Bật/tắt ghi log
       loggerFn: ignoreLogger,        // Hàm xử lý log tùy chỉnh
     }),
-    InvoiceModule
+    InvoiceModule,
+    StorageFileModule
   ],
   controllers: [OrderController],
   providers: [OrderService],

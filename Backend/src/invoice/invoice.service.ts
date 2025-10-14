@@ -2,58 +2,52 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import { Order, OrderDetail } from '@prisma/client';
 import path from 'path';
+import { PassThrough } from 'stream';
 const PDFDocument = require('pdfkit'); // ✅ Use proper default import with nodenext
 
 @Injectable()
 export class InvoiceService {
   async createInvoice(order: Order, items?: OrderDetail[]) {
-    const now = new Date();
-
-    //server bucket
-    const dirPath = path.join(
-      process.cwd(),
-      'invoices',
-      `${now.getFullYear()}`,
-      `${now.getMonth() + 1}`,
-    );
-    fs.mkdirSync(dirPath, { recursive: true });
-
-    const fileName = `invoice-${order.id}.pdf`;
-    const filePath = path.join(dirPath, fileName);
     const invoice = {
       order,
-      items: items ?? []
-    }
+      items: items ?? [],
+    };
 
-    // ✅ Create PDF Document
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
+    // ✅ Generate PDF in memory
+    const pdfBuffer = await generatePdfBuffer(invoice);
 
-    Logger.log(`🧾 Creating invoice at: ${filePath}`);
+    // ✅ Upload directly to bucket
+    const key = `invoices/${new Date().getFullYear()}/${new Date().getMonth() + 1}/invoice-${order.id}.pdf`;
 
-    generateHeader(doc);
-    generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
-    generateFooter(doc);
-
-    // ✅ End writing
-    doc.end();
-
-    // Optional: Wait until finished writing before returning
-    return new Promise<void>((resolve, reject) => {
-      writeStream.on('finish', () => {
-        Logger.log(`✅ Invoice saved: ${filePath}`);
-        resolve();
-      });
-      writeStream.on('error', reject);
-    });
+    Logger.log(`✅ Invoice uploaded to bucket: ${key}`);
+    return { key, pdfBuffer };
   }
 }
 
 /* ============================
    PDF Helper Functions
 ============================ */
+function generatePdfBuffer(invoice: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const stream = new PassThrough();
+
+    const chunks: Buffer[] = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+
+    doc.pipe(stream);
+
+    // 📝 Generate the PDF content here (same as before)
+    generateHeader(doc);
+    generateCustomerInformation(doc, invoice);
+    generateInvoiceTable(doc, invoice);
+    generateFooter(doc);
+
+    doc.end();
+  });
+}
 
 function generateHeader(doc: any) {
   const logoPath = path.join(process.cwd(), 'public', 'img', 'logo.jpg');

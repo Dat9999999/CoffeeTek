@@ -12,12 +12,14 @@ import { dateFormat, InpOrderAlreadyConfirmed, IpnFailChecksum, IpnInvalidAmount
 import { json } from 'express';
 import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 import { InvoiceService } from 'src/invoice/invoice.service';
+import { B2Service } from 'src/storage-file/b2.service';
 
 @Injectable()
 export class OrderService {
 
   constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService,
-    private readonly invoiceService: InvoiceService
+    private readonly invoiceService: InvoiceService,
+    private readonly b2Service: B2Service
   ) { }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
@@ -246,7 +248,10 @@ export class OrderService {
           order_id: order.id
         }
       })
-      this.invoiceService.createInvoice(order, items)
+      const { key, pdfBuffer } = await this.invoiceService.createInvoice(order, items);
+
+      // store this pdf to private bucket
+      await this.b2Service.uploadFile(key, pdfBuffer, 'application/pdf', process.env.B2_PRIVATE_BUCKET);
     }
     return order;
   }

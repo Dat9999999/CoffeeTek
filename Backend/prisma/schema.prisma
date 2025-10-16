@@ -277,7 +277,7 @@ model UnitConversion {
   toUnit    Unit  @relation("ToUnit", fields: [to_unit], references: [id])
 
   @@unique([from_unit, to_unit])
-  @@map("unit_conversion")
+  @@map("unit_conversions")
 }
 
 model Recipe {

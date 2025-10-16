@@ -253,3 +253,13 @@ model PaymentDetail {
 
   @@map("payment_details")
 }
+
+
+model Unit{
+  id Int  @id @default(autoincrement())
+  name String 
+  code String
+  class String // weight or volume 
+
+  @@map("units")
+}

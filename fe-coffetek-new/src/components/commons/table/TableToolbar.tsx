@@ -1,6 +1,6 @@
 'use client';
 
-import { Input, Button, Space, Row, Col } from "antd";
+import { Input, Button, Space, Row, Col, theme } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, PlusSquareOutlined, PlusCircleTwoTone, PlusCircleOutlined, DeleteTwoTone } from "@ant-design/icons";
 
 interface TableToolbarProps {
@@ -22,6 +22,9 @@ export function TableToolbar({
     onDeleteMany,
     deleteManyLabel = "Delete Selected",
 }: TableToolbarProps) {
+
+    const { token } = theme.useToken();
+
     return (
         <Row justify="space-between" align="middle" style={{ marginBottom: 8 }} gutter={[8, 8]}>
             {/* Bên trái: search + filters */}
@@ -32,7 +35,11 @@ export function TableToolbar({
                             prefix={<SearchOutlined />}
                             placeholder="Search..."
                             value={search}
+
                             onChange={(e) => onSearchChange?.(e.target.value)}
+                            style={{
+                                marginRight: token.marginXS
+                            }}
                         />
                     )}
                     {filters}

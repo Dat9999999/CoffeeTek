@@ -3,7 +3,7 @@
 import { Modal, Descriptions, Image } from "antd";
 import type { Topping } from "@/interfaces";
 import { formatPrice } from "@/utils";
-import AppImage from "@/components/commons/AppImage";
+import { AppImageSize } from "@/components/commons/AppImageSize";
 
 interface ToppingDetailModalProps {
     open: boolean;
@@ -30,7 +30,7 @@ export function ToppingDetailModal({ open, onClose, record }: ToppingDetailModal
                     </Descriptions.Item>
                     <Descriptions.Item label="Image">
                         {record.image_name ? (
-                            <AppImage src={record.image_name} alt={record.name} />
+                            <AppImageSize src={record.image_name} alt={record.name} />
                         ) : (
                             "No image"
                         )}

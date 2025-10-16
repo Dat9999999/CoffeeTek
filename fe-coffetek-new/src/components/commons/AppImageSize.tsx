@@ -3,23 +3,29 @@
 import React, { useEffect, useState } from "react";
 import { Image, Skeleton, theme } from "antd";
 
-interface AppImageProps {
+interface AppImageSizeProps {
+    srcObj?: string | null;
     src?: string | null;
     alt?: string;
     preview?: boolean;
     style?: React.CSSProperties;
+    height?: number | string;
+    width?: number | string;
 }
 
-export const AppImage: React.FC<AppImageProps> = ({
+export const AppImageSize: React.FC<AppImageSizeProps> = ({
     src,
     alt,
+    srcObj,
     preview = true,
     style,
+    height = 200,
+    width = "100%",
 }) => {
     const { token } = theme.useToken();
     const [loaded, setLoaded] = useState(false);
     const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
-    const fullSrc = src ? `${baseUrl}/${src}` : undefined;
+    const fullSrc = src ? `${baseUrl}/${src}` : srcObj;
 
     useEffect(() => {
         if (!fullSrc) {
@@ -28,7 +34,6 @@ export const AppImage: React.FC<AppImageProps> = ({
         }
 
         const img = new window.Image();
-
         img.src = fullSrc;
         img.onload = () => setLoaded(true);
         img.onerror = () => setLoaded(true);
@@ -38,6 +43,8 @@ export const AppImage: React.FC<AppImageProps> = ({
         <div
             style={{
                 position: "relative",
+                width,
+                height,
                 background: token.colorFillTertiary,
                 borderRadius: token.borderRadiusLG,
                 overflow: "hidden",
@@ -72,10 +79,10 @@ export const AppImage: React.FC<AppImageProps> = ({
                 <Image
                     src={fullSrc}
                     alt={alt}
+                    height={height}
+                    width={width}
                     preview={preview}
                     style={{
-                        width: "100%",
-                        height: "100%",
                         objectFit: "contain",
                         borderRadius: token.borderRadiusLG,
                         opacity: loaded ? 1 : 0,

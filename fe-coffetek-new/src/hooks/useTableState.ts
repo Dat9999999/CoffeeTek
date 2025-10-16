@@ -80,10 +80,10 @@ export function useTableState(initial?: Partial<TableState>) {
         if (tableState.orderBy) params.set("orderBy", tableState.orderBy);
         if (tableState.orderDirection)
             params.set("orderDirection", tableState.orderDirection);
-        if (tableState.search) params.set("search", tableState.search);
+        // if (tableState.search) params.set("search", tableState.search);
 
         Object.keys(tableState).forEach((key) => {
-            if (!["currentPage", "pageSize", "orderBy", "orderDirection", "search"].includes(key)) {
+            if (!["currentPage", "pageSize", "orderBy", "orderDirection", "search", "searchName"].includes(key)) {
                 const value = tableState[key];
                 if (value !== undefined && value !== null && value !== "")
                     params.set(key, String(value));

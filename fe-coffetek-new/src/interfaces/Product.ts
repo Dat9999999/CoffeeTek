@@ -1,10 +1,14 @@
 import { Category } from "./Category";
+import { OptionGroup } from "./OptionGroup";
+import { Size } from "./Size";
+import { Topping } from "./Topping";
 
 export interface ProductSize {
     id: number;
     product_id: number;
     size_id: number;
     price: number;
+    size?: Size;
 }
 
 export interface ProductOptionValue {
@@ -39,6 +43,24 @@ export interface Product {
     sizes?: ProductSize[];
     optionValues?: ProductOptionValue[];
     toppings?: ProductTopping[];
+    images?: ProductImage[];
+    category?: Category | null;
+}
+
+
+export interface ProductDetail {
+    id: number;
+    name: string;
+    is_multi_size: boolean;
+    product_detail?: string | null;
+    price?: number | null;
+    category_id?: number | null;
+
+
+
+    sizes?: ProductSize[];
+    optionGroups?: OptionGroup[];
+    toppings?: Topping[];
     images?: ProductImage[];
     category?: Category | null;
 }

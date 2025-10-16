@@ -4,3 +4,5 @@ export * from "./Category";
 export * from "./OptionGroup";
 export * from "./OptionValue";
 export * from "./Product";
+export * from "./types";
+export * from "./User";

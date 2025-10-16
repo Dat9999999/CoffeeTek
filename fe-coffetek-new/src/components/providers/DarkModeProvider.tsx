@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, createContext, useContext } from "react";
+import React, { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 type Mode = "light" | "dark";
@@ -15,13 +15,23 @@ const DarkModeContext = createContext<DarkModeContextProps | undefined>(undefine
 export function DarkModeProvider({ children }: { children: ReactNode }) {
     const { theme, systemTheme, setTheme } = useTheme();
 
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+
     // Nếu theme = "system" thì lấy theo systemTheme
     const resolvedTheme = theme === "system" ? systemTheme : theme;
     const mode = (resolvedTheme === "dark" ? "dark" : "light") as Mode;
 
+
     const toggleMode = () => {
         setTheme(mode === "light" ? "dark" : "light");
     };
+
+    if (!mounted) return null;
 
     return (
         <DarkModeContext.Provider value={{ mode, toggleMode }}>

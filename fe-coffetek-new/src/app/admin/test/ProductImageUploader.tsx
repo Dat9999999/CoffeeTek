@@ -97,6 +97,7 @@ export const ProductImageUploader: React.FC<ProductImageUploaderProps> = ({
         onChange?.(filtered);
     };
 
+    console.log(">>> fileList:", fileList);
     return (
         <>
             <DndContext sensors={[sensor]} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -123,7 +124,6 @@ export const ProductImageUploader: React.FC<ProductImageUploaderProps> = ({
 
 
 
-
                             onChange={handleChange}
                             onPreview={handlePreview}
                             onRemove={handleRemove}
@@ -140,12 +140,15 @@ export const ProductImageUploader: React.FC<ProductImageUploaderProps> = ({
 
                         </Upload>
                     </div>
+
+
+
                     {error && (
                         <Text type="danger">{error}</Text>
                     )}
 
                 </SortableContext>
-            </DndContext>
+            </DndContext >
 
             {previewImage && (
                 <Image
@@ -157,10 +160,16 @@ export const ProductImageUploader: React.FC<ProductImageUploaderProps> = ({
                     }}
                     src={previewImage}
                 />
-            )}
+            )
+            }
+
+
+
         </>
     );
 };
+
+
 
 const getBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {

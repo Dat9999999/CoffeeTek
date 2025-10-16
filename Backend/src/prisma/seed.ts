@@ -243,6 +243,65 @@ async function main() {
     } else {
         Logger.warn('⚠️ Payment method already exist, skipping...');
     }
+    const units = [
+        { name: 'Gram', symbol: 'g', class: 'weight' },
+        { name: 'Kilogram', symbol: 'kg', class: 'weight' },
+        { name: 'Milliliter', symbol: 'ml', class: 'volume' },
+        { name: 'Liter', symbol: 'l', class: 'volume' },
+        { name: 'Piece', symbol: 'pc', class: 'count' },
+        { name: 'Pack', symbol: 'pack', class: 'count' },
+        { name: 'Box', symbol: 'box', class: 'count' },
+        { name: 'Bottle', symbol: 'btl', class: 'count' },
+    ];
+
+    for (const unit of units) {
+        await prisma.unit.upsert({
+            where: { symbol: unit.symbol },
+            update: {},
+            create: unit,
+        });
+    }
+
+    console.log('✅ Seeded Unit table');
+
+
+    const unitMap = await prisma.unit.findMany();
+    const getId = (symbol: string) => {
+        const u = unitMap.find((x) => x.symbol === symbol);
+        if (!u) throw new Error(`Unit with symbol ${symbol} not found`);
+        return u.id;
+    };
+
+    // --- 3️⃣ Seed UnitConversion table ---
+    const conversions = [
+        // weight
+        { from: 'kg', to: 'g', factor: 1000 },
+        { from: 'g', to: 'kg', factor: 0.001 },
+
+        // volume
+        { from: 'l', to: 'ml', factor: 1000 },
+        { from: 'ml', to: 'l', factor: 0.001 },
+
+    ];
+
+    for (const c of conversions) {
+        await prisma.unitConversion.upsert({
+            where: {
+                from_unit_to_unit: {
+                    from_unit: getId(c.from),
+                    to_unit: getId(c.to),
+                },
+            },
+            update: {},
+            create: {
+                from_unit: getId(c.from),
+                to_unit: getId(c.to),
+                factor: c.factor,
+            },
+        });
+    }
+
+    console.log('✅ Seeded UnitConversion table');
 }
 
 main()

@@ -125,6 +125,7 @@ model Product {
   toppings     ProductTopping[] // 1 product có nhiều topping
   images       ProductImage[]
   orderDetails OrderDetail[]
+  Recipe       Recipe[]             @relation("RecipeProduct")
 
   @@map("products")
 }
@@ -254,12 +255,45 @@ model PaymentDetail {
   @@map("payment_details")
 }
 
+model Unit {
+  id     Int    @id @default(autoincrement())
+  name   String
+  symbol String @unique
+  class  String // weight or volume or count
 
-model Unit{
-  id Int  @id @default(autoincrement())
-  name String 
-  code String
-  class String // weight or volume 
+  fromConversions UnitConversion[] @relation("FromUnit")
+  toConversions   UnitConversion[] @relation("ToUnit")
+  Material        Material[]
 
   @@map("units")
+}
+
+model UnitConversion {
+  id        Int   @id @default(autoincrement())
+  from_unit Int
+  to_unit   Int
+  factor    Float
+  fromUnit  Unit  @relation("FromUnit", fields: [from_unit], references: [id])
+  toUnit    Unit  @relation("ToUnit", fields: [to_unit], references: [id])
+
+  @@unique([from_unit, to_unit])
+  @@map("unit_conversion")
+}
+
+model Recipe {
+  id         Int     @id @default(autoincrement())
+  product_id Int
+  Product    Product @relation("RecipeProduct", fields: [product_id], references: [id])
+
+  @@map("recipes")
+}
+
+model Material {
+  id     Int    @id @default(autoincrement())
+  name   String
+  remain Float
+  unitId Int
+  Unit   Unit   @relation(fields: [unitId], references: [id])
+
+  @@map("materials")
 }

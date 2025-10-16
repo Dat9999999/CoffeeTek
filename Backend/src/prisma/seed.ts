@@ -302,6 +302,165 @@ async function main() {
     }
 
     console.log('✅ Seeded UnitConversion table');
+
+    // =======================
+    // 8. Seed Materials
+    // =======================
+    const materialCount = await prisma.material.count();
+    if (materialCount === 0) {
+        Logger.log('🪄 Seeding materials...');
+
+        const kg = await prisma.unit.findFirst({ where: { symbol: 'kg' } });
+        const g = await prisma.unit.findFirst({ where: { symbol: 'g' } });
+        const ml = await prisma.unit.findFirst({ where: { symbol: 'ml' } });
+        const l = await prisma.unit.findFirst({ where: { symbol: 'l' } });
+
+        if (!kg || !g || !ml || !l) {
+            throw new Error('❌ Required base units not found. Seed Units first!');
+        }
+
+        const materials = [
+            { name: 'Coffee Beans', remain: 5, unitId: kg.id },
+            { name: 'Fresh Milk', remain: 10, unitId: l.id },
+            { name: 'Sugar', remain: 2, unitId: kg.id },
+            { name: 'Ice Cubes', remain: 50, unitId: l.id },
+        ];
+
+        await prisma.material.createMany({ data: materials });
+
+        Logger.log('✅ Seeded Materials');
+    } else {
+        Logger.warn('⚠️ Materials already exist, skipping...');
+    }
+
+    // =======================
+    // 9. Seed Recipes
+    // =======================
+    const recipeCount = await prisma.recipe.count();
+    if (recipeCount === 0) {
+        Logger.log('🪄 Seeding recipes...');
+
+        const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
+        if (!latte) throw new Error('❌ Product Latte not found. Seed products first!');
+
+        const recipe = await prisma.recipe.create({
+            data: {
+                product_id: latte.id,
+            },
+        });
+
+        Logger.log(`✅ Seeded recipe for Latte (id: ${recipe.id})`);
+    } else {
+        Logger.warn('⚠️ Recipes already exist, skipping...');
+    }
+
+    // =======================
+    // 10. Seed MaterialRecipe
+    // =======================
+    const materialRecipeCount = await prisma.materialRecipe.count();
+    if (materialRecipeCount === 0) {
+        Logger.log('🪄 Seeding material_recipes...');
+
+        const latteRecipe = await prisma.recipe.findFirst({
+            where: {
+                Product: { name: 'Latte' },
+            },
+        });
+        if (!latteRecipe) throw new Error('❌ Latte recipe not found');
+
+        const coffeeBeans = await prisma.material.findFirst({ where: { name: 'Coffee Beans' } });
+        const milk = await prisma.material.findFirst({ where: { name: 'Fresh Milk' } });
+        const sugar = await prisma.material.findFirst({ where: { name: 'Sugar' } });
+
+        if (!coffeeBeans || !milk || !sugar) throw new Error('❌ Missing base materials');
+
+        // base consumption for a Medium Latte
+        await prisma.materialRecipe.createMany({
+            data: [
+                { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 18 }, // g
+                { recipeId: latteRecipe.id, materialId: milk.id, consume: 180 },      // ml
+                { recipeId: latteRecipe.id, materialId: sugar.id, consume: 10 },      // g
+            ],
+        });
+
+        Logger.log('✅ Seeded MaterialRecipe (Latte)');
+    } else {
+        Logger.warn('⚠️ MaterialRecipe already exists, skipping...');
+    }
+
+    // =======================
+    // 11. Seed ConsumeSize
+    // =======================
+    const consumeSizeCount = await prisma.consumeSize.count();
+    if (consumeSizeCount === 0) {
+        Logger.log('🪄 Seeding consume_sizes...');
+
+        const sizes = await prisma.size.findMany();
+        const latteRecipe = await prisma.recipe.findFirst({
+            where: { Product: { name: 'Latte' } },
+            include: { MaterialRecipe: true },
+        });
+
+        if (!latteRecipe) throw new Error('❌ Latte recipe not found');
+
+        const sizeMap = Object.fromEntries(sizes.map((s) => [s.name, s.id]));
+        const recipes = latteRecipe.MaterialRecipe;
+
+        // For Large size → +20% material usage, Small → -20%
+        for (const mr of recipes) {
+            await prisma.consumeSize.createMany({
+                data: [
+                    {
+                        productSizeId: sizeMap['Small'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: -4, // rough estimate, e.g., less coffee, milk...
+                    },
+                    {
+                        productSizeId: sizeMap['Medium'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: 0,
+                    },
+                    {
+                        productSizeId: sizeMap['Large'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: 5,
+                    },
+                ],
+            });
+        }
+
+        Logger.log('✅ Seeded ConsumeSize');
+    } else {
+        Logger.warn('⚠️ ConsumeSize already exists, skipping...');
+    }
+
+    // =======================
+    // 12. Seed MaterialImportation
+    // =======================
+    const importCount = await prisma.materialImportation.count();
+    if (importCount === 0) {
+        Logger.log('🪄 Seeding MaterialImportation...');
+
+        const owner = await prisma.user.findFirst({ where: { email: 'huynhtandat184@gmail.com' } });
+        if (!owner) throw new Error('❌ Owner not found');
+
+        const materials = await prisma.material.findMany();
+        for (const m of materials) {
+            await prisma.materialImportation.create({
+                data: {
+                    materialId: m.id,
+                    importQuantity: m.remain,
+                    employeeId: owner.id,
+                    importDate: new Date(),
+                },
+            });
+        }
+
+        Logger.log('✅ Seeded MaterialImportation');
+    } else {
+        Logger.warn('⚠️ MaterialImportation already exists, skipping...');
+    }
+
 }
 
 main()

@@ -28,7 +28,8 @@ model User {
 
   customerOrders Order[] @relation("CustomerOrders")
 
-  staffOrders Order[] @relation("StaffOrders")
+  staffOrders         Order[]               @relation("StaffOrders")
+  MaterialImportation MaterialImportation[]
 
   @@map("users")
 }
@@ -137,8 +138,9 @@ model ProductSize {
   product_id Int
   size_id    Int
 
-  product Product @relation(fields: [product_id], references: [id])
-  size    Size    @relation(fields: [size_id], references: [id])
+  product     Product       @relation(fields: [product_id], references: [id])
+  size        Size          @relation(fields: [size_id], references: [id])
+  ConsumeSize ConsumeSize[]
 
   @@map("product_sizes")
 }
@@ -281,19 +283,59 @@ model UnitConversion {
 }
 
 model Recipe {
-  id         Int     @id @default(autoincrement())
-  product_id Int
-  Product    Product @relation("RecipeProduct", fields: [product_id], references: [id])
+  id             Int              @id @default(autoincrement())
+  product_id     Int
+  Product        Product          @relation("RecipeProduct", fields: [product_id], references: [id])
+  MaterialRecipe MaterialRecipe[]
 
   @@map("recipes")
 }
 
 model Material {
-  id     Int    @id @default(autoincrement())
-  name   String
-  remain Float
-  unitId Int
-  Unit   Unit   @relation(fields: [unitId], references: [id])
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  remain              Float
+  unitId              Int
+  Unit                Unit                  @relation(fields: [unitId], references: [id])
+  MaterialRecipe      MaterialRecipe[]
+  MaterialImportation MaterialImportation[]
 
   @@map("materials")
+}
+
+model MaterialRecipe {
+  id       Int    @id @default(autoincrement())
+  consume  Float
+  Recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId Int
+
+  Material    Material      @relation(fields: [materialId], references: [id])
+  materialId  Int
+  ConsumeSize ConsumeSize[]
+
+  @@map("material_recipes")
+}
+
+model ConsumeSize {
+  id            Int         @id @default(autoincrement())
+  Size          ProductSize @relation(fields: [productSizeId], references: [id])
+  productSizeId Int
+
+  additionalConsume Int
+  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id])
+  materialRecipeId  Int
+
+  @@map("consume_sizes")
+}
+
+model MaterialImportation {
+  id             Int      @id @default(autoincrement())
+  importQuantity Float
+  Material       Material @relation(fields: [materialId], references: [id])
+
+  materialId Int
+
+  importDate DateTime @default(now())
+  Employee   User     @relation(fields: [employeeId], references: [id])
+  employeeId Int
 }

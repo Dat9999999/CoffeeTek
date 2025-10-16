@@ -94,6 +94,8 @@ export function UserRoleModal({ open, user, onClose, onSuccess }: UserRoleModalP
                     mode="multiple"
                     style={{ width: "100%", padding: "10px 50px 10px 10px" }}
                     placeholder="Select roles"
+
+
                     value={selectedRoles}
                     onChange={(values) => {
                         // Không cho bỏ chọn owner

@@ -20,6 +20,7 @@ interface DataTableProps<T> {
     onDelete?: (record: T) => void;
     onRowSelectionChange?: (selectedRowKeys: number[]) => void;
     enableRowSelection?: boolean; // Thêm prop mới để bật/tắt rowSelection
+    renderActions?: (record: T) => React.ReactNode;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -34,6 +35,7 @@ export function DataTable<T extends { id: number | string }>({
     onDelete,
     onRowSelectionChange,
     enableRowSelection = false, // Mặc định tắt rowSelection
+    renderActions,
 }: DataTableProps<T>) {
     const handleChange = (
         newPagination: TablePaginationConfig,
@@ -80,14 +82,17 @@ export function DataTable<T extends { id: number | string }>({
                     width: 40,
                     fixed: "right",
                     align: "center",
-                    render: (_, record) => (
-                        <TableActions
-                            record={record}
-                            onDetail={onDetail}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                        />
-                    ),
+                    render: (_, record) =>
+                        renderActions ? (
+                            renderActions(record)
+                        ) : (
+                            <TableActions
+                                record={record}
+                                onDetail={onDetail}
+                                onEdit={onEdit}
+                                onDelete={onDelete}
+                            />
+                        ),
                 },
             ]}
             dataSource={data}

@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Modal, Form, Input, InputNumber, message, Upload, Button, Image } from "antd";
+import { Modal, Form, Input, InputNumber, message, Upload, Button, Image, theme } from "antd";
 import { UploadOutlined } from '@ant-design/icons';
 import type { Topping } from "@/interfaces";
 import { formatPrice, parsePrice, restrictInputToNumbers } from "@/utils/priceFormatter";
 import { toppingService, uploadImages } from "@/services";
 import type { UploadFile } from 'antd';
+import { AppImageSize } from "@/components/commons";
 
 interface EditToppingModalProps {
     open: boolean;
@@ -20,6 +21,7 @@ export function EditToppingModal({ open, onClose, record, onSuccess }: EditToppi
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const { token } = theme.useToken();
 
     // Reset form & preview khi modal đóng
     const handlePreviewCancel = () => {
@@ -160,12 +162,16 @@ export function EditToppingModal({ open, onClose, record, onSuccess }: EditToppi
 
                 {previewImage && (
                     <Form.Item label="Image Preview">
-                        <Image
-                            src={previewImage}
+                        <AppImageSize
+                            srcObj={previewImage}
                             alt="Image Preview"
                             width={120}
                             height={120}
-                            style={{ objectFit: 'cover' }}
+                            style={{
+                                objectFit: 'contain',
+
+                            }}
+
                         />
                     </Form.Item>
                 )}

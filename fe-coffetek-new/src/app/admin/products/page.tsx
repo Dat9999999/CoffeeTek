@@ -6,26 +6,24 @@ import { productService } from "@/services/productService";
 import type { Product, ProductImage } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import {
-    CreateProductModal,
     ProductDetailModal,
-    EditProductModal,
     DeleteProductModal,
-    DeleteManyProductsModal
+    DeleteManyProductsModal,
 } from "@/components/features/products";
 import { formatPrice } from "@/utils";
+import { CategorySelector } from "@/components/features/categories";
+import { useRouter } from 'next/navigation';
 
 export default function ProductPage() {
+    const router = useRouter();
     const { tableState, setTableState } = useTableState();
     const [data, setData] = useState<Product[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-    const [openAddModal, setOpenAddModal] = useState(false);
     const [detailRecord, setDetailRecord] = useState<Product | null>(null);
-    const [editRecord, setEditRecord] = useState<Product | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Product | null>(null);
     const [openDeleteManyModal, setOpenDeleteManyModal] = useState(false);
-
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -35,6 +33,7 @@ export default function ProductPage() {
                 search: tableState.search,
                 orderBy: tableState.orderBy || "id",
                 orderDirection: tableState.orderDirection || "asc",
+                categoryId: tableState.categoryId ? Number(tableState.categoryId) : undefined,
             });
             setData(res.data);
             setTotal(res.meta.total);
@@ -65,7 +64,13 @@ export default function ProductPage() {
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) => setTableState({ ...tableState, search: value })}
-                onAdd={() => setOpenAddModal(true)}
+                filters={
+                    <CategorySelector
+                        value={tableState.categoryId ? Number(tableState.categoryId) : null}
+                        onChange={(value) => setTableState({ ...tableState, categoryId: value, currentPage: 1 })}
+                    />
+                }
+                onAdd={() => router.push('/admin/products/create')}
                 addLabel="Add"
                 onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
                 deleteManyLabel="Delete"
@@ -80,7 +85,11 @@ export default function ProductPage() {
                 columns={[
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
-                    { title: "Category", dataIndex: ["category", "name"], sorter: false },
+                    {
+                        title: "Category",
+                        sorter: false,
+                        render: (_: any, record: Product) => record.category?.name ?? "–",
+                    },
                     {
                         title: "Price",
                         dataIndex: "price",
@@ -92,30 +101,19 @@ export default function ProductPage() {
                     },
                 ]}
                 onDetail={(record) => setDetailRecord(record)}
-                onEdit={(record) => setEditRecord(record)}
+                onEdit={(record) => router.push(`/admin/products/${record.id}/edit`)}
                 onDelete={(record) => setDeleteRecord(record)}
                 onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
                 enableRowSelection={true}
             />
 
-            <CreateProductModal
-                open={openAddModal}
-                onClose={() => setOpenAddModal(false)}
-                onSuccess={() => fetchData()}
-            />
 
             <ProductDetailModal
                 open={!!detailRecord}
                 onClose={() => setDetailRecord(null)}
-                record={detailRecord}
+                recordId={detailRecord?.id}
             />
 
-            <EditProductModal
-                open={!!editRecord}
-                onClose={() => setEditRecord(null)}
-                record={editRecord}
-                onSuccess={() => fetchData()}
-            />
 
             <DeleteProductModal
                 open={!!deleteRecord}

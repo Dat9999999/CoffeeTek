@@ -76,22 +76,50 @@ export class ProductsService {
       search,
       orderBy = 'id',
       orderDirection = 'asc',
-      categoryId
+      categoryId,
     } = query;
+
+    let categoryIds: number[] | undefined;
+
+    // 🔹 Nếu có filter theo categoryId, lấy tất cả category con (nếu có)
+    if (categoryId) {
+      const parent = await this.prisma.category.findUnique({
+        where: { id: categoryId },
+        include: { subcategories: true },
+      });
+
+      if (parent) {
+        // Gộp category cha + con
+        categoryIds = [parent.id, ...parent.subcategories.map((c) => c.id)];
+      }
+
+
+    }
 
     const where: Prisma.ProductWhereInput = {
       AND: [
         search
           ? { name: { contains: search, mode: Prisma.QueryMode.insensitive } }
           : {},
-        categoryId ? { category_id: categoryId } : {},
+        categoryId === -1 // nếu chọn "Chưa phân loại"
+          ? { category_id: null }
+          : categoryIds
+            ? { category_id: { in: categoryIds } }
+            : {},
       ],
     };
+
 
     const [data, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        include: { sizes: true, optionValues: true, toppings: true, images: true, category: true },
+        include: {
+          sizes: true,
+          optionValues: true,
+          toppings: true,
+          images: true,
+          category: true,
+        },
         orderBy: { [orderBy]: orderDirection },
         skip: (page - 1) * size,
         take: size,
@@ -112,16 +140,79 @@ export class ProductsService {
   }
 
 
+
   async findOne(id: number) {
-    const existing = await this.prisma.product.findUnique({ where: { id } });
-    if (!existing) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        images: true,
+        sizes: {
+          include: { size: true },
+        },
+        toppings: {
+          include: { topping: true },
+        },
+        optionValues: {
+          include: {
+            option_value: {
+              include: { option_group: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
-    return this.prisma.product.findUnique({
-      where: { id },
-      include: { sizes: true, optionValues: true, toppings: true, images: true },
-    });
+
+    const optionGroupsMap = new Map<number, any>();
+
+    for (const pov of product.optionValues) {
+      const group = pov.option_value.option_group;
+      const value = pov.option_value;
+
+      if (!optionGroupsMap.has(group.id)) {
+        optionGroupsMap.set(group.id, {
+          id: group.id,
+          name: group.name,
+          values: [],
+        });
+      }
+      optionGroupsMap.get(group.id).values.push({
+        id: value.id,
+        name: value.name,
+        sort_index: value.sort_index,
+      });
+    }
+
+    const mappedToppings = product.toppings.map((pt) => ({
+      id: pt.topping.id,
+      name: pt.topping.name,
+      price: pt.topping.price,
+      image_name: pt.topping.image_name,
+      sort_index: pt.topping.sort_index,
+    }));
+
+    return {
+      id: product.id,
+      name: product.name,
+      is_multi_size: product.is_multi_size,
+      product_detail: product.product_detail,
+      price: product.price,
+      category_id: product.category_id,
+      category: product.category,
+      images: product.images,
+      sizes: product.sizes,
+      toppings: mappedToppings,
+      optionGroups: Array.from(optionGroupsMap.values()),
+    };
   }
+
+
+
+
 
   async update(id: number, dto: UpdateProductDto) {
     const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds, categoryId } = dto;
@@ -214,6 +305,52 @@ export class ProductsService {
     await this.prisma.productImage.deleteMany({ where: { product_id: id } });
 
     return this.prisma.product.delete({ where: { id } });
+  }
+
+  async removeMany(ids: number[]) {
+    if (!ids || ids.length === 0) {
+      throw new Error("No product IDs provided for deletion");
+    }
+
+    // Kiểm tra sản phẩm tồn tại
+    const existingProducts = await this.prisma.product.findMany({
+      where: { id: { in: ids } },
+      select: { id: true },
+    });
+
+    if (existingProducts.length === 0) {
+      throw new NotFoundException("No valid product IDs found");
+    }
+
+    const existingIds = existingProducts.map((p) => p.id);
+
+    // Dùng transaction để đảm bảo tính toàn vẹn dữ liệu
+    await this.prisma.$transaction(async (tx) => {
+      await tx.productSize.deleteMany({
+        where: { product_id: { in: existingIds } },
+      });
+
+      await tx.productOptionValue.deleteMany({
+        where: { product_id: { in: existingIds } },
+      });
+
+      await tx.productTopping.deleteMany({
+        where: { product_id: { in: existingIds } },
+      });
+
+      await tx.productImage.deleteMany({
+        where: { product_id: { in: existingIds } },
+      });
+
+      await tx.product.deleteMany({
+        where: { id: { in: existingIds } },
+      });
+    });
+
+    return {
+      message: `Deleted ${existingIds.length} product(s) successfully.`,
+      deletedIds: existingIds,
+    };
   }
 
 }

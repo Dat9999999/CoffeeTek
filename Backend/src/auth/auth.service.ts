@@ -174,4 +174,17 @@ export class AuthService {
         return userUpdated;
     }
 
+    async getAllRole() {
+        return this.prisma.role.findMany({
+            select: {
+                id: true,
+                role_name: true,
+            },
+            orderBy: {
+                id: 'asc',
+            },
+        });
+    }
+
+
 }

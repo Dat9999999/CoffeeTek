@@ -33,4 +33,10 @@ export class ProductsController {
   remove(@Param('id') id: string) {
     return this.productsService.remove(+id);
   }
+
+  @Delete()
+  removeMany(@Body() body: { ids: number[] }) {
+    return this.productsService.removeMany(body.ids);
+  }
+
 }

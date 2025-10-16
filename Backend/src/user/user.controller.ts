@@ -15,7 +15,7 @@ import { B2Service } from 'src/storage-file/b2.service';
 @Controller('user')
 
 // comment when testing 
-@UseGuards(AuthGuard('jwt'))
+// @UseGuards(AuthGuard('jwt'))
 
 export class UserController {
     constructor(private readonly userService: UserService, private readonly b2Service: B2Service) { }
@@ -43,20 +43,20 @@ export class UserController {
 
     //owner or manager only
     @Get('get-all')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Role('owner', 'manager')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Role('owner', 'manager')
     async getAllUsers(@Query() query: GetAllDto) {
         return await this.userService.getAllUsers(query);
     }
     @Delete('lock/:id')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Role('owner', 'manager')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Role('owner', 'manager')
     async lockUser(@Param('id', ParseIntPipe) id: number) {
         return await this.userService.lockUser(id);
     }
     @Patch('unlock/:id')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Role('owner', 'manager')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Role('owner', 'manager')
     async unlockUser(@Param('id', ParseIntPipe) id: number) {
         return await this.userService.unlockUser(id);
     }

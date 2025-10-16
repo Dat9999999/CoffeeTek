@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
-import { IsEnum, IsOptional, Min } from "class-validator";
-import { Order } from "../enums/order.enum";
+import { IsEnum, IsOptional, IsString, Min } from "class-validator";
+import { Order, OrderDirection } from "../enums/order.enum";
 
 export class GetAllDto {
     @Type(() => Number)
@@ -14,8 +14,12 @@ export class GetAllDto {
     @IsOptional()
     searchName?: string;
 
-    @IsEnum(Order, { message: "orderBy must be 'asc' or 'desc'" })
-    orderBy?: Order = Order.ASC;
+    @IsString()
+    orderBy?: string = 'id';
+
+    @IsEnum(OrderDirection)
+    @IsOptional()
+    orderDirection?: OrderDirection = OrderDirection.ASC;
 }
 
 export class ResponseGetAllDto<T> {

@@ -29,7 +29,7 @@ export class UserService {
         return JSON.stringify(userUpdated);
     }
     async getAllUsers(query: GetAllDto) {
-        const { page, size, searchName, orderBy } = query;
+        const { page, size, searchName, orderBy = 'id', orderDirection = 'asc' } = query;
         if (!page || !size) {
             throw new Error("page and size are required");
         }
@@ -46,9 +46,13 @@ export class UserService {
                     id: true,
                     email: true,
                     phone_number: true,
+                    first_name: true,
+                    last_name: true,
+                    is_locked: true,
                     detail: true,
+                    roles: true
                 },
-                orderBy: { id: orderBy }
+                orderBy: { [orderBy]: orderDirection },
             }),
             this.prisma.user.count(),
         ]);

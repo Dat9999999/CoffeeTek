@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { ImportMaterialDto } from './dto/import-material.dto';
 
 @Controller('material')
 export class MaterialController {
@@ -30,5 +31,9 @@ export class MaterialController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.materialService.remove(+id);
+  }
+  @Post('import')
+  importMaterial(@Body() dto: ImportMaterialDto) {
+    return "import material"
   }
 }

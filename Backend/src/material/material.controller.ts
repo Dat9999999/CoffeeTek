@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Controller('material')
 export class MaterialController {
-  constructor(private readonly materialService: MaterialService) {}
+  constructor(private readonly materialService: MaterialService) { }
 
   @Post()
   create(@Body() createMaterialDto: CreateMaterialDto) {
@@ -22,7 +22,7 @@ export class MaterialController {
     return this.materialService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateMaterialDto: UpdateMaterialDto) {
     return this.materialService.update(+id, updateMaterialDto);
   }

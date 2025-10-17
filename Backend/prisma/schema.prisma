@@ -293,8 +293,8 @@ model Recipe {
 
 model Material {
   id                  Int                   @id @default(autoincrement())
-  name                String
-  remain              Float
+  name                String                @unique
+  remain              Float                 @default(0)
   unitId              Int
   Unit                Unit                  @relation(fields: [unitId], references: [id])
   MaterialRecipe      MaterialRecipe[]

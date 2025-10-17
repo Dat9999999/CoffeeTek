@@ -284,8 +284,8 @@ model UnitConversion {
 
 model Recipe {
   id             Int              @id @default(autoincrement())
-  product_id     Int
-  Product        Product          @relation("RecipeProduct", fields: [product_id], references: [id])
+  product_id     Int              @unique
+  Product        Product          @relation("RecipeProduct", fields: [product_id], references: [id], onDelete: Cascade)
   MaterialRecipe MaterialRecipe[]
 
   @@map("recipes")
@@ -306,10 +306,10 @@ model Material {
 model MaterialRecipe {
   id       Int    @id @default(autoincrement())
   consume  Float
-  Recipe   Recipe @relation(fields: [recipeId], references: [id])
+  Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeId Int
 
-  Material    Material      @relation(fields: [materialId], references: [id])
+  Material    Material      @relation(fields: [materialId], references: [id], onDelete: Cascade)
   materialId  Int
   ConsumeSize ConsumeSize[]
 

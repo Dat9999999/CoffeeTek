@@ -11,12 +11,12 @@ import { PaymentDTO } from './dto/payment.dto';
 import { VerifyReturnUrl } from 'vnpay';
 
 @Controller('order')
+// @UseGuards(AuthGuard('jwt'), RolesGuard)
+// @Role('owner', 'manager','cashier')
 export class OrderController {
   constructor(private readonly orderService: OrderService) { }
 
   @Post()
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @Role('owner', 'manager', 'cashier')
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
   }

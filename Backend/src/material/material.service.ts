@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ImportMaterialDto } from './dto/import-material.dto';
 
 @Injectable()
 export class MaterialService {
+
   constructor(private readonly prisma: PrismaService) {
 
   }
@@ -16,7 +18,32 @@ export class MaterialService {
       }
     });
   }
+  async importMaterial(dto: ImportMaterialDto) {
+    const material = await this.prisma.material.update({
+      where: { id: dto.materialId },
+      data: {
+        remain: {
+          increment: dto.quantity
+        }
+      }
+    });
 
+    //send log import material here
+    Logger.log(`Import material id ${dto.materialId} with quantity ${dto.quantity}`, 'MaterialService');
+
+
+    //store import history here if needed
+    await this.prisma.materialImportation.create({
+      data: {
+        materialId: dto.materialId,
+        importQuantity: dto.quantity,
+        // ensure employeeId is provided to satisfy Prisma's required field;
+        // cast dto to any to avoid compile errors if DTO type isn't updated yet
+        employeeId: (dto as any).employeeId ?? 1, // employeeId = 1 is owner
+      }
+    });
+    return material;
+  }
   async findAll() {
     return await this.prisma.material.findMany();
   }

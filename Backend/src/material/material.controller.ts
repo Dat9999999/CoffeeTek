@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { ImportMaterialDto } from './dto/import-material.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/auth/strategy/role.strategy';
+import { Role } from 'src/auth/decorator/role.decorator';
 
 @Controller('material')
+// @UseGuards(AuthGuard('jwt'), RolesGuard)
+// @Role('owner', 'manager')
 export class MaterialController {
   constructor(private readonly materialService: MaterialService) { }
 
@@ -34,6 +39,6 @@ export class MaterialController {
   }
   @Post('import')
   importMaterial(@Body() dto: ImportMaterialDto) {
-    return "import material"
+    return this.materialService.importMaterial(dto);
   }
 }

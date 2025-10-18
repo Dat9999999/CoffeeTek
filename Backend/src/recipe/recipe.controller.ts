@@ -9,8 +9,8 @@ export class RecipeController {
   constructor(private readonly recipeService: RecipeService) { }
 
   @Post()
+  //need to check there no duplicate materialIds in createRecipeDto.materials
   create(@Body(new ValidateRecipePipe()) createRecipeDto: CreateRecipeDto) {
-    //need to check there no duplicate materialIds in createRecipeDto.materials
     return this.recipeService.create(createRecipeDto);
   }
 

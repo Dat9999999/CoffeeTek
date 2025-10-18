@@ -35,8 +35,22 @@ export class RecipeService {
     });
   }
 
-  findAll() {
-    return `This action returns all recipe`;
+  async findAll() {
+    return await this.prisma.recipe.findMany({
+      include: {
+        Product: true,
+        MaterialRecipe: {
+          include: {
+            Material: {
+              include: {
+                Unit: true
+              }
+            },
+
+          }
+        }
+      }
+    });
   }
 
   findOne(id: number) {

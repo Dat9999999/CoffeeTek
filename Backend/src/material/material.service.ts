@@ -3,6 +3,7 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ImportMaterialDto } from './dto/import-material.dto';
+import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
 
 @Injectable()
 export class MaterialService {
@@ -11,11 +12,28 @@ export class MaterialService {
 
   }
   getAdjustmentHistory //store import history here if needed
-    (type: string, date: String) {
+    (query: GetAllAdjustmentHistoryDto) {
+    const { type, date, materialId } = query;
     if (type !== 'import' && type !== 'consume') {
       throw new NotFoundException(`Adjustment history type ${type} is not valid`);
     }
-    return this.prisma.inventoryAdjustment.findMany();
+    Logger.log(`Getting adjustment history for type ${type} and date ${date.toISOString()}`, 'MaterialService');
+    let startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
+
+    let endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
+    endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
+
+    return this.prisma.inventoryAdjustment.findMany({
+      where: {
+        adjustedAt: {
+          gte: startDate,
+          lt: endDate // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+        },
+        materialId: materialId,
+      }
+    });
   }
   async create(createMaterialDto: CreateMaterialDto) {
     return this.prisma.material.create({

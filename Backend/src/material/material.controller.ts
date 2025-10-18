@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query, ParseDatePipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -6,6 +6,8 @@ import { ImportMaterialDto } from './dto/import-material.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { Role } from 'src/auth/decorator/role.decorator';
+import { ParseDatePipe } from 'src/common/pipe/binding-pipe/parse-date.pipe';
+import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
 
 @Controller('material')
 // @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -23,8 +25,8 @@ export class MaterialController {
     return this.materialService.findAll();
   }
   @Get('adjustment-history')
-  getAdjustmentHistory(@Query('type') type: string, @Query('date') date: String) {
-    return this.materialService.getAdjustmentHistory(type, date);
+  getAdjustmentHistory(@Query() query: GetAllAdjustmentHistoryDto) {
+    return this.materialService.getAdjustmentHistory(query);
   }
 
   @Get(':id')

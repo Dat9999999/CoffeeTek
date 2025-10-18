@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query, DefaultValuePipe } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -27,6 +27,11 @@ export class MaterialController {
   @Get('adjustment-history')
   getAdjustmentHistory(@Query() query: GetAllAdjustmentHistoryDto) {
     return this.materialService.getAdjustmentHistory(query);
+  }
+  @Put('adjustment-history')
+  // Adjust material stock here if needed
+  adjustMaterialStock(@Query('date', new DefaultValuePipe(() => new ParseDatePipe())) date: Date, @Body() updateAdjustmentDto: any) {
+    // Implementation for adjusting material stock
   }
 
   @Get(':id')

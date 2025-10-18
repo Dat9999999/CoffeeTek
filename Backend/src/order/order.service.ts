@@ -277,6 +277,10 @@ export class OrderService {
         }
       })
     }
+    //adjust inventory  when order is completed
+    if (dto.status == OrderStatus.COMPLETED) {
+      
+    }
     return order;
   }
   async updateItems(id: number, updateItemsDto: UpdateOrderDto) {

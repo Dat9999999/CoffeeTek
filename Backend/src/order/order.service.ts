@@ -13,6 +13,7 @@ import { json } from 'express';
 import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { B2Service } from 'src/storage-file/b2.service';
+import { InventoryService } from 'src/inventory/inventory.service';
 
 @Injectable()
 export class OrderService {
@@ -20,7 +21,8 @@ export class OrderService {
 
   constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService,
     private readonly invoiceService: InvoiceService,
-    private readonly b2Service: B2Service
+    private readonly b2Service: B2Service,
+    private readonly inventoryService: InventoryService
   ) { }
   async getInvoice(orderId: number) {
     const order = await this.prisma.order.findUnique({
@@ -279,7 +281,20 @@ export class OrderService {
     }
     //adjust inventory  when order is completed
     if (dto.status == OrderStatus.COMPLETED) {
-      
+      const orderDetails = await this.prisma.orderDetail.findMany({
+        where: {
+          order_id: order.id
+        }
+      })
+      for (const detail of orderDetails) {
+        try {
+          const inventory_change = await this.inventoryService.adjustInventoryByOrderDetail(detail.product_id, detail.quantity, order.id);
+          Logger.log(`Inventory adjusted: ${JSON.stringify(inventory_change)}`);
+        } catch (error: BadRequestException | NotFoundException | Error | any) {
+          Logger.error(`Failed to adjust inventory for order detail id ${detail.id}: ${error.message}`);
+          return error;
+        }
+      }
     }
     return order;
   }

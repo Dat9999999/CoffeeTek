@@ -192,11 +192,12 @@ model Order {
   customerPhone String?
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
 
-  staffId         Int
-  Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
-  paymentDetailId Int?           @unique
-  PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
-  invoiceUrl      String?
+  staffId             Int
+  Staff               User                  @relation("StaffOrders", fields: [staffId], references: [id])
+  paymentDetailId     Int?                  @unique
+  PaymentDetail       PaymentDetail?        @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  invoiceUrl          String?
+  InventoryAdjustment InventoryAdjustment[]
 
   @@map("orders")
 }
@@ -299,6 +300,7 @@ model Material {
   Unit                Unit                  @relation(fields: [unitId], references: [id])
   MaterialRecipe      MaterialRecipe[]
   MaterialImportation MaterialImportation[]
+  InventoryAdjustment InventoryAdjustment[]
 
   @@map("materials")
 }
@@ -338,4 +340,19 @@ model MaterialImportation {
   importDate DateTime @default(now())
   Employee   User     @relation(fields: [employeeId], references: [id])
   employeeId Int
+
+  @@map("material_importations")
+}
+
+model InventoryAdjustment {
+  id             Int      @id @default(autoincrement())
+  materialId     Int
+  Material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  consume        Float
+  reason         String
+  relatedOrderId Int?
+  relatedOrder   Order?   @relation(fields: [relatedOrderId], references: [id], onDelete: Cascade)
+  adjustedAt     DateTime @default(now())
+
+  @@map("inventory_adjustments")
 }

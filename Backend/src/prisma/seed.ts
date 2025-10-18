@@ -320,10 +320,10 @@ async function main() {
         }
 
         const materials = [
-            { name: 'Coffee Beans', remain: 5, unitId: kg.id },
-            { name: 'Fresh Milk', remain: 10, unitId: l.id },
-            { name: 'Sugar', remain: 2, unitId: kg.id },
-            { name: 'Ice Cubes', remain: 50, unitId: l.id },
+            { name: 'Coffee Beans', remain: 50, unitId: kg.id },
+            { name: 'Fresh Milk', remain: 100, unitId: l.id },
+            { name: 'Sugar', remain: 20, unitId: kg.id },
+            { name: 'Ice Cubes', remain: 500, unitId: l.id },
         ];
 
         await prisma.material.createMany({ data: materials });
@@ -377,9 +377,9 @@ async function main() {
         // base consumption for a Medium Latte
         await prisma.materialRecipe.createMany({
             data: [
-                { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 18 }, // g
-                { recipeId: latteRecipe.id, materialId: milk.id, consume: 180 },      // ml
-                { recipeId: latteRecipe.id, materialId: sugar.id, consume: 10 },      // g
+                { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 0.18 },
+                { recipeId: latteRecipe.id, materialId: milk.id, consume: 0.3 },
+                { recipeId: latteRecipe.id, materialId: sugar.id, consume: 0.08 },
             ],
         });
 
@@ -413,17 +413,17 @@ async function main() {
                     {
                         productSizeId: sizeMap['Small'],
                         materialRecipeId: mr.id,
-                        additionalConsume: -4, // rough estimate, e.g., less coffee, milk...
+                        additionalConsume: 4, // rough estimate, e.g., less coffee, milk...
                     },
                     {
                         productSizeId: sizeMap['Medium'],
                         materialRecipeId: mr.id,
-                        additionalConsume: 0,
+                        additionalConsume: 6,
                     },
                     {
                         productSizeId: sizeMap['Large'],
                         materialRecipeId: mr.id,
-                        additionalConsume: 5,
+                        additionalConsume: 8,
                     },
                 ],
             });

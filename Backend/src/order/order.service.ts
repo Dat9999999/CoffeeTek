@@ -288,7 +288,7 @@ export class OrderService {
       })
       for (const detail of orderDetails) {
         try {
-          const inventory_change = await this.inventoryService.adjustInventoryByOrderDetail(detail.product_id, detail.quantity, order.id);
+          const inventory_change = await this.inventoryService.adjustInventoryByOrderDetail(detail.product_id, detail.quantity, order.id, detail.size_id ?? undefined);
           Logger.log(`Inventory adjusted: ${JSON.stringify(inventory_change)}`);
         } catch (error: BadRequestException | NotFoundException | Error | any) {
           Logger.error(`Failed to adjust inventory for order detail id ${detail.id}: ${error.message}`);

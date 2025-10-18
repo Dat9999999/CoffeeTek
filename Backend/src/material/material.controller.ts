@@ -28,7 +28,7 @@ export class MaterialController {
   getAdjustmentHistory(@Query() query: GetAllAdjustmentHistoryDto) {
     return this.materialService.getAdjustmentHistory(query);
   }
-  @Put('adjustment-history')
+  @Put('adjustment-history/confirm')
   // Adjust material stock here if needed
   adjustMaterialStock(@Query('date', new DefaultValuePipe(() => new ParseDatePipe())) date: Date, @Body() updateAdjustmentDto: any) {
     // Implementation for adjusting material stock

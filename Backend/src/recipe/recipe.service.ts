@@ -53,8 +53,23 @@ export class RecipeService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} recipe`;
+  async findOne(id: number) {
+    return await this.prisma.recipe.findUnique({
+      where: { id },
+      include: {
+        Product: true,
+        MaterialRecipe: {
+          include: {
+            Material: {
+              include: {
+                Unit: true
+              }
+            },
+
+          }
+        }
+      }
+    });
   }
 
   update(id: number, updateRecipeDto: UpdateRecipeDto) {

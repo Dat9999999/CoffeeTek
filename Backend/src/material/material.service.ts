@@ -10,6 +10,13 @@ export class MaterialService {
   constructor(private readonly prisma: PrismaService) {
 
   }
+  getAdjustmentHistory //store import history here if needed
+    (type: string, date: String) {
+    if (type !== 'import' && type !== 'consume') {
+      throw new NotFoundException(`Adjustment history type ${type} is not valid`);
+    }
+    return this.prisma.inventoryAdjustment.findMany();
+  }
   async create(createMaterialDto: CreateMaterialDto) {
     return this.prisma.material.create({
       data: {

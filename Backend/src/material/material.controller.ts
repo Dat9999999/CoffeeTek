@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query, ParseDatePipe } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -21,6 +21,10 @@ export class MaterialController {
   @Get()
   findAll() {
     return this.materialService.findAll();
+  }
+  @Get('adjustment-history')
+  getAdjustmentHistory(@Query('type') type: string, @Query('date') date: String) {
+    return this.materialService.getAdjustmentHistory(type, date);
   }
 
   @Get(':id')

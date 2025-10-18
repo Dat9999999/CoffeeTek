@@ -318,11 +318,11 @@ model MaterialRecipe {
 
 model ConsumeSize {
   id            Int         @id @default(autoincrement())
-  Size          ProductSize @relation(fields: [productSizeId], references: [id])
+  Size          ProductSize @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
   productSizeId Int
 
   additionalConsume Int
-  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id])
+  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id], onDelete: Cascade)
   materialRecipeId  Int
 
   @@map("consume_sizes")

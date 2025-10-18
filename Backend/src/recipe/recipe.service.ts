@@ -72,8 +72,28 @@ export class RecipeService {
     });
   }
 
-  update(id: number, updateRecipeDto: UpdateRecipeDto) {
-    return `This action updates a #${id} recipe`;
+  async update(id: number, updateRecipeDto: UpdateRecipeDto) {
+    const recipe = await this.prisma.recipe.findFirst({
+      where: { id }
+    });
+
+    if (!recipe) {
+      throw new BadRequestException(`Recipe with ID ${id} does not exist`);
+    }
+    // delete old data and insert new data
+    await this.prisma.materialRecipe.deleteMany({
+      where: { recipeId: id }
+    });
+    for (const material of updateRecipeDto.materials || []) {
+      await this.prisma.materialRecipe.create({
+        data: {
+          recipeId: id,
+          materialId: material.materialId,
+          consume: material.consume
+        }
+      });
+    }
+    return recipe;
   }
 
   async remove(id: number) {

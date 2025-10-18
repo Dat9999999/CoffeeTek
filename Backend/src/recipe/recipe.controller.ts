@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { ValidateRecipePipe } from './pipe/validate-recipe.pipe';
 
 @Controller('recipe')
 export class RecipeController {
-  constructor(private readonly recipeService: RecipeService) {}
+  constructor(private readonly recipeService: RecipeService) { }
 
   @Post()
-  create(@Body() createRecipeDto: CreateRecipeDto) {
+  create(@Body(new ValidateRecipePipe()) createRecipeDto: CreateRecipeDto) {
+    //need to check there no duplicate materialIds in createRecipeDto.materials
     return this.recipeService.create(createRecipeDto);
   }
 
@@ -24,6 +26,7 @@ export class RecipeController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
+
     return this.recipeService.update(+id, updateRecipeDto);
   }
 

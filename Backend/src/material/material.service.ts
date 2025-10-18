@@ -4,6 +4,9 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ImportMaterialDto } from './dto/import-material.dto';
 import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
+import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
+import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/extension';
 
 @Injectable()
 export class MaterialService {
@@ -11,7 +14,7 @@ export class MaterialService {
   constructor(private readonly prisma: PrismaService) {
 
   }
-  getAdjustmentHistory //store import history here if needed
+  async getAdjustmentHistory //store import history here if needed
     (query: GetAllAdjustmentHistoryDto) {
     const { type, date, materialId } = query;
     if (type !== 'import' && type !== 'consume') {
@@ -25,15 +28,33 @@ export class MaterialService {
     endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
     endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
-    return this.prisma.inventoryAdjustment.findMany({
+    const skip = query.size * (query.page - 1);
+
+    const data = await this.prisma.inventoryAdjustment.findMany({
       where: {
         adjustedAt: {
           gte: startDate,
           lt: endDate // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
         },
         materialId: materialId,
+      },
+      skip: skip,
+      take: query.size,
+      orderBy: {
+        adjustedAt: query.orderBy
       }
     });
+    const total = await this.prisma.inventoryAdjustment.count();
+    const response: ResponseGetAllDto<Prisma.InventoryAdjustmentGetPayload<{}>> = {
+      data: data,
+      meta: {
+        total: total,
+        page: query.page,
+        size: query.size,
+        totalPages: Math.ceil(total / query.size)
+      }
+    };
+    return response;
   }
   async create(createMaterialDto: CreateMaterialDto) {
     return this.prisma.material.create({

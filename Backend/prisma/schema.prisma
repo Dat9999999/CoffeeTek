@@ -117,6 +117,7 @@ model Product {
   is_multi_size  Boolean @default(false)
   product_detail String?
   price          Float?
+  isActive       Boolean @default(true)
 
   category_id Int? // FK có thể null
   category    Category? @relation(fields: [category_id], references: [id])

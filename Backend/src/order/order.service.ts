@@ -105,52 +105,65 @@ export class OrderService {
     // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
     const final_price = original_price;
     //create order
-    const order = await this.prisma.order.create({
-      data: {
-        customerPhone: createOrderDto.customerPhone,
-        original_price: original_price,
-        final_price: final_price,
-        note: createOrderDto.note,
-        staffId: parseInt(createOrderDto.staffId),
-        order_details: {
-          create: order_details.map(item => ({
-            product_name: item.product?.name,
-            quantity: parseInt(item.quantity),
-            unit_price: item.product?.price || 0,
 
-            product: {
-              connect: { id: parseInt(item.productId) }
-            },
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of order_details) {
 
-            size: item.sizeId
-              ? { connect: { id: parseInt(item.sizeId) } }
-              : undefined,
-
-            ToppingOrderDetail: item.toppingItems?.length
-              ? {
-                create: item.toppingItems.map(t => ({
-                  quantity: parseInt(t.quantity),
-                  unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
-                  topping: { connect: { id: parseInt(t.toppingId) } }
-                }))
-              }
-              : undefined,
-          }))
+        //throw error if product is inactive
+        if (!item.product || !item.product.isActive) {
+          const productNameOrId = item.product?.name ?? item.productId;
+          throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
         }
-      },
-      include: {
-        order_details: {
-          include: {
-            product: true,
-            size: true,
-            ToppingOrderDetail: {
-              include: {
-                topping: true
+      }
+
+      const order = await tx.order.create({
+        data: {
+          customerPhone: createOrderDto.customerPhone,
+          original_price: original_price,
+          final_price: final_price,
+          note: createOrderDto.note,
+          staffId: parseInt(createOrderDto.staffId),
+          order_details: {
+            create: order_details.map(item => ({
+              product_name: item.product?.name,
+              quantity: parseInt(item.quantity),
+              unit_price: item.product?.price || 0,
+
+              product: {
+                connect: { id: parseInt(item.productId) }
+              },
+
+              size: item.sizeId
+                ? { connect: { id: parseInt(item.sizeId) } }
+                : undefined,
+
+              ToppingOrderDetail: item.toppingItems?.length
+                ? {
+                  create: item.toppingItems.map(t => ({
+                    quantity: parseInt(t.quantity),
+                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
+                    topping: { connect: { id: parseInt(t.toppingId) } }
+                  }))
+                }
+                : undefined,
+            }))
+          }
+        },
+        include: {
+          order_details: {
+            include: {
+              product: true,
+              size: true,
+              ToppingOrderDetail: {
+                include: {
+                  topping: true
+                }
               }
             }
           }
         }
-      }
+      });
+
     });
     return createOrderDto;
   }

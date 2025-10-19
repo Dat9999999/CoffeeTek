@@ -19,6 +19,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { MaterialModule } from './material/material.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { UnitModule } from './unit/unit.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { InventoryModule } from './inventory/inventory.module';
     MaterialModule,
     RecipeModule,
     InventoryModule,
+    UnitModule,
   ],
 })
 export class AppModule { }

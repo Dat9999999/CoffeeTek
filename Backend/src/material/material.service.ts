@@ -20,7 +20,9 @@ export class MaterialService {
     endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
     endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
-    
+
+
+
     const consumeRecords = await this.prisma.inventoryAdjustment.findMany({
       where: {
         adjustedAt: {
@@ -36,12 +38,31 @@ export class MaterialService {
 
     // map materialId to consume
     let record = new Map<number, number>();
+
     for (const consumeRecord of consumeRecords) {
-      
+
       const materialId = consumeRecord.materialId;
       const currentConsume = consumeRecord.consume;
       const prev = record.get(materialId) ?? 0;
       record.set(materialId, prev + currentConsume);
+    }
+
+    // reupdate material realistic remain 
+    if (updateAdjustmentDto.items.length > 0) {
+      for (const item of updateAdjustmentDto.items) {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.material.update({
+            where: {
+              id: item.materailId
+            },
+            data: {
+              remain: item.realisticRemain
+            }
+          })
+        });
+        // if there is any change remove it out of stock adjustment
+        record.delete(item.materailId);
+      }
     }
     for (const materailId of record.keys()) {
       this.prisma.$transaction(async (tx) => {
@@ -62,9 +83,7 @@ export class MaterialService {
         });
       });
     }
-
-
-    return consumeRecords;
+    return JSON.stringify(record);
   }
 
   constructor(private readonly prisma: PrismaService) {

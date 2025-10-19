@@ -39,10 +39,9 @@ export interface Product {
     price?: number | null;
     category_id?: number | null;
 
-    // Quan hệ (được include trong Prisma)
     sizes?: ProductSize[];
-    optionValues?: ProductOptionValue[];
-    toppings?: ProductTopping[];
+    optionGroups?: OptionGroup[];
+    toppings?: Topping[];
     images?: ProductImage[];
     category?: Category | null;
 }
@@ -56,8 +55,6 @@ export interface ProductDetail {
     price?: number | null;
     category_id?: number | null;
 
-
-
     sizes?: ProductSize[];
     optionGroups?: OptionGroup[];
     toppings?: Topping[];
@@ -67,8 +64,9 @@ export interface ProductDetail {
 
 
 
-
+//
 // input DTOs
+//
 export interface ProductSizeInput {
     id: number;
     price: number;

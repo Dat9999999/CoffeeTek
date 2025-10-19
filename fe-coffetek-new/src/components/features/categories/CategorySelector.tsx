@@ -46,7 +46,7 @@ export function CategorySelector({
                 ? [
                     ...builtTree,
                     {
-                        title: "Chưa phân loại",
+                        title: "Others",
                         value: -1,
                         key: "uncategorized",
                         isLeaf: true,

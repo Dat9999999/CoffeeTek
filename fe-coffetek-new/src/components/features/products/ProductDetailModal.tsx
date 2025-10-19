@@ -278,13 +278,12 @@ export function ProductDetailModal({
                                             background: token.colorBgContainer,
                                         }}
                                     >
-                                        <Image
-                                            src={`${IMAGE_BASE_URL}/${t.image_name}`}
+                                        <AppImageSize
+                                            src={t.image_name}
                                             alt={t.name}
                                             width={60}
                                             height={60}
                                             style={{
-                                                objectFit: "cover",
                                                 borderRadius: token.borderRadius,
                                             }}
                                         />

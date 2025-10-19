@@ -6,6 +6,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDto } from './dto/get-all-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
+import { ProductDetailResponse } from 'src/common/dto/product';
 
 @Injectable()
 export class ProductsService {
@@ -69,7 +70,7 @@ export class ProductsService {
 
   }
 
-  async findAll(query: GetAllProductsDto) {
+  async findAll(query: GetAllProductsDto): Promise<ResponseGetAllDto<ProductDetailResponse>> {
     const {
       page,
       size,
@@ -81,7 +82,7 @@ export class ProductsService {
 
     let categoryIds: number[] | undefined;
 
-    // 🔹 Nếu có filter theo categoryId, lấy tất cả category con (nếu có)
+    //  Nếu có filter theo categoryId, lấy tất cả category con (nếu có)
     if (categoryId) {
       const parent = await this.prisma.category.findUnique({
         where: { id: categoryId },
@@ -109,16 +110,21 @@ export class ProductsService {
       ],
     };
 
-
-    const [data, total] = await Promise.all([
+    const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         include: {
-          sizes: true,
-          optionValues: true,
-          toppings: true,
-          images: true,
           category: true,
+          images: true,
+          sizes: { include: { size: true } },
+          toppings: { select: { topping: true } },
+          optionValues: {
+            include: {
+              option_value: {
+                include: { option_group: true },
+              },
+            },
+          },
         },
         orderBy: { [orderBy]: orderDirection },
         skip: (page - 1) * size,
@@ -127,7 +133,49 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    const res: ResponseGetAllDto<any> = {
+    // 🔹 Map dữ liệu sang ProductDetailResponse
+    const data: ProductDetailResponse[] = products.map((product) => {
+      const optionGroupsMap = new Map<number, any>();
+
+      for (const pov of product.optionValues) {
+        const group = pov.option_value.option_group;
+        const value = pov.option_value;
+
+        if (!optionGroupsMap.has(group.id)) {
+          optionGroupsMap.set(group.id, {
+            id: group.id,
+            name: group.name,
+            values: [],
+          });
+        }
+
+        optionGroupsMap.get(group.id).values.push({
+          id: value.id,
+          name: value.name,
+          sort_index: value.sort_index,
+        });
+      }
+
+      return {
+        id: product.id,
+        name: product.name,
+        is_multi_size: product.is_multi_size,
+        product_detail: product.product_detail,
+        price: product.price,
+        category_id: product.category_id,
+        category: product.category,
+        images: product.images,
+        sizes: product.sizes.map((s) => ({
+          price: s.price,
+          size: s.size,
+        })),
+        toppings: product.toppings.map((t) => t.topping),
+        optionGroups: Array.from(optionGroupsMap.values()),
+      };
+    });
+
+    // 🔹 Kết quả trả về
+    const res: ResponseGetAllDto<ProductDetailResponse> = {
       data,
       meta: {
         total,
@@ -136,12 +184,13 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+
     return res;
   }
 
 
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<ProductDetailResponse> {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -151,7 +200,7 @@ export class ProductsService {
           include: { size: true },
         },
         toppings: {
-          include: { topping: true },
+          select: { topping: true },
         },
         optionValues: {
           include: {
@@ -160,8 +209,11 @@ export class ProductsService {
             },
           },
         },
+
       },
     });
+
+
 
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
@@ -187,13 +239,7 @@ export class ProductsService {
       });
     }
 
-    const mappedToppings = product.toppings.map((pt) => ({
-      id: pt.topping.id,
-      name: pt.topping.name,
-      price: pt.topping.price,
-      image_name: pt.topping.image_name,
-      sort_index: pt.topping.sort_index,
-    }));
+
 
     return {
       id: product.id,
@@ -204,8 +250,11 @@ export class ProductsService {
       category_id: product.category_id,
       category: product.category,
       images: product.images,
-      sizes: product.sizes,
-      toppings: mappedToppings,
+      sizes: product.sizes.map((s) => ({
+        price: s.price,
+        size: s.size,
+      })),
+      toppings: product.toppings.map((t) => t.topping),
       optionGroups: Array.from(optionGroupsMap.values()),
     };
   }
@@ -352,5 +401,45 @@ export class ProductsService {
       deletedIds: existingIds,
     };
   }
+
+  async search(keyword: string) {
+    if (!keyword || keyword.trim() === '') {
+      return []; // không tìm gì thì trả mảng rỗng
+    }
+
+    const products = await this.prisma.product.findMany({
+      where: {
+        name: {
+          contains: keyword,
+          mode: 'insensitive', // không phân biệt hoa thường
+        },
+      },
+      include: {
+        images: {
+          take: 1, // chỉ lấy 1 ảnh đầu tiên
+        },
+        sizes: {
+          include: { size: true },
+          orderBy: { size: { sort_index: 'asc' } }
+        },
+        category: true,
+      },
+      take: 10, // giới hạn 10 kết quả
+      orderBy: { name: 'asc' },
+    });
+
+    return products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0]?.image_name ?? null,
+      categoryName: p.category?.name ?? null,
+      sizes: p.sizes.map((s) => ({
+        price: s.price,
+        size: s.size,
+      })),
+    }));
+  }
+
 
 }

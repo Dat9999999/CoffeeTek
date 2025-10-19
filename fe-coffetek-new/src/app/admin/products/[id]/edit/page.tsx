@@ -292,7 +292,7 @@ export default function UpdateProductPage() {
                                             {fields.map((field) => (
                                                 <Flex
                                                     key={field.key}
-                                                    align="center"
+                                                    align="flex-start"
                                                     gap="small"
                                                     style={{ marginBottom: token.marginSM }}
                                                     wrap
@@ -300,12 +300,12 @@ export default function UpdateProductPage() {
                                                     <Form.Item
                                                         {...field}
                                                         name={[field.name, 'size_id']}
-                                                        rules={[{ required: true }]}
+                                                        rules={[{ required: true, message: 'Please select size' }]}
                                                         style={{ marginBottom: 0 }}
                                                     >
                                                         <Select
                                                             placeholder="Select size"
-                                                            style={{ width: 160 }}
+                                                            // style={{ width: 160 }}
                                                             options={sizes.map((s) => ({
                                                                 label: s.name,
                                                                 value: s.id,
@@ -316,13 +316,19 @@ export default function UpdateProductPage() {
                                                     <Form.Item
                                                         {...field}
                                                         name={[field.name, 'price']}
-                                                        rules={[{ required: true }]}
+                                                        rules={[{ required: true, message: 'Please enter price' }]}
                                                         style={{ marginBottom: 0, flex: 1 }}
                                                     >
-                                                        <InputNumber
+                                                        <InputNumber<number>
                                                             min={0}
                                                             style={{ width: '100%' }}
                                                             placeholder="Enter price"
+
+                                                            formatter={(value) =>
+                                                                formatPrice(value, { includeSymbol: false })
+                                                            }
+                                                            parser={(value) => parsePrice(value)}
+                                                            onKeyDown={(e) => restrictInputToNumbers(e)}
                                                         />
                                                     </Form.Item>
 

@@ -68,6 +68,10 @@ export class CategoriesService {
                 orderBy: { [orderBy]: orderDirection },
                 skip: (page - 1) * size,
                 take: size,
+                include: {
+                    parent_category: true,
+                    subcategories: true
+                }
             }),
             this.prisma.category.count({ where }),
         ]);

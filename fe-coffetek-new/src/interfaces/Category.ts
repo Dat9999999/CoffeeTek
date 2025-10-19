@@ -4,6 +4,8 @@ export interface Category {
     sort_index: number;
     is_parent_category: boolean;
     parent_category_id?: number | null;
+    parent_category?: Category;
+    subcategories?: Category[];
 }
 
 export interface CategoryResponsePaging {

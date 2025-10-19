@@ -12,4 +12,10 @@ export class ImportMaterialDto {
     @Type(() => Number)
     @IsNumber({}, { message: "quantity must be a number" })
     quantity: number;
+
+    @IsNotEmpty()
+    @Type(() => Number)
+    @IsNumber({}, { message: "price per unit must be a number" })
+    pricePerUnit: number;
+
 }

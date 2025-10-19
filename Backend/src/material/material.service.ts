@@ -11,6 +11,10 @@ import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto
 
 @Injectable()
 export class MaterialService {
+
+  constructor(private readonly prisma: PrismaService) {
+
+  }
   async adjustMaterialStock(date: Date, updateAdjustmentDto: UpdateConsumeInventoryDto) {
     //update material consume if any change'
     let startDate = new Date(date);
@@ -86,9 +90,6 @@ export class MaterialService {
     return JSON.stringify(record);
   }
 
-  constructor(private readonly prisma: PrismaService) {
-
-  }
   async getAdjustmentHistory //store import history here if needed
     (query: GetAllAdjustmentHistoryDto) {
     const { type, date, materialId } = query;
@@ -140,29 +141,28 @@ export class MaterialService {
     });
   }
   async importMaterial(dto: ImportMaterialDto) {
-    const material = await this.prisma.material.update({
-      where: { id: dto.materialId },
-      data: {
-        remain: {
-          increment: dto.quantity
-        }
-      }
-    });
-
-    //send log import material here
-    Logger.log(`Import material id ${dto.materialId} with quantity ${dto.quantity}`, 'MaterialService');
-
 
     //store import history here if needed
     await this.prisma.materialImportation.create({
       data: {
         materialId: dto.materialId,
         importQuantity: dto.quantity,
+        pricePerUnit: dto.pricePerUnit,
         // ensure employeeId is provided to satisfy Prisma's required field;
         // cast dto to any to avoid compile errors if DTO type isn't updated yet
         employeeId: (dto as any).employeeId ?? 1, // employeeId = 1 is owner
       }
     });
+    const material = await this.prisma.material.update({
+      where: { id: dto.materialId },
+      data: {
+        remain: {
+          increment: dto.quantity,
+        }
+      }
+    });
+    // send log import material here
+    Logger.log(`Import material id ${dto.materialId} with quantity ${dto.quantity}`, `MaterialService, price per unit : ${dto.pricePerUnit}`);
     return material;
   }
   async findAll() {

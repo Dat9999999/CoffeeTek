@@ -334,6 +334,7 @@ model MaterialImportation {
   id             Int      @id @default(autoincrement())
   importQuantity Float
   Material       Material @relation(fields: [materialId], references: [id])
+  pricePerUnit   Float    @default(0)
 
   materialId Int
 

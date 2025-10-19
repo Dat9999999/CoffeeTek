@@ -11,6 +11,7 @@ export interface ProductDetailResponse {
     id: number;
     name: string;
     is_multi_size: boolean;
+    isActive?: boolean;
     product_detail: string | null;
     price: number | null;
     category_id: number | null;

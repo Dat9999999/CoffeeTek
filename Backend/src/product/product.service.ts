@@ -10,6 +10,12 @@ import { ProductDetailResponse } from 'src/common/dto/product';
 
 @Injectable()
 export class ProductsService {
+  async toggleActiveStatus(id: number, isActive: boolean) {
+    return await this.prisma.product.update({
+      where: { id },
+      data: { isActive },
+    });
+  }
   constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateProductDto) {

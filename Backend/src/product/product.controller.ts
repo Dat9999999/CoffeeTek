@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Query, Patch, ParseBoolPipe, ParseIntPipe } from '@nestjs/common';
 import { ProductsService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDto } from './dto/get-all-products.dto';
@@ -43,6 +43,10 @@ export class ProductsController {
   @Delete()
   removeMany(@Body() body: { ids: number[] }) {
     return this.productsService.removeMany(body.ids);
+  }
+  @Patch()
+  toggleActiveStatus(@Query('id', ParseIntPipe) id: number, @Query('isActive', ParseBoolPipe) isActive: boolean) {
+    return this.productsService.toggleActiveStatus(id, isActive);
   }
 
 }

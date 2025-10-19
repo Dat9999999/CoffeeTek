@@ -92,7 +92,7 @@ export class MaterialService {
 
   async getAdjustmentHistory //store import history here if needed
     (query: GetAllAdjustmentHistoryDto) {
-    const { type, date, materialId } = query;
+    const { type, date, materialId, orderBy = 'id', orderDirection = 'asc' } = query;
     if (type !== 'import' && type !== 'consume') {
       throw new NotFoundException(`Adjustment history type ${type} is not valid`);
     }
@@ -116,9 +116,7 @@ export class MaterialService {
       },
       skip: skip,
       take: query.size,
-      orderBy: {
-        adjustedAt: query.orderBy
-      }
+      orderBy: { [orderBy]: orderDirection },
     });
     const total = await this.prisma.inventoryAdjustment.count();
     const response: ResponseGetAllDto<Prisma.InventoryAdjustmentGetPayload<{}>> = {

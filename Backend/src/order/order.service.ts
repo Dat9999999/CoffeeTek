@@ -156,7 +156,7 @@ export class OrderService {
   }
 
   async findAll(query: GetAllOrderDto) {
-    const { page, size, searchName, searchStatus, orderBy = "id" } = query;
+    const { page, size, searchName, searchStatus, orderBy = 'id', orderDirection = 'asc' } = query;
     if (!page || !size) {
       throw new Error("page and size are required");
     }
@@ -171,7 +171,7 @@ export class OrderService {
         //for search by name, this name is customer's phone
         customerPhone: searchName ?? {}
       },
-      orderBy: { [orderBy]: "asc" }
+      orderBy: { [orderBy]: orderDirection },
     }), this.prisma.order.count()]);
     const res: ResponseGetAllDto<any> = {
       data: data,

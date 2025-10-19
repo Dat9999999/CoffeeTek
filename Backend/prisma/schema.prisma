@@ -28,7 +28,8 @@ model User {
 
   customerOrders Order[] @relation("CustomerOrders")
 
-  staffOrders Order[] @relation("StaffOrders")
+  staffOrders         Order[]               @relation("StaffOrders")
+  MaterialImportation MaterialImportation[]
 
   @@map("users")
 }
@@ -125,6 +126,7 @@ model Product {
   toppings     ProductTopping[] // 1 product có nhiều topping
   images       ProductImage[]
   orderDetails OrderDetail[]
+  Recipe       Recipe[]             @relation("RecipeProduct")
 
   @@map("products")
 }
@@ -136,8 +138,9 @@ model ProductSize {
   product_id Int
   size_id    Int
 
-  product Product @relation(fields: [product_id], references: [id])
-  size    Size    @relation(fields: [size_id], references: [id])
+  product     Product       @relation(fields: [product_id], references: [id])
+  size        Size          @relation(fields: [size_id], references: [id])
+  ConsumeSize ConsumeSize[]
 
   @@map("product_sizes")
 }
@@ -189,18 +192,21 @@ model Order {
   customerPhone String?
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
 
-  staffId         Int
-  Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
-  paymentDetailId Int?           @unique
-  PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  staffId             Int
+  Staff               User                  @relation("StaffOrders", fields: [staffId], references: [id])
+  paymentDetailId     Int?                  @unique
+  PaymentDetail       PaymentDetail?        @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  invoiceUrl          String?
+  InventoryAdjustment InventoryAdjustment[]
 
   @@map("orders")
 }
 
 model OrderDetail {
-  id         Int   @id @default(autoincrement())
-  quantity   Int
-  unit_price Float
+  id           Int     @id @default(autoincrement())
+  quantity     Int
+  unit_price   Float
+  product_name String?
 
   order_id Int
   order    Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
@@ -250,4 +256,104 @@ model PaymentDetail {
   Order             Order?        @relation("OrderPaymentDetail")
 
   @@map("payment_details")
+}
+
+model Unit {
+  id     Int    @id @default(autoincrement())
+  name   String
+  symbol String @unique
+  class  String // weight or volume or count
+
+  fromConversions UnitConversion[] @relation("FromUnit")
+  toConversions   UnitConversion[] @relation("ToUnit")
+  Material        Material[]
+
+  @@map("units")
+}
+
+model UnitConversion {
+  id        Int   @id @default(autoincrement())
+  from_unit Int
+  to_unit   Int
+  factor    Float
+  fromUnit  Unit  @relation("FromUnit", fields: [from_unit], references: [id])
+  toUnit    Unit  @relation("ToUnit", fields: [to_unit], references: [id])
+
+  @@unique([from_unit, to_unit])
+  @@map("unit_conversions")
+}
+
+model Recipe {
+  id             Int              @id @default(autoincrement())
+  product_id     Int              @unique
+  Product        Product          @relation("RecipeProduct", fields: [product_id], references: [id], onDelete: Cascade)
+  MaterialRecipe MaterialRecipe[]
+
+  @@map("recipes")
+}
+
+model Material {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique
+  remain              Float                 @default(0)
+  unitId              Int
+  Unit                Unit                  @relation(fields: [unitId], references: [id])
+  MaterialRecipe      MaterialRecipe[]
+  MaterialImportation MaterialImportation[]
+  InventoryAdjustment InventoryAdjustment[]
+
+  @@map("materials")
+}
+
+model MaterialRecipe {
+  id       Int    @id @default(autoincrement())
+  consume  Float
+  Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId Int
+
+  Material    Material      @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId  Int
+  ConsumeSize ConsumeSize[]
+
+  @@map("material_recipes")
+}
+
+model ConsumeSize {
+  id            Int         @id @default(autoincrement())
+  Size          ProductSize @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
+  productSizeId Int
+
+  additionalConsume Int
+  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id], onDelete: Cascade)
+  materialRecipeId  Int
+
+  @@map("consume_sizes")
+}
+
+model MaterialImportation {
+  id             Int      @id @default(autoincrement())
+  importQuantity Float
+  Material       Material @relation(fields: [materialId], references: [id])
+  pricePerUnit   Float    @default(0)
+
+  materialId Int
+
+  importDate DateTime @default(now())
+  Employee   User     @relation(fields: [employeeId], references: [id])
+  employeeId Int
+
+  @@map("material_importations")
+}
+
+model InventoryAdjustment {
+  id             Int      @id @default(autoincrement())
+  materialId     Int
+  Material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  consume        Float
+  reason         String
+  relatedOrderId Int?
+  relatedOrder   Order?   @relation(fields: [relatedOrderId], references: [id], onDelete: Cascade)
+  adjustedAt     DateTime @default(now())
+
+  @@map("inventory_adjustments")
 }

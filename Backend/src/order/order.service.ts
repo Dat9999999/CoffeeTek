@@ -11,11 +11,32 @@ import { VnpayService } from 'nestjs-vnpay';
 import { dateFormat, InpOrderAlreadyConfirmed, IpnFailChecksum, IpnInvalidAmount, IpnOrderNotFound, IpnSuccess, IpnUnknownError, ProductCode, VerifyReturnUrl, VnpLocale } from 'vnpay';
 import { json } from 'express';
 import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
+import { InvoiceService } from 'src/invoice/invoice.service';
+import { B2Service } from 'src/storage-file/b2.service';
+import { InventoryService } from 'src/inventory/inventory.service';
 
 @Injectable()
 export class OrderService {
 
-  constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService) { }
+
+  constructor(private prisma: PrismaService, private readonly vnpayService: VnpayService,
+    private readonly invoiceService: InvoiceService,
+    private readonly b2Service: B2Service,
+    private readonly inventoryService: InventoryService
+  ) { }
+  async getInvoice(orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        id: orderId
+      }
+    })
+    if (!order) throw new NotFoundException(`Not found invoice of order ${orderId}`)
+    if (!order.invoiceUrl) throw new BadRequestException(`order ${orderId} stills pending or canceled`)
+    const key = order.invoiceUrl;
+
+    return this.b2Service.getSignedUrl(key)
+
+  }
   async create(createOrderDto: CreateOrderDto) {
     const toppings = await this.prisma.topping.findMany({
       where: {
@@ -93,6 +114,7 @@ export class OrderService {
         staffId: parseInt(createOrderDto.staffId),
         order_details: {
           create: order_details.map(item => ({
+            product_name: item.product?.name,
             quantity: parseInt(item.quantity),
             unit_price: item.product?.price || 0,
 
@@ -222,15 +244,7 @@ export class OrderService {
     //create payment detail
     const paymentDetail = await this.createPaymentDetail(PaymentMethod.CASH, order.id, paymentDTO.amount, order.final_price);
 
-    return await this.prisma.order.update({
-      where: {
-        id: paymentDTO.orderId
-      },
-      data: {
-        status: OrderStatus.PAID,
-        paymentDetailId: paymentDetail.id
-      }
-    })
+    return this.updateStatus({ orderId: paymentDTO.orderId, status: OrderStatus.PAID }, paymentDetail.id);
   }
   async updateStatus(dto: UpdateOrderStatusDTO, paymentDetailId?: number) {
     const order = await this.prisma.order.update({
@@ -242,6 +256,46 @@ export class OrderService {
         paymentDetailId: paymentDetailId
       }
     })
+
+    //create invoice when user paid sucessfully
+    if (dto.status == OrderStatus.PAID) {
+      const items = await this.prisma.orderDetail.findMany({
+        where: {
+          order_id: order.id
+        }
+      })
+      const { key, pdfBuffer } = await this.invoiceService.createInvoice(order, items);
+
+      // store this pdf to private bucket
+      await this.b2Service.uploadFile(key, pdfBuffer, 'application/pdf', process.env.B2_PRIVATE_BUCKET);
+
+      // store invoice url into db 
+      await this.prisma.order.update({
+        where: {
+          id: dto.orderId
+        },
+        data: {
+          invoiceUrl: key
+        }
+      })
+    }
+    //adjust inventory  when order is completed
+    if (dto.status == OrderStatus.COMPLETED) {
+      const orderDetails = await this.prisma.orderDetail.findMany({
+        where: {
+          order_id: order.id
+        }
+      })
+      for (const detail of orderDetails) {
+        try {
+          const inventory_change = await this.inventoryService.adjustInventoryByOrderDetail(detail.product_id, detail.quantity, order.id, detail.size_id ?? undefined);
+          Logger.log(`Inventory adjusted: ${JSON.stringify(inventory_change)}`);
+        } catch (error: BadRequestException | NotFoundException | Error | any) {
+          Logger.error(`Failed to adjust inventory for order detail id ${detail.id}: ${error.message}`);
+          return error;
+        }
+      }
+    }
     return order;
   }
   async updateItems(id: number, updateItemsDto: UpdateOrderDto) {

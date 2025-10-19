@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { Role } from 'src/auth/decorator/role.decorator';
 import { ParseDatePipe } from 'src/common/pipe/binding-pipe/parse-date.pipe';
 import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
+import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto';
 
 @Controller('material')
 // @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -30,8 +31,9 @@ export class MaterialController {
   }
   @Put('adjustment-history/confirm')
   // Adjust material stock here if needed
-  adjustMaterialStock(@Query('date', new DefaultValuePipe(() => new ParseDatePipe())) date: Date, @Body() updateAdjustmentDto: any) {
-    // Implementation for adjusting material stockœ
+  adjustMaterialStock(@Query('date', new DefaultValuePipe(() => new ParseDatePipe())) date: Date, @Body() updateAdjustmentDto: UpdateConsumeInventoryDto) {
+    // Implementation for adjusting material stock
+    return this.materialService.adjustMaterialStock(date, updateAdjustmentDto);
   }
 
   @Get(':id')

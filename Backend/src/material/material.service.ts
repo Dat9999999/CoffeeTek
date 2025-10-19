@@ -7,9 +7,65 @@ import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaClient } from '@prisma/client/extension';
+import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto';
 
 @Injectable()
 export class MaterialService {
+  async adjustMaterialStock(date: Date, updateAdjustmentDto: UpdateConsumeInventoryDto) {
+    //update material consume if any change'
+    let startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
+
+    let endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
+    endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
+
+    
+    const consumeRecords = await this.prisma.inventoryAdjustment.findMany({
+      where: {
+        adjustedAt: {
+          gte: startDate,
+          lt: endDate
+        }
+      },
+      select: {
+        materialId: true,
+        consume: true
+      }
+    })
+
+    // map materialId to consume
+    let record = new Map<number, number>();
+    for (const consumeRecord of consumeRecords) {
+      
+      const materialId = consumeRecord.materialId;
+      const currentConsume = consumeRecord.consume;
+      const prev = record.get(materialId) ?? 0;
+      record.set(materialId, prev + currentConsume);
+    }
+    for (const materailId of record.keys()) {
+      this.prisma.$transaction(async (tx) => {
+        const totalConsume = record.get(materailId) ?? 0;
+        const remainToDeduct = await tx.material.findUnique({
+          where: {
+            id: materailId
+          }
+        });
+        const newRemain = (remainToDeduct?.remain ?? 0) - totalConsume;
+        await tx.material.update({
+          where: {
+            id: materailId
+          },
+          data: {
+            remain: newRemain >= 0 ? newRemain : 0
+          }
+        });
+      });
+    }
+
+
+    return consumeRecords;
+  }
 
   constructor(private readonly prisma: PrismaService) {
 

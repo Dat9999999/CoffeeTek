@@ -4,11 +4,11 @@ import { IsNotEmpty } from "class-validator";
 export class AdjustmentItemDto {
     @IsNotEmpty()
     @Type(() => Number)
-    recordIds: number;
+    materailId: number;
 
     @IsNotEmpty()
     @Type(() => Number)
-    consume: number;
+    realisticRemain: number;
 }
 
 export class UpdateConsumeInventoryDto {

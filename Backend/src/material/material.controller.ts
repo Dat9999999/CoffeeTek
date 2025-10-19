@@ -31,7 +31,7 @@ export class MaterialController {
   @Put('adjustment-history/confirm')
   // Adjust material stock here if needed
   adjustMaterialStock(@Query('date', new DefaultValuePipe(() => new ParseDatePipe())) date: Date, @Body() updateAdjustmentDto: any) {
-    // Implementation for adjusting material stock
+    // Implementation for adjusting material stockœ
   }
 
   @Get(':id')

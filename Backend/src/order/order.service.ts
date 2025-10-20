@@ -52,6 +52,13 @@ export class OrderService {
       createOrderDto.order_details.map(async (item) => {
         const product = await this.prisma.product.findUnique({
           where: { id: parseInt(item.productId) },
+          include: {
+            Recipe: {
+              include: {
+                MaterialRecipe: true
+              }
+            },
+          }
         });
 
         const toppings = item.toppingItems?.length
@@ -110,7 +117,14 @@ export class OrderService {
       for (const item of order_details) {
 
         //throw error if product is inactive
-        if (!item.product || !item.product.isActive) {
+        if (
+          !item.product ||
+          !item.product.isActive ||
+          !item.product.Recipe ||
+          item.product.Recipe.length === 0 ||
+          // if Recipe is an array, ensure at least one recipe has MaterialRecipe entries
+          item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
+        ) {
           const productNameOrId = item.product?.name ?? item.productId;
           throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
         }
@@ -141,7 +155,7 @@ export class OrderService {
                 ? {
                   create: item.toppingItems.map(t => ({
                     quantity: parseInt(t.quantity),
-                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
+                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0,
                     topping: { connect: { id: parseInt(t.toppingId) } }
                   }))
                 }

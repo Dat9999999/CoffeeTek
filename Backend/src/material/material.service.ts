@@ -93,9 +93,7 @@ export class MaterialService {
   async getAdjustmentHistory //store import history here if needed
     (query: GetAllAdjustmentHistoryDto) {
     const { type, date, materialId, orderBy = 'id', orderDirection = 'asc' } = query;
-    if (type !== 'import' && type !== 'consume') {
-      throw new NotFoundException(`Adjustment history type ${type} is not valid`);
-    }
+
     Logger.log(`Getting adjustment history for type ${type} and date ${date.toISOString()}`, 'MaterialService');
     let startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
@@ -105,20 +103,43 @@ export class MaterialService {
     endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
     const skip = query.size * (query.page - 1);
+    let data;
+    let total;
 
-    const data = await this.prisma.inventoryAdjustment.findMany({
-      where: {
-        adjustedAt: {
-          gte: startDate,
-          lt: endDate // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
-        },
-        materialId: materialId,
-      },
-      skip: skip,
-      take: query.size,
-      orderBy: { [orderBy]: orderDirection },
-    });
-    const total = await this.prisma.inventoryAdjustment.count();
+    switch (type) {
+      case 'consume':
+        data = await this.prisma.inventoryAdjustment.findMany({
+          where: {
+            adjustedAt: {
+              gte: startDate,
+              lt: endDate // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+            },
+            materialId: materialId,
+          },
+          skip: skip,
+          take: query.size,
+          orderBy: { [orderBy]: orderDirection },
+        });
+        total = await this.prisma.inventoryAdjustment.count();
+        break;
+      case 'import':
+        data = await this.prisma.materialImportation.findMany({
+          where: {
+            importDate: {
+              gte: startDate,
+              lt: endDate // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+            },
+            materialId: materialId,
+          },
+          skip: skip,
+          take: query.size,
+          orderBy: { [orderBy]: orderDirection },
+        });
+        total = await this.prisma.materialImportation.count();
+        break;
+      default:
+        throw new NotFoundException(`Adjustment history type ${type} is not valid`);
+    }
     const response: ResponseGetAllDto<Prisma.InventoryAdjustmentGetPayload<{}>> = {
       data: data,
       meta: {

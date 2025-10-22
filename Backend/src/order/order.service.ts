@@ -368,12 +368,26 @@ export class OrderService {
             where: { id: parseInt(item.sizeId) },
           })
           : null;
+        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
+        const productSizes = await this.prisma.productSize.findUnique({
+          where: {
+            id:
+              updateItemsDto?.order_details?.map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
+                .find(id => id !== undefined && id === sizeIdNum)
+          },
+          select: {
+            id: true,       // This is the ProductSize.id (from dto.sizeId)
+            price: true,    // This is the correct unit price
+            size_id: true   // This is the Size.id (for the OrderDetail relation)
+          }
+        });
 
         return {
           ...item, // giữ lại quantity, productId, toppingItems, sizeId...
           product,
           toppings,
           size,
+          productSizes
         };
       })
     );
@@ -419,7 +433,7 @@ export class OrderService {
           order_details: {
             create: order_details.map(item => ({
               quantity: parseInt(item.quantity),
-              unit_price: item.product?.price || 0,
+              unit_price: item.productSizes?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }

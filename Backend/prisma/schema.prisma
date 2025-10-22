@@ -31,6 +31,7 @@ model User {
   staffOrders         Order[]               @relation("StaffOrders")
   MaterialImportation MaterialImportation[]
   CustomerPoint       CustomerPoint?
+  Voucher             Voucher[]
 
   @@map("users")
 }
@@ -388,7 +389,6 @@ model Promotion {
   start_date       DateTime
   end_date         DateTime
   is_active        Boolean            @default(true)
-  Voucher          Voucher[]
   ProductPromotion ProductPromotion[]
 
   @@map("promotions")
@@ -400,20 +400,21 @@ model ProductPromotion {
   promotionId Int
   Product     Product   @relation(fields: [productId], references: [id])
   Promotion   Promotion @relation(fields: [promotionId], references: [id])
+  new_price   Float     @default(0)
 
   @@unique([productId, promotionId])
   @@map("product_promotions")
 }
 
 model Voucher {
-  id                  Int       @id @default(autoincrement())
-  code                String    @unique
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique
   discount_percentage Float
   valid_from          DateTime
   valid_to            DateTime
-  is_active           Boolean   @default(true)
-  Promotion           Promotion @relation(fields: [promotionId], references: [id])
-  promotionId         Int
+  is_active           Boolean  @default(true)
+  userId              Int?
+  User                User?    @relation(fields: [userId], references: [id])
 
   @@map("vouchers")
 }

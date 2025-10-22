@@ -72,6 +72,7 @@ model OptionValue {
   option_group       OptionGroup          @relation(fields: [option_group_id], references: [id])
   option_group_id    Int
   ProductOptionValue ProductOptionValue[]
+  orderDetails       OrderDetail[]
 
   @@map("option_values")
 }
@@ -151,8 +152,9 @@ model ProductOptionValue {
   product_id      Int
   option_value_id Int
 
-  product      Product     @relation(fields: [product_id], references: [id])
-  option_value OptionValue @relation(fields: [option_value_id], references: [id])
+  product       Product     @relation(fields: [product_id], references: [id])
+  option_value  OptionValue @relation(fields: [option_value_id], references: [id])
+  orderDetailId Int?
 
   @@map("product_option_values")
 }
@@ -219,6 +221,7 @@ model OrderDetail {
   size_id            Int?
   size               Size?                @relation(fields: [size_id], references: [id])
   ToppingOrderDetail ToppingOrderDetail[]
+  optionValue        OptionValue[]
 
   @@map("order_details")
 }

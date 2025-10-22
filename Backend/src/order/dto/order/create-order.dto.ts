@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsPhoneNumber } from "class-validator";
+import { IsNotEmpty, IsOptional, IsPhoneNumber } from "class-validator";
 import { orderItemDTO } from "./item-order.dto";
 import { Type } from "class-transformer";
 
@@ -15,6 +15,8 @@ export class CreateOrderDto {
     staffId: string
     note?: string
 
-    // paymentMethod: 'CASH' | 'CARD' | 'MOMO'
+    
+
+
 
 }

@@ -175,8 +175,16 @@ export class OrderService {
                   }))
                 }
                 : undefined,
+              optionValue: createOrderDto.order_details.map(i => i.optionId)?.length
+                ? {
+                  connect: createOrderDto.order_details
+                    .flatMap(i => i.optionId)
+                    .map(id => ({ id: parseInt(id) }))
+                }
+                : undefined,
             }))
-          }
+          },
+
         },
         include: {
           order_details: {
@@ -189,9 +197,11 @@ export class OrderService {
                 }
               }
             }
-          }
-        }
+          },
+        },
+
       });
+
 
     });
     return createOrderDto;
@@ -450,6 +460,13 @@ export class OrderService {
                     unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
                     topping: { connect: { id: parseInt(t.toppingId) } }
                   }))
+                }
+                : undefined,
+              optionValue: updateItemsDto?.order_details?.map(i => i.optionId)?.length
+                ? {
+                  connect: updateItemsDto?.order_details
+                    .flatMap(i => i.optionId)
+                    .map(id => ({ id: parseInt(id) }))
                 }
                 : undefined,
             }))

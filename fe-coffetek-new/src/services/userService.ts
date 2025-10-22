@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import type { User, UserDetail } from "@/interfaces";
-import type { GenderEnum } from "@/interfaces";
+import type { GenderEnum } from "@/enum";
 
 /**
  * ✅ Kiểu dữ liệu dùng cho query get-all

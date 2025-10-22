@@ -171,7 +171,7 @@ export function ProductDetailModal({
                                 marginBottom: token.marginLG,
                             }}
                         >
-                            Chưa có hình ảnh nào.
+                            No image founded
                         </div>
                     )}
 
@@ -227,7 +227,7 @@ export function ProductDetailModal({
                             >
                                 {product.sizes.map((s) => (
                                     <div
-                                        key={s.id}
+                                        key={s.size.id}
                                         style={{
                                             display: "flex",
                                             justifyContent: "space-between",

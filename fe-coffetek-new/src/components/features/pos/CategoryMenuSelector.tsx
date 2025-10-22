@@ -10,14 +10,16 @@ interface CategorySelectorProps {
     showUncategorized?: boolean;
     /** Callback khi người dùng chọn category */
     onSelect?: (categoryId: number | null) => void;
+    style?: React.CSSProperties;
 }
 
 const CategoryMenuSelector = ({
     showUncategorized = true,
     onSelect,
+    style
 }: CategorySelectorProps) => {
     const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
     const fetchCategories = async () => {
@@ -99,9 +101,10 @@ const CategoryMenuSelector = ({
     return (
         <div>
             {loading ? (
-                <Skeleton.Node active style={{ height: 46 }} />
+                <Skeleton.Input active block style={{ height: "32px", ...style }} />
             ) : (
                 <Menu
+                    style={style}
                     mode="horizontal"
                     items={buildMenuItems()}
                     onClick={onClick}

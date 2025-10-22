@@ -36,6 +36,22 @@ import { ProductImageUploader, ProductImageState } from '@/components/features/p
 
 const { Title } = Typography;
 
+// export interface Product {
+//     id: number;
+//     name: string;
+//     is_multi_size: boolean;
+//     product_detail?: string | null;
+//     price?: number | null;
+//     category_id?: number | null;
+
+//     sizes?: ProductSize[];
+//     optionGroups?: OptionGroup[];
+//     toppings?: Topping[];
+//     images?: ProductImage[];
+//     category?: Category | null;
+// }
+
+
 export default function UpdateProductPage() {
     const router = useRouter();
     const { id } = useParams();
@@ -43,6 +59,11 @@ export default function UpdateProductPage() {
     const { token } = theme.useToken();
 
     const [form] = Form.useForm();
+
+    const sizeIdsValue = Form.useWatch("sizeIds", form);
+    const selectedSizeIds =
+        sizeIdsValue?.map((s: any) => s?.size_id).filter(Boolean) || [];
+
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [isMultiSize, setIsMultiSize] = useState(false);
@@ -51,7 +72,6 @@ export default function UpdateProductPage() {
     const [selectedOptionGroups, setSelectedOptionGroups] = useState<OptionGroup[]>([]);
     const [toppingModalOpen, setToppingModalOpen] = useState(false);
     const [optionGroupModalOpen, setOptionGroupModalOpen] = useState(false);
-
     // --- Hình ảnh ---
     const [productImages, setProductImages] = useState<ProductImageState[]>([]);
 
@@ -231,6 +251,8 @@ export default function UpdateProductPage() {
         );
     }
 
+
+
     return (
         <div>
             <Flex align="center" justify="space-between" wrap style={{ marginBottom: 24 }}>
@@ -285,76 +307,100 @@ export default function UpdateProductPage() {
                                 </Form.Item>
                             )}
 
-                            {isMultiSize && (
-                                <Form.List name="sizeIds">
-                                    {(fields, { add, remove }) => (
-                                        <>
-                                            {fields.map((field) => (
-                                                <Flex
-                                                    key={field.key}
-                                                    align="flex-start"
-                                                    gap="small"
-                                                    style={{ marginBottom: token.marginSM }}
-                                                    wrap
-                                                >
-                                                    <Form.Item
-                                                        {...field}
-                                                        name={[field.name, 'size_id']}
-                                                        rules={[{ required: true, message: 'Please select size' }]}
-                                                        style={{ marginBottom: 0 }}
-                                                    >
-                                                        <Select
-                                                            placeholder="Select size"
-                                                            // style={{ width: 160 }}
-                                                            options={sizes.map((s) => ({
-                                                                label: s.name,
-                                                                value: s.id,
-                                                            }))}
-                                                        />
-                                                    </Form.Item>
+                            {isMultiSize && (() => {
 
-                                                    <Form.Item
-                                                        {...field}
-                                                        name={[field.name, 'price']}
-                                                        rules={[{ required: true, message: 'Please enter price' }]}
-                                                        style={{ marginBottom: 0, flex: 1 }}
-                                                    >
-                                                        <InputNumber<number>
-                                                            min={0}
-                                                            style={{ width: '100%' }}
-                                                            placeholder="Enter price"
 
-                                                            formatter={(value) =>
-                                                                formatPrice(value, { includeSymbol: false })
-                                                            }
-                                                            parser={(value) => parsePrice(value)}
-                                                            onKeyDown={(e) => restrictInputToNumbers(e)}
-                                                        />
-                                                    </Form.Item>
+                                return (
+                                    <Form.List name="sizeIds">
+                                        {(fields, { add, remove }) => (
+                                            <>
+                                                {fields.map((field) => {
+                                                    const currentSizeId = form.getFieldValue([
+                                                        "sizeIds",
+                                                        field.name,
+                                                        "size_id",
+                                                    ]);
 
+                                                    const options = sizes
+                                                        .filter(
+                                                            (s) =>
+                                                                !selectedSizeIds.includes(s.id) ||
+                                                                s.id === currentSizeId
+                                                        )
+                                                        .map((s) => ({
+                                                            label: s.name,
+                                                            value: s.id,
+                                                        }));
+
+                                                    return (
+                                                        <Flex
+                                                            key={field.key}
+                                                            align="flex-start"
+                                                            gap="small"
+                                                            style={{ marginBottom: token.marginSM }}
+                                                            wrap
+                                                        >
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, "size_id"]}
+                                                                rules={[{ required: true, message: "Please select size" }]}
+                                                                style={{ marginBottom: 0 }}
+                                                            >
+                                                                <Select
+                                                                    placeholder="Select size"
+                                                                    style={{ minWidth: 100 }}
+                                                                    options={options}
+                                                                />
+                                                            </Form.Item>
+
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, "price"]}
+                                                                rules={[{ required: true, message: "Please enter price" }]}
+                                                                style={{ marginBottom: 0, flex: 1 }}
+                                                            >
+                                                                <InputNumber<number>
+                                                                    min={0}
+                                                                    style={{ width: "100%" }}
+                                                                    placeholder="Enter price"
+                                                                    formatter={(value) =>
+                                                                        formatPrice(value, { includeSymbol: false })
+                                                                    }
+                                                                    parser={(value) => parsePrice(value)}
+                                                                    onKeyDown={(e) => restrictInputToNumbers(e)}
+                                                                />
+                                                            </Form.Item>
+
+                                                            <Button
+                                                                type="text"
+                                                                icon={<DeleteOutlined />}
+                                                                danger
+                                                                onClick={() => remove(field.name)}
+                                                            />
+                                                        </Flex>
+                                                    );
+                                                })}
+
+                                                <Form.Item>
                                                     <Button
-                                                        type="text"
-                                                        icon={<DeleteOutlined />}
-                                                        danger
-                                                        onClick={() => remove(field.name)}
-                                                    />
-                                                </Flex>
-                                            ))}
+                                                        type="dashed"
+                                                        onClick={() => add()}
+                                                        block
+                                                        icon={<PlusOutlined />}
+                                                        disabled={
+                                                            sizes.filter((s) => !selectedSizeIds.includes(s.id)).length === 0
+                                                        }
+                                                    >
+                                                        Add size
+                                                    </Button>
+                                                </Form.Item>
+                                            </>
+                                        )}
+                                    </Form.List>
+                                );
+                            })()}
 
-                                            <Form.Item>
-                                                <Button
-                                                    type="dashed"
-                                                    onClick={() => add()}
-                                                    block
-                                                    icon={<PlusOutlined />}
-                                                >
-                                                    Add size
-                                                </Button>
-                                            </Form.Item>
-                                        </>
-                                    )}
-                                </Form.List>
-                            )}
+
 
                             <Form.Item name="categoryId" label="Category">
                                 <CategorySelector placeholder="Select category" />

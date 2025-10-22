@@ -6,26 +6,35 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDto } from './dto/get-all-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
-import { ProductDetailResponse } from 'src/common/dto/product';
+import { ProductDetailResponse } from './dto/response.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateProductDto) {
-    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds, categoryId } = dto;
+    const {
+      name,
+      is_multi_size,
+      product_detail,
+      price,
+      sizeIds,
+      optionValueIds,
+      toppingIds,
+      categoryId,
+    } = dto;
 
     // Validate logic
     if (!is_multi_size && (price === undefined || price === null)) {
-      throw new Error("Product must have a price when is_multi_size = false");
+      throw new Error('Product must have a price when is_multi_size = false');
     }
 
     if (is_multi_size) {
       if (!sizeIds || sizeIds.length === 0) {
-        throw new Error("Product must have sizes when is_multi_size = true");
+        throw new Error('Product must have sizes when is_multi_size = true');
       }
       if (price !== undefined && price !== null) {
-        throw new Error("Product price must be null when using multi size");
+        throw new Error('Product price must be null when using multi size');
       }
     }
 
@@ -35,42 +44,46 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
-        category: categoryId
-          ? { connect: { id: categoryId } }
-          : undefined,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         sizes: sizeIds
           ? {
-            create: sizeIds.map((s) => ({
-              size_id: s.id,
-              price: s.price,
-            })),
-          }
+              create: sizeIds.map((s) => ({
+                size_id: s.id,
+                price: s.price,
+              })),
+            }
           : undefined,
         optionValues: optionValueIds
           ? {
-            create: optionValueIds.map((id) => ({ option_value_id: id })),
-          }
+              create: optionValueIds.map((id) => ({ option_value_id: id })),
+            }
           : undefined,
         toppings: toppingIds
           ? {
-            create: toppingIds.map((id) => ({ topping_id: id })),
-          }
+              create: toppingIds.map((id) => ({ topping_id: id })),
+            }
           : undefined,
         images: dto.images
           ? {
-            create: dto.images.map((img) => ({
-              image_name: img.image_name,
-              sort_index: img.sort_index,
-            })),
-          }
+              create: dto.images.map((img) => ({
+                image_name: img.image_name,
+                sort_index: img.sort_index,
+              })),
+            }
           : undefined,
       },
-      include: { sizes: true, optionValues: true, toppings: true, images: true },
+      include: {
+        sizes: true,
+        optionValues: true,
+        toppings: true,
+        images: true,
+      },
     });
-
   }
 
-  async findAll(query: GetAllProductsDto): Promise<ResponseGetAllDto<ProductDetailResponse>> {
+  async findAll(
+    query: GetAllProductsDto,
+  ): Promise<ResponseGetAllDto<ProductDetailResponse>> {
     const {
       page,
       size,
@@ -93,8 +106,6 @@ export class ProductsService {
         // Gộp category cha + con
         categoryIds = [parent.id, ...parent.subcategories.map((c) => c.id)];
       }
-
-
     }
 
     const where: Prisma.ProductWhereInput = {
@@ -175,7 +186,8 @@ export class ProductsService {
     });
 
     // 🔹 Kết quả trả về
-    const res: ResponseGetAllDto<ProductDetailResponse> = {
+
+    return {
       data,
       meta: {
         total,
@@ -184,11 +196,7 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
-
-    return res;
   }
-
-
 
   async findOne(id: number): Promise<ProductDetailResponse> {
     const product = await this.prisma.product.findUnique({
@@ -209,11 +217,8 @@ export class ProductsService {
             },
           },
         },
-
       },
     });
-
-
 
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
@@ -239,8 +244,6 @@ export class ProductsService {
       });
     }
 
-
-
     return {
       id: product.id,
       name: product.name,
@@ -259,13 +262,17 @@ export class ProductsService {
     };
   }
 
-
-
-
-
   async update(id: number, dto: UpdateProductDto) {
-    const { name, is_multi_size, product_detail, price, sizeIds, optionValueIds, toppingIds, categoryId } = dto;
-
+    const {
+      name,
+      is_multi_size,
+      product_detail,
+      price,
+      sizeIds,
+      optionValueIds,
+      toppingIds,
+      categoryId,
+    } = dto;
 
     const existing = await this.prisma.product.findUnique({
       where: { id },
@@ -273,22 +280,22 @@ export class ProductsService {
     });
 
     if (!existing) {
-      throw new NotFoundException("Product not found");
+      throw new NotFoundException('Product not found');
     }
 
     const finalIsMultiSize = is_multi_size ?? existing.is_multi_size;
 
     // Validate logic
     if (!finalIsMultiSize && (price === undefined || price === null)) {
-      throw new Error("Product must have a price when is_multi_size = false");
+      throw new Error('Product must have a price when is_multi_size = false');
     }
 
     if (finalIsMultiSize) {
       if (!sizeIds || sizeIds.length === 0) {
-        throw new Error("Product must have sizes when is_multi_size = true");
+        throw new Error('Product must have sizes when is_multi_size = true');
       }
       if (price !== undefined && price !== null) {
-        throw new Error("Product price must be null when using multi size");
+        throw new Error('Product price must be null when using multi size');
       }
     }
 
@@ -299,49 +306,44 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
-        category: categoryId
-          ? { connect: { id: categoryId } }
-          : undefined,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         // Cập nhật quan hệ (topping, option, size)
         sizes: sizeIds
           ? {
-            deleteMany: {}, // xoá toàn bộ cũ
-            create: sizeIds.map((s) => ({
-              size_id: s.id,
-              price: s.price,
-            })),
-          }
+              deleteMany: {}, // xoá toàn bộ cũ
+              create: sizeIds.map((s) => ({
+                size_id: s.id,
+                price: s.price,
+              })),
+            }
           : undefined,
         optionValues: optionValueIds
           ? {
-            deleteMany: {},
-            create: optionValueIds.map((id) => ({ option_value_id: id })),
-          }
+              deleteMany: {},
+              create: optionValueIds.map((id) => ({ option_value_id: id })),
+            }
           : undefined,
         toppings: toppingIds
           ? {
-            deleteMany: {},
-            create: toppingIds.map((id) => ({ topping_id: id })),
-          }
+              deleteMany: {},
+              create: toppingIds.map((id) => ({ topping_id: id })),
+            }
           : undefined,
         images: dto.images
           ? {
-            deleteMany: {},
-            create: dto.images.map((img) => ({
-              image_name: img.image_name,
-              sort_index: img.sort_index,
-            })),
-          }
+              deleteMany: {},
+              create: dto.images.map((img) => ({
+                image_name: img.image_name,
+                sort_index: img.sort_index,
+              })),
+            }
           : undefined,
-
       },
       include: { sizes: true, optionValues: true, toppings: true },
     });
   }
 
-
   async remove(id: number) {
-
     const existing = await this.prisma.product.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException(`Product with id ${id} not found`);
@@ -349,7 +351,9 @@ export class ProductsService {
 
     // delete related records
     await this.prisma.productSize.deleteMany({ where: { product_id: id } });
-    await this.prisma.productOptionValue.deleteMany({ where: { product_id: id } });
+    await this.prisma.productOptionValue.deleteMany({
+      where: { product_id: id },
+    });
     await this.prisma.productTopping.deleteMany({ where: { product_id: id } });
     await this.prisma.productImage.deleteMany({ where: { product_id: id } });
 
@@ -358,7 +362,7 @@ export class ProductsService {
 
   async removeMany(ids: number[]) {
     if (!ids || ids.length === 0) {
-      throw new Error("No product IDs provided for deletion");
+      throw new Error('No product IDs provided for deletion');
     }
 
     // Kiểm tra sản phẩm tồn tại
@@ -368,7 +372,7 @@ export class ProductsService {
     });
 
     if (existingProducts.length === 0) {
-      throw new NotFoundException("No valid product IDs found");
+      throw new NotFoundException('No valid product IDs found');
     }
 
     const existingIds = existingProducts.map((p) => p.id);
@@ -401,45 +405,4 @@ export class ProductsService {
       deletedIds: existingIds,
     };
   }
-
-  async search(keyword: string) {
-    if (!keyword || keyword.trim() === '') {
-      return []; // không tìm gì thì trả mảng rỗng
-    }
-
-    const products = await this.prisma.product.findMany({
-      where: {
-        name: {
-          contains: keyword,
-          mode: 'insensitive', // không phân biệt hoa thường
-        },
-      },
-      include: {
-        images: {
-          take: 1, // chỉ lấy 1 ảnh đầu tiên
-        },
-        sizes: {
-          include: { size: true },
-          orderBy: { size: { sort_index: 'asc' } }
-        },
-        category: true,
-      },
-      take: 10, // giới hạn 10 kết quả
-      orderBy: { name: 'asc' },
-    });
-
-    return products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      image: p.images?.[0]?.image_name ?? null,
-      categoryName: p.category?.name ?? null,
-      sizes: p.sizes.map((s) => ({
-        price: s.price,
-        size: s.size,
-      })),
-    }));
-  }
-
-
 }

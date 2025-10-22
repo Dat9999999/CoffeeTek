@@ -1,94 +1,137 @@
 import { Product } from "@/interfaces";
 import { SearchOutlined } from "@ant-design/icons";
-import { Select, SelectProps } from "antd";
-import { useState } from "react";
-
+import { Empty, Select, Skeleton, Spin, theme } from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { productService } from "@/services";
+import debounce from "lodash/debounce";
+import { ProductOptionItem } from "./ProductOptionItem";
 
 interface ProductSearchSelectorProps {
     onSelect?: (product: Product | null) => void;
     style?: React.CSSProperties;
 }
 
-let timeout: ReturnType<typeof setTimeout> | null = null;
-let currentValue: string = '';
+interface ProductValue {
+    label: string;
+    value: number;
+    product: Product;
+}
 
-const fetchData = async (
-    value: string,
-    callback: (data: { value: string; text: string }[]) => void
-) => {
-    if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-    }
 
-    currentValue = value;
-
-    const fake = async () => {
-        try {
-            const response = await fetch(`https://api.github.com/search/users?q=${value}`);
-            const { items } = await response.json();
-
-            if (currentValue === value && Array.isArray(items)) {
-                const data = items.map((user: any) => ({
-                    value: user.login,
-                    text: user.login,
-                }));
-                callback(data);
-            } else {
-                callback([]);
-            }
-        } catch (err) {
-            console.error("Lỗi khi fetch:", err);
-            callback([]);
-        }
-    };
-
-    if (value) {
-        timeout = setTimeout(fake, 400);
-    } else {
-        callback([]);
+const fetchProducts = async (search: string): Promise<ProductValue[]> => {
+    try {
+        search = search.trim();
+        if (search === "") return [];
+        const response = await productService.getAll({
+            search,
+            size: 10,
+            page: 1,
+            orderBy: "name",
+            orderDirection: "asc",
+        });
+        const products = response.data || [];
+        return products.map((product: Product) => ({
+            label: product.name,
+            value: product.id,
+            product,
+        }));
+    } catch (err) {
+        console.error("ERROR:", err);
+        return [];
     }
 };
 
-
-
 export const ProductSearchSelector = ({
     onSelect,
-    style
+    style,
 }: ProductSearchSelectorProps) => {
+    const [fetching, setFetching] = useState(false);
+    const [options, setOptions] = useState<ProductValue[]>([]);
+    const [mounted, setMounted] = useState(false);
+    const searchTextRef = useRef<string>("");
+    const isEmptyRef = useRef<boolean>(false);
+    const fetchRef = useRef(0);
 
-    const [data, setData] = useState<SelectProps['options']>([]);
-    const [value, setValue] = useState<string>();
+    const debounceFetcher = useMemo(() => {
+        const loadOptions = async (searchValue: string) => {
+            searchTextRef.current = searchValue.trim();
+            fetchRef.current += 1;
+            const fetchId = fetchRef.current;
+            setOptions([]);
+            setFetching(true);
 
-    const handleSearch = (newValue: string) => {
-        fetchData(newValue, setData);
+            const newOptions = await fetchProducts(searchValue);
+            if (fetchId !== fetchRef.current) {
+                return;
+            }
+            setOptions(newOptions);
+            isEmptyRef.current = newOptions.length === 0 && searchTextRef.current !== "";
+            setFetching(false);
+        };
+        return debounce(loadOptions, 300);
+    }, []);
+
+    const handleChange = (newValue: ProductValue) => {
+        // Gọi callback onSelect
+        if (onSelect) {
+            onSelect(newValue ? newValue.product : null);
+        }
+        // Reset trạng thái
+        searchTextRef.current = ""; // Xóa văn bản tìm kiếm
+        setOptions([]); // Xóa danh sách options
+        isEmptyRef.current = false; // Đặt lại trạng thái isEmpty
+        setFetching(false); // Đặt lại trạng thái fetching
     };
 
-    const handleChange = (newValue: string) => {
-        setValue(newValue);
-    };
+    useEffect(() => {
+        const timer = setTimeout(() => setMounted(true), 150);
+        return () => clearTimeout(timer);
+    }, []);
 
-
+    if (!mounted) {
+        return <Skeleton.Input active block style={{ height: "32px", ...style }} />;
+    }
 
     return (
-        <>
-            <Select
-                showSearch
-                value={value}
-                placeholder="Search"
-                style={style}
-                defaultActiveFirstOption={false}
-                filterOption={false}
-                suffixIcon={<SearchOutlined />}
-                onSearch={handleSearch}
-                onChange={handleChange}
-                notFoundContent={null}
-                options={(data || []).map((d) => ({
-                    value: d.value,
-                    label: d.text,
-                }))}
-            />
-        </>
+        <Select
+            showSearch
+            labelInValue
+            value={null}
+            placeholder="Search..."
+            style={style}
+            filterOption={false}
+            onSearch={(val) => {
+                searchTextRef.current = val;
+                if (val.trim() === "") {
+                    setOptions([]);
+                    isEmptyRef.current = false;
+                    setFetching(false);
+                    return;
+                }
+                debounceFetcher(val);
+            }}
+            onChange={handleChange}
+            notFoundContent={
+                fetching ? (
+                    <Spin style={{ margin: "8px auto", display: "block" }} size="small" />
+                ) : searchTextRef.current.trim() && !fetching && isEmptyRef.current ? (
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Not Found" />
+                ) : null
+            }
+            suffixIcon={<SearchOutlined />}
+            options={options.map((option) => ({
+                label: option.label,
+                value: option.value,
+                product: option.product,
+            }))}
 
+            optionRender={(option) => (
+                <ProductOptionItem
+                    label={String(option.label)}
+                    product={option.data.product}
+                />
+            )}
+
+        />
     );
 };

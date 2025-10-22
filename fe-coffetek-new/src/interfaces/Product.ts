@@ -1,65 +1,43 @@
-import { Category } from "./Category";
-import { OptionGroup } from "./OptionGroup";
+
+import { OptionValue } from "./OptionValue";
 import { Size } from "./Size";
-import { Topping } from "./Topping";
+import { OptionGroup, Product, Topping } from "./types";
+import { v4 as uuidv4 } from "uuid";
 
-export interface ProductSize {
-    id: number;
-    product_id: number;
-    size_id: number;
-    price: number;
+export interface ProductPosItem {
+    posItemId: string;
+    product: Product;
+    toppings?: {
+        topping: Topping;
+        toppingQuantity: number;
+    }[];
+    optionsSelected?: {
+        optionGroup: OptionGroup;
+        optionValue: OptionValue;
+    }[];
     size?: Size;
-}
-
-export interface ProductOptionValue {
-    id: number;
-    product_id: number;
-    option_value_id: number;
-}
-
-export interface ProductTopping {
-    id: number;
-    product_id: number;
-    topping_id: number;
-}
-
-export interface ProductImage {
-    id: number;
-    product_id: number;
-    image_name: string;
-    sort_index: number;
+    quantity: number;
 }
 
 
-export interface Product {
-    id: number;
-    name: string;
-    is_multi_size: boolean;
-    product_detail?: string | null;
-    price?: number | null;
-    category_id?: number | null;
-
-    sizes?: ProductSize[];
-    optionGroups?: OptionGroup[];
-    toppings?: Topping[];
-    images?: ProductImage[];
-    category?: Category | null;
+export interface GetAllProductResponse {
+    data: Product[];
+    meta: {
+        meta: {
+            total: number,
+            page: number,
+            size: number,
+            totalPages: number
+        }
+    }
 }
 
 
-export interface ProductDetail {
-    id: number;
-    name: string;
-    is_multi_size: boolean;
-    product_detail?: string | null;
-    price?: number | null;
-    category_id?: number | null;
 
-    sizes?: ProductSize[];
-    optionGroups?: OptionGroup[];
-    toppings?: Topping[];
-    images?: ProductImage[];
-    category?: Category | null;
+
+
+export interface ProductDetail extends Product {
+
 }
 
 

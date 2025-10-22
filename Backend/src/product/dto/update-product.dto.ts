@@ -1,11 +1,4 @@
-import {
-  IsBoolean,
-  IsOptional,
-  IsString,
-  ValidateIf,
-  IsArray,
-  IsNumber,
-} from 'class-validator';
+import { IsBoolean, IsOptional, IsString, ValidateIf, IsArray, IsNumber, IsNotEmpty } from "class-validator";
 
 export class UpdateProductDto {
   @IsOptional()
@@ -40,6 +33,10 @@ export class UpdateProductDto {
   @IsOptional()
   toppingIds?: number[];
 
-  @IsOptional()
-  images?: { image_name: string; sort_index: number }[];
+    @IsOptional()
+    images?: { image_name: string; sort_index: number }[];
+
+    @IsNotEmpty()
+    @IsBoolean()
+    isTopping: boolean;
 }

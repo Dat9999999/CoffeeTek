@@ -102,15 +102,15 @@ model Category {
 }
 
 model Product {
-  id             Int     @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String
-  is_multi_size  Boolean @default(false)
+  is_multi_size  Boolean   @default(false)
   product_detail String?
   price          Float?
-  isActive       Boolean @default(true)
-
-  category_id Int? // FK có thể null
-  category    Category? @relation(fields: [category_id], references: [id])
+  isActive       Boolean   @default(true)
+  isTopping      Boolean   @default(false)
+  category_id    Int? // FK có thể null
+  category       Category? @relation(fields: [category_id], references: [id])
 
   sizes            ProductSize[] // 1 product có nhiều size
   optionValues     ProductOptionValue[] // 1 product có nhiều option value

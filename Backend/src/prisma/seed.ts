@@ -180,12 +180,14 @@ async function main() {
                     name: 'Pearl',
                     price: 5000,
                     is_multi_size: false,
+                    isTopping: true,
                     category_id: toppingCategory.id,
                 },
                 {
                     name: 'Cheese Foam',
                     price: 10000,
                     is_multi_size: false,
+                    isTopping: true,
                     category_id: toppingCategory.id,
                 },
             ],
@@ -229,7 +231,7 @@ async function main() {
                 is_multi_size: true,
                 product_detail: 'Hot or iced latte with espresso and milk',
                 category_id: coffeeCategory.id,
-                price: 35000, // Base price (e.g., for Medium)
+                price: 30000, // Base price (e.g., for Medium)
                 sizes: {
                     create: [
                         { size_id: sizeS.id, price: 30000 },

@@ -10,7 +10,6 @@ import { OptionGroupsModule } from './option-groups/option-groups.module';
 import { OptionValuesModule } from './option-values/option-values.module';
 import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
-import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
 import { UploadModule } from './upload-file/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -39,7 +38,6 @@ import { UnitModule } from './unit/unit.module';
     OptionValuesModule,
     SizesModule,
     CategoriesModule,
-    ToppingsModule,
     ProductsModule,
     UploadModule,
     InvoiceModule,

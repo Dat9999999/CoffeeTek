@@ -1,5 +1,5 @@
 // types/product.ts
-import { Category, ProductImage, ProductSize, Size, Topping, OptionValue, ProductOptionValue } from "@prisma/client";
+import { Category, ProductImage, ProductSize, Size, OptionValue, ProductOptionValue, Product } from "@prisma/client";
 
 export interface ProductOptionValueGroup {
     id: number;
@@ -18,6 +18,6 @@ export interface ProductDetailResponse {
     category: Category | null;
     images: ProductImage[];
     sizes: (Pick<ProductSize, "price"> & { size: Size })[];
-    toppings: Topping[];
+    toppings: Product[];
     optionGroups: ProductOptionValueGroup[];
 }

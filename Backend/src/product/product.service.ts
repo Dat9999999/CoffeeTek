@@ -50,7 +50,10 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        isTopping: dto.isTopping,
+        category: categoryId
+          ? { connect: { id: categoryId } }
+          : undefined,
         sizes: sizeIds
           ? {
             create: sizeIds.map((s) => ({
@@ -312,7 +315,10 @@ export class ProductsService {
         is_multi_size,
         product_detail,
         price,
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        isTopping: dto.isTopping,
+        category: categoryId
+          ? { connect: { id: categoryId } }
+          : undefined,
         // Cập nhật quan hệ (topping, option, size)
         sizes: sizeIds
           ? {

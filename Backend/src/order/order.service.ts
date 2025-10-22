@@ -38,7 +38,7 @@ export class OrderService {
 
   }
   async create(createOrderDto: CreateOrderDto) {
-    const toppings = await this.prisma.topping.findMany({
+    const toppings = await this.prisma.product.findMany({
       where: {
         id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
       }
@@ -62,7 +62,7 @@ export class OrderService {
         });
 
         const toppings = item.toppingItems?.length
-          ? await this.prisma.topping.findMany({
+          ? await this.prisma.product.findMany({
             where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
           })
           : [];
@@ -72,12 +72,27 @@ export class OrderService {
             where: { id: parseInt(item.sizeId) },
           })
           : null;
+        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
+        const productSizes = await this.prisma.productSize.findUnique({
+          where: {
+            id:
+              createOrderDto.order_details
+                .map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
+                .find(id => id !== undefined && id === sizeIdNum)
+          },
+          select: {
+            id: true,       // This is the ProductSize.id (from dto.sizeId)
+            price: true,    // This is the correct unit price
+            size_id: true   // This is the Size.id (for the OrderDetail relation)
+          }
+        });
 
         return {
           ...item, // giữ lại quantity, productId, toppingItems, sizeId...
           product,
           toppings,
           size,
+          productSizes
         };
       })
     );
@@ -85,7 +100,7 @@ export class OrderService {
     const toppingPrice = (item) => {
       return item.toppingItems?.reduce((sum, t) => {
         const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
-        return sum + (topping ? topping.price * parseInt(t.quantity) : 0);
+        return sum + ((topping?.price ?? 0) * parseInt(t.quantity));
       }, 0) || 0;
     };
 
@@ -141,7 +156,7 @@ export class OrderService {
             create: order_details.map(item => ({
               product_name: item.product?.name,
               quantity: parseInt(item.quantity),
-              unit_price: item.product?.price || 0,
+              unit_price: item.productSizes?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -160,8 +175,16 @@ export class OrderService {
                   }))
                 }
                 : undefined,
+              optionValue: createOrderDto.order_details.map(i => i.optionId)?.length
+                ? {
+                  connect: createOrderDto.order_details
+                    .flatMap(i => i.optionId)
+                    .map(id => ({ id: parseInt(id) }))
+                }
+                : undefined,
             }))
-          }
+          },
+
         },
         include: {
           order_details: {
@@ -174,9 +197,11 @@ export class OrderService {
                 }
               }
             }
-          }
-        }
+          },
+        },
+
       });
+
 
     });
     return createOrderDto;
@@ -326,7 +351,7 @@ export class OrderService {
     return order;
   }
   async updateItems(id: number, updateItemsDto: UpdateOrderDto) {
-    const toppings = await this.prisma.topping.findMany({
+    const toppings = await this.prisma.product.findMany({
       where: {
         id: { in: updateItemsDto.order_details?.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
       }
@@ -343,7 +368,7 @@ export class OrderService {
         });
 
         const toppings = item.toppingItems?.length
-          ? await this.prisma.topping.findMany({
+          ? await this.prisma.product.findMany({
             where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
           })
           : [];
@@ -353,19 +378,33 @@ export class OrderService {
             where: { id: parseInt(item.sizeId) },
           })
           : null;
+        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
+        const productSizes = await this.prisma.productSize.findUnique({
+          where: {
+            id:
+              updateItemsDto?.order_details?.map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
+                .find(id => id !== undefined && id === sizeIdNum)
+          },
+          select: {
+            id: true,       // This is the ProductSize.id (from dto.sizeId)
+            price: true,    // This is the correct unit price
+            size_id: true   // This is the Size.id (for the OrderDetail relation)
+          }
+        });
 
         return {
           ...item, // giữ lại quantity, productId, toppingItems, sizeId...
           product,
           toppings,
           size,
+          productSizes
         };
       })
     );
     const toppingPrice = (item) => {
       return item.toppingItems?.reduce((sum, t) => {
         const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
-        return sum + (topping ? topping.price * parseInt(t.quantity) : 0);
+        return sum + (topping != null && topping.price ? topping.price * parseInt(t.quantity) : 0);
       }, 0) || 0;
     };
 
@@ -404,7 +443,7 @@ export class OrderService {
           order_details: {
             create: order_details.map(item => ({
               quantity: parseInt(item.quantity),
-              unit_price: item.product?.price || 0,
+              unit_price: item.productSizes?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -421,6 +460,13 @@ export class OrderService {
                     unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
                     topping: { connect: { id: parseInt(t.toppingId) } }
                   }))
+                }
+                : undefined,
+              optionValue: updateItemsDto?.order_details?.map(i => i.optionId)?.length
+                ? {
+                  connect: updateItemsDto?.order_details
+                    .flatMap(i => i.optionId)
+                    .map(id => ({ id: parseInt(id) }))
                 }
                 : undefined,
             }))

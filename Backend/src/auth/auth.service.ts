@@ -59,6 +59,7 @@ export class AuthService {
                     roles: {
                         connect: { role_name: 'customer' }
                     }
+                    // 
                 }
             });
         return this.signToken(user.id, user.phone_number);

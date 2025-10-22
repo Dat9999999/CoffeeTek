@@ -31,6 +31,7 @@ model User {
   staffOrders         Order[]               @relation("StaffOrders")
   MaterialImportation MaterialImportation[]
   CustomerPoint       CustomerPoint?
+  Voucher             Voucher[]
 
   @@map("users")
 }
@@ -71,6 +72,7 @@ model OptionValue {
   option_group       OptionGroup          @relation(fields: [option_group_id], references: [id])
   option_group_id    Int
   ProductOptionValue ProductOptionValue[]
+  orderDetails       OrderDetail[]
 
   @@map("option_values")
 }
@@ -100,36 +102,32 @@ model Category {
   @@map("categories")
 }
 
-model Topping {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  price              Float
-  image_name         String?
-  sort_index         Int
-  ProductTopping     ProductTopping[]
-  ToppingOrderDetail ToppingOrderDetail[]
-
-  @@map("toppings")
-}
-
 model Product {
-  id             Int     @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String
-  is_multi_size  Boolean @default(false)
+  is_multi_size  Boolean   @default(false)
   product_detail String?
   price          Float?
-  isActive       Boolean @default(true)
-
-  category_id Int? // FK có thể null
-  category    Category? @relation(fields: [category_id], references: [id])
+  isActive       Boolean   @default(true)
+  isTopping      Boolean   @default(false)
+  category_id    Int? // FK có thể null
+  category       Category? @relation(fields: [category_id], references: [id])
 
   sizes            ProductSize[] // 1 product có nhiều size
   optionValues     ProductOptionValue[] // 1 product có nhiều option value
-  toppings         ProductTopping[] // 1 product có nhiều topping
   images           ProductImage[]
   orderDetails     OrderDetail[]
   Recipe           Recipe[]             @relation("RecipeProduct")
   ProductPromotion ProductPromotion[]
+
+  // "I am a base product (e.g., Latte) and these are my available toppings"
+  toppings ProductTopping[] @relation("BaseProduct")
+
+  // "I am a topping (e.g., Pearl) and I am available on these base products"
+  toppingOn ProductTopping[] @relation("Topping")
+
+  // "I am a topping and I am part of this order detail"
+  ToppingOrderDetail ToppingOrderDetail[] @relation("ToppingOrder")
 
   @@map("products")
 }
@@ -154,8 +152,9 @@ model ProductOptionValue {
   product_id      Int
   option_value_id Int
 
-  product      Product     @relation(fields: [product_id], references: [id])
-  option_value OptionValue @relation(fields: [option_value_id], references: [id])
+  product       Product     @relation(fields: [product_id], references: [id])
+  option_value  OptionValue @relation(fields: [option_value_id], references: [id])
+  orderDetailId Int?
 
   @@map("product_option_values")
 }
@@ -163,11 +162,14 @@ model ProductOptionValue {
 model ProductTopping {
   id Int @id @default(autoincrement())
 
-  product_id Int
-  topping_id Int
+  product_id Int // ID of the base product (e.g., Latte)
+  topping_id Int // ID of the topping product (e.g., Pearl)
 
-  product Product @relation(fields: [product_id], references: [id])
-  topping Topping @relation(fields: [topping_id], references: [id])
+  // Relation for the base product
+  baseProduct Product @relation("BaseProduct", fields: [product_id], references: [id], onDelete: Cascade)
+
+  // Relation for the topping
+  topping Product @relation("Topping", fields: [topping_id], references: [id], onDelete: Cascade)
 
   @@map("product_toppings")
 }
@@ -219,6 +221,7 @@ model OrderDetail {
   size_id            Int?
   size               Size?                @relation(fields: [size_id], references: [id])
   ToppingOrderDetail ToppingOrderDetail[]
+  optionValue        OptionValue[]
 
   @@map("order_details")
 }
@@ -232,7 +235,7 @@ model ToppingOrderDetail {
   order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id], onDelete: Cascade)
 
   topping_id Int
-  topping    Topping @relation(fields: [topping_id], references: [id], onDelete: Cascade)
+  topping    Product @relation("ToppingOrder", fields: [topping_id], references: [id], onDelete: Cascade)
 
   @@map("topping_order_details")
 }
@@ -388,7 +391,6 @@ model Promotion {
   start_date       DateTime
   end_date         DateTime
   is_active        Boolean            @default(true)
-  Voucher          Voucher[]
   ProductPromotion ProductPromotion[]
 
   @@map("promotions")
@@ -400,20 +402,21 @@ model ProductPromotion {
   promotionId Int
   Product     Product   @relation(fields: [productId], references: [id])
   Promotion   Promotion @relation(fields: [promotionId], references: [id])
+  new_price   Float     @default(0)
 
   @@unique([productId, promotionId])
   @@map("product_promotions")
 }
 
 model Voucher {
-  id                  Int       @id @default(autoincrement())
-  code                String    @unique
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique
   discount_percentage Float
   valid_from          DateTime
   valid_to            DateTime
-  is_active           Boolean   @default(true)
-  Promotion           Promotion @relation(fields: [promotionId], references: [id])
-  promotionId         Int
+  is_active           Boolean  @default(true)
+  userId              Int?
+  User                User?    @relation(fields: [userId], references: [id])
 
   @@map("vouchers")
 }

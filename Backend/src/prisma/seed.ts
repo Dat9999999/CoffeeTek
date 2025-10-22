@@ -69,31 +69,44 @@ async function main() {
     Logger.warn('⚠️ Owner already exists, skipping...');
   }
 
-  // =======================
-  // 3. Seed Categories
-  // =======================
-  const categoryCount = await prisma.category.count();
-  if (categoryCount === 0) {
-    const coffeeCategory = await prisma.category.create({
-      data: {
-        name: 'Coffee',
-        sort_index: 1,
-        is_parent_category: true,
-      },
-    });
+    // =======================
+    // 3. Seed Categories
+    // =======================
+    let coffeeCategory, teaCategory, toppingCategory;
+    const categoryCount = await prisma.category.count();
+    if (categoryCount === 0) {
+        coffeeCategory = await prisma.category.create({
+            data: {
+                name: 'Coffee',
+                sort_index: 1,
+                is_parent_category: true,
+            },
+        });
 
-    const teaCategory = await prisma.category.create({
-      data: {
-        name: 'Tea',
-        sort_index: 2,
-        is_parent_category: true,
-      },
-    });
+        teaCategory = await prisma.category.create({
+            data: {
+                name: 'Tea',
+                sort_index: 2,
+                is_parent_category: true,
+            },
+        });
 
-    Logger.log('✅ Seeded categories');
-  } else {
-    Logger.warn('⚠️ Categories already exist, skipping...');
-  }
+        // Topping category (for items like 'Pearl', 'Cheese Foam')
+        toppingCategory = await prisma.category.create({
+            data: {
+                name: 'Topping',
+                sort_index: 99,
+                is_parent_category: false,
+            },
+        });
+
+        Logger.log('✅ Seeded categories');
+    } else {
+        coffeeCategory = await prisma.category.findFirst({ where: { name: 'Coffee' } });
+        teaCategory = await prisma.category.findFirst({ where: { name: 'Tea' } });
+        toppingCategory = await prisma.category.findFirst({ where: { name: 'Topping' } });
+        Logger.warn('⚠️ Categories already exist, skipping...');
+    }
 
   // =======================
   // 4. Seed Size
@@ -112,118 +125,150 @@ async function main() {
     Logger.warn('⚠️ Sizes already exist, skipping...');
   }
 
-  // =======================
-  // 5. Seed OptionGroup
-  // =======================
-  const optionGroupCount = await prisma.optionGroup.count();
-  if (optionGroupCount === 0) {
-    const sugarGroup = await prisma.optionGroup.create({
-      data: {
-        name: 'Sugar Level',
-        values: {
-          create: [
-            { name: '0%', sort_index: 1 },
-            { name: '50%', sort_index: 2 },
-            { name: '100%', sort_index: 3 },
-          ],
-        },
-      },
+    // =======================
+    // 5. Seed OptionGroup
+    // =======================
+    let sugarGroup, iceGroup;
+    const optionGroupCount = await prisma.optionGroup.count();
+    if (optionGroupCount === 0) {
+        sugarGroup = await prisma.optionGroup.create({
+            data: {
+                name: 'Sugar Level',
+                values: {
+                    create: [
+                        { name: '0%', sort_index: 1 },
+                        { name: '50%', sort_index: 2 },
+                        { name: '100%', sort_index: 3 },
+                    ],
+                },
+            },
+        });
+
+        iceGroup = await prisma.optionGroup.create({
+            data: {
+                name: 'Ice Level',
+                values: {
+                    create: [
+                        { name: 'No Ice', sort_index: 1 },
+                        { name: 'Less Ice', sort_index: 2 },
+                        { name: 'Normal Ice', sort_index: 3 },
+                    ],
+                },
+            },
+        });
+        Logger.log('✅ Seeded option groups');
+    } else {
+        sugarGroup = await prisma.optionGroup.findFirst({ where: { name: 'Sugar Level' } });
+        iceGroup = await prisma.optionGroup.findFirst({ where: { name: 'Ice Level' } });
+        Logger.warn('⚠️ Option groups already exist, skipping...');
+    }
+
+    // =======================
+    // 6. Seed Toppings (as Products)
+    // =======================
+    // **FIX**: Toppings are Products, not a separate model.
+    if (!toppingCategory) throw new Error('Topping category not found');
+
+    const toppingCount = await prisma.product.count({
+        where: { category_id: toppingCategory.id },
     });
 
-    const iceGroup = await prisma.optionGroup.create({
-      data: {
-        name: 'Ice Level',
-        values: {
-          create: [
-            { name: 'No Ice', sort_index: 1 },
-            { name: 'Less Ice', sort_index: 2 },
-            { name: 'Normal Ice', sort_index: 3 },
-          ],
-        },
-      },
-    });
-    Logger.log('✅ Seeded option groups');
-  } else {
-    Logger.warn('⚠️ Option groups already exist, skipping...');
-  }
+    if (toppingCount === 0) {
+        await prisma.product.createMany({
+            data: [
+                {
+                    name: 'Pearl',
+                    price: 5000,
+                    is_multi_size: false,
+                    category_id: toppingCategory.id,
+                },
+                {
+                    name: 'Cheese Foam',
+                    price: 10000,
+                    is_multi_size: false,
+                    category_id: toppingCategory.id,
+                },
+            ],
+        });
+        Logger.log('✅ Seeded toppings (as Products)');
+    } else {
+        Logger.warn('⚠️ Toppings already exist, skipping...');
+    }
 
-  // =======================
-  // 6. Seed Toppings
-  // =======================
-  const toppingCount = await prisma.topping.count();
-  if (toppingCount === 0) {
-    await prisma.topping.createMany({
-      data: [
-        { name: 'Pearl', price: 5000, sort_index: 1 },
-        { name: 'Cheese Foam', price: 10000, sort_index: 2 },
-      ],
-    });
-    Logger.log('✅ Seeded toppings');
-  } else {
-    Logger.warn('⚠️ Toppings already exist, skipping...');
-  }
+    // =======================
+    // 7. Seed Product
+    // =======================
+    const productCount = await prisma.product.count({ where: { NOT: { category_id: toppingCategory.id } } });
+    if (productCount === 0) {
+        const [sizeS, sizeM, sizeL] = await prisma.size.findMany({
+            orderBy: { sort_index: 'asc' },
+        });
 
-  // =======================
-  // 7. Seed Product
-  // =======================
-  const productCount = await prisma.product.count();
-  if (productCount === 0) {
-    const coffeeCategory = await prisma.category.findFirst({
-      where: { name: 'Coffee' },
-    });
-    const [sizeS, sizeM, sizeL] = await prisma.size.findMany();
+        // **FIX**: Get OptionValues, not OptionGroups
+        const sugarValues = await prisma.optionValue.findMany({
+            where: { option_group: { name: 'Sugar Level' } },
+        });
+        const iceValues = await prisma.optionValue.findMany({
+            where: { option_group: { name: 'Ice Level' } },
+        });
+        const allOptions = [...sugarValues, ...iceValues];
 
-    const sugarGroup = await prisma.optionGroup.findFirst({
-      where: { name: 'Sugar Level' },
-    });
-    const iceGroup = await prisma.optionGroup.findFirst({
-      where: { name: 'Ice Level' },
-    });
-    const pearl = await prisma.topping.findFirst({ where: { name: 'Pearl' } });
-    const cheeseFoam = await prisma.topping.findFirst({
-      where: { name: 'Cheese Foam' },
-    });
+        // **FIX**: Get Topping Products
+        const pearl = await prisma.product.findFirst({ where: { name: 'Pearl' } });
+        const cheeseFoam = await prisma.product.findFirst({
+            where: { name: 'Cheese Foam' },
+        });
 
-    await prisma.product.create({
-      data: {
-        name: 'Latte',
-        is_multi_size: true,
-        product_detail: 'Hot or iced latte with espresso and milk',
-        category_id: coffeeCategory!.id,
-        price: 35000,
-        sizes: {
-          create: [
-            { size_id: sizeS.id, price: 30000 },
-            { size_id: sizeM.id, price: 35000 },
-            { size_id: sizeL.id, price: 40000 },
-          ],
-        },
-        optionValues: {
-          create: [
-            { option_value_id: sugarGroup!.id },
-            { option_value_id: iceGroup!.id },
-          ],
-        },
-        toppings: {
-          create: [{ topping_id: pearl!.id }, { topping_id: cheeseFoam!.id }],
-        },
-        images: {
-          create: [
-            { image_name: 'latte1.png', sort_index: 1 },
-            { image_name: 'latte2.png', sort_index: 2 },
-          ],
-        },
-      },
-    });
-    Logger.log('✅ Seeded products');
-  } else {
-    Logger.warn('⚠️ Products already exist, skipping...');
-  }
+        if (!coffeeCategory || !pearl || !cheeseFoam) {
+            throw new Error('Missing dependencies for product seeding');
+        }
 
-  // payment method
-  const paymeyMethodCount = await prisma.paymentMethod.count();
-  if (paymeyMethodCount == 0) {
-    Logger.log('🪄 Seeding payment methods...');
+        await prisma.product.create({
+            data: {
+                name: 'Latte',
+                is_multi_size: true,
+                product_detail: 'Hot or iced latte with espresso and milk',
+                category_id: coffeeCategory.id,
+                price: 35000, // Base price (e.g., for Medium)
+                sizes: {
+                    create: [
+                        { size_id: sizeS.id, price: 30000 },
+                        { size_id: sizeM.id, price: 35000 },
+                        { size_id: sizeL.id, price: 40000 },
+                    ],
+                },
+                optionValues: {
+                    // **FIX**: Connect to OptionValue IDs
+                    create: allOptions.map((val) => ({
+                        option_value_id: val.id,
+                    })),
+                },
+                toppings: {
+                    // **FIX**: Connect to Topping Product IDs
+                    create: [
+                        { topping_id: pearl.id },
+                        { topping_id: cheeseFoam.id },
+                    ],
+                },
+                images: {
+                    create: [
+                        { image_name: 'latte1.png', sort_index: 1 },
+                        { image_name: 'latte2.png', sort_index: 2 },
+                    ],
+                },
+            },
+        });
+        Logger.log('✅ Seeded products');
+    } else {
+        Logger.warn('⚠️ Products already exist, skipping...');
+    }
+
+    // =======================
+    // 8. Seed Payment Method
+    // =======================
+    const paymeyMethodCount = await prisma.paymentMethod.count();
+    if (paymeyMethodCount == 0) {
+        Logger.log('🪄 Seeding payment methods...');
 
     await prisma.paymentMethod.createMany({
       data: [
@@ -238,90 +283,103 @@ async function main() {
       ],
     });
 
-    Logger.log('✅ Payment methods seeded successfully!');
-  } else {
-    Logger.warn('⚠️ Payment method already exist, skipping...');
-  }
-  const units = [
-    { name: 'Gram', symbol: 'g', class: 'weight' },
-    { name: 'Kilogram', symbol: 'kg', class: 'weight' },
-    { name: 'Milliliter', symbol: 'ml', class: 'volume' },
-    { name: 'Liter', symbol: 'l', class: 'volume' },
-    { name: 'Piece', symbol: 'pc', class: 'count' },
-    { name: 'Pack', symbol: 'pack', class: 'count' },
-    { name: 'Box', symbol: 'box', class: 'count' },
-    { name: 'Bottle', symbol: 'btl', class: 'count' },
-  ];
-
-  for (const unit of units) {
-    await prisma.unit.upsert({
-      where: { symbol: unit.symbol },
-      update: {},
-      create: unit,
-    });
-  }
-
-  console.log('✅ Seeded Unit table');
-
-  const unitMap = await prisma.unit.findMany();
-  const getId = (symbol: string) => {
-    const u = unitMap.find((x) => x.symbol === symbol);
-    if (!u) throw new Error(`Unit with symbol ${symbol} not found`);
-    return u.id;
-  };
-
-  // --- 3️⃣ Seed UnitConversion table ---
-  const conversions = [
-    // weight
-    { from: 'kg', to: 'g', factor: 1000 },
-    { from: 'g', to: 'kg', factor: 0.001 },
-
-    // volume
-    { from: 'l', to: 'ml', factor: 1000 },
-    { from: 'ml', to: 'l', factor: 0.001 },
-  ];
-
-  for (const c of conversions) {
-    await prisma.unitConversion.upsert({
-      where: {
-        from_unit_to_unit: {
-          from_unit: getId(c.from),
-          to_unit: getId(c.to),
-        },
-      },
-      update: {},
-      create: {
-        from_unit: getId(c.from),
-        to_unit: getId(c.to),
-        factor: c.factor,
-      },
-    });
-  }
-
-  console.log('✅ Seeded UnitConversion table');
-
-  // =======================
-  // 8. Seed Materials
-  // =======================
-  const materialCount = await prisma.material.count();
-  if (materialCount === 0) {
-    Logger.log('🪄 Seeding materials...');
-
-    const kg = await prisma.unit.findFirst({ where: { symbol: 'kg' } });
-    const g = await prisma.unit.findFirst({ where: { symbol: 'g' } });
-    const ml = await prisma.unit.findFirst({ where: { symbol: 'ml' } });
-    const l = await prisma.unit.findFirst({ where: { symbol: 'l' } });
-
-    if (!kg || !g || !ml || !l) {
-      throw new Error('❌ Required base units not found. Seed Units first!');
+        Logger.log('✅ Payment methods seeded successfully!');
+    } else {
+        Logger.warn('⚠️ Payment method already exist, skipping...');
     }
 
-    const materials = [
-      { name: 'Coffee Beans', remain: 50, unitId: kg.id },
-      { name: 'Fresh Milk', remain: 100, unitId: l.id },
-      { name: 'Sugar', remain: 20, unitId: kg.id },
-      { name: 'Ice Cubes', remain: 500, unitId: l.id },
-    ];
+    // =======================
+    // 9. Seed Units
+    // =======================
+    const unitCount = await prisma.unit.count();
+    if (unitCount === 0) {
+        Logger.log('🪄 Seeding units...');
+        const units = [
+            { name: 'Gram', symbol: 'g', class: 'weight' },
+            { name: 'Kilogram', symbol: 'kg', class: 'weight' },
+            { name: 'Milliliter', symbol: 'ml', class: 'volume' },
+            { name: 'Liter', symbol: 'l', class: 'volume' },
+            { name: 'Piece', symbol: 'pc', class: 'count' },
+            { name: 'Pack', symbol: 'pack', class: 'count' },
+            { name: 'Box', symbol: 'box', class: 'count' },
+            { name: 'Bottle', symbol: 'btl', class: 'count' },
+        ];
+
+        for (const unit of units) {
+            await prisma.unit.upsert({
+                where: { symbol: unit.symbol },
+                update: {},
+                create: unit,
+            });
+        }
+        Logger.log('✅ Seeded Unit table');
+    } else {
+        Logger.warn('⚠️ Units already exist, skipping...');
+    }
+
+    // =======================
+    // 10. Seed Unit Conversions
+    // =======================
+    const conversionCount = await prisma.unitConversion.count();
+    if (conversionCount === 0) {
+        Logger.log('🪄 Seeding unit conversions...');
+        const unitMap = await prisma.unit.findMany();
+        const getId = (symbol: string) => {
+            const u = unitMap.find((x) => x.symbol === symbol);
+            if (!u) throw new Error(`Unit with symbol ${symbol} not found`);
+            return u.id;
+        };
+
+        const conversions = [
+            // weight
+            { from: 'kg', to: 'g', factor: 1000 },
+            { from: 'g', to: 'kg', factor: 0.001 },
+            // volume
+            { from: 'l', to: 'ml', factor: 1000 },
+            { from: 'ml', to: 'l', factor: 0.001 },
+        ];
+
+        for (const c of conversions) {
+            await prisma.unitConversion.upsert({
+                where: {
+                    from_unit_to_unit: {
+                        from_unit: getId(c.from),
+                        to_unit: getId(c.to),
+                    },
+                },
+                update: {},
+                create: {
+                    from_unit: getId(c.from),
+                    to_unit: getId(c.to),
+                    factor: c.factor,
+                },
+            });
+        }
+        Logger.log('✅ Seeded UnitConversion table');
+    } else {
+        Logger.warn('⚠️ Unit conversions already exist, skipping...');
+    }
+
+    // =======================
+    // 11. Seed Materials
+    // =======================
+    const materialCount = await prisma.material.count();
+    if (materialCount === 0) {
+        Logger.log('🪄 Seeding materials...');
+
+        const kg = await prisma.unit.findFirst({ where: { symbol: 'kg' } });
+        const l = await prisma.unit.findFirst({ where: { symbol: 'l' } });
+
+        if (!kg || !l) {
+            throw new Error('❌ Required base units not found. Seed Units first!');
+        }
+
+        const materials = [
+            { name: 'Coffee Beans', remain: 50, unitId: kg.id }, // 50kg
+            { name: 'Fresh Milk', remain: 100, unitId: l.id }, // 100l
+            { name: 'Sugar', remain: 20, unitId: kg.id }, // 20kg
+            { name: 'Ice Cubes', remain: 50, unitId: l.id }, // 50l (as proxy for kg)
+        ];
 
     await prisma.material.createMany({ data: materials });
 
@@ -330,12 +388,12 @@ async function main() {
     Logger.warn('⚠️ Materials already exist, skipping...');
   }
 
-  // =======================
-  // 9. Seed Recipes
-  // =======================
-  const recipeCount = await prisma.recipe.count();
-  if (recipeCount === 0) {
-    Logger.log('🪄 Seeding recipes...');
+    // =======================
+    // 12. Seed Recipes
+    // =======================
+    const recipeCount = await prisma.recipe.count();
+    if (recipeCount === 0) {
+        Logger.log('🪄 Seeding recipes...');
 
     const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
     if (!latte)
@@ -352,12 +410,12 @@ async function main() {
     Logger.warn('⚠️ Recipes already exist, skipping...');
   }
 
-  // =======================
-  // 10. Seed MaterialRecipe
-  // =======================
-  const materialRecipeCount = await prisma.materialRecipe.count();
-  if (materialRecipeCount === 0) {
-    Logger.log('🪄 Seeding material_recipes...');
+    // =======================
+    // 13. Seed MaterialRecipe
+    // =======================
+    const materialRecipeCount = await prisma.materialRecipe.count();
+    if (materialRecipeCount === 0) {
+        Logger.log('🪄 Seeding material_recipes...');
 
     const latteRecipe = await prisma.recipe.findFirst({
       where: {
@@ -377,91 +435,108 @@ async function main() {
     if (!coffeeBeans || !milk || !sugar)
       throw new Error('❌ Missing base materials');
 
-    // base consumption for a Medium Latte
-    await prisma.materialRecipe.createMany({
-      data: [
-        { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 0.18 },
-        { recipeId: latteRecipe.id, materialId: milk.id, consume: 0.3 },
-        { recipeId: latteRecipe.id, materialId: sugar.id, consume: 0.08 },
-      ],
-    });
+        // base consumption (in kg/l) for a Medium Latte
+        await prisma.materialRecipe.createMany({
+            data: [
+                { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 0.02 }, // 20g
+                { recipeId: latteRecipe.id, materialId: milk.id, consume: 0.18 }, // 180ml
+                { recipeId: latteRecipe.id, materialId: sugar.id, consume: 0.01 }, // 10g
+            ],
+        });
 
     Logger.log('✅ Seeded MaterialRecipe (Latte)');
   } else {
     Logger.warn('⚠️ MaterialRecipe already exists, skipping...');
   }
 
-  // =======================
-  // 11. Seed ConsumeSize
-  // =======================
-  const consumeSizeCount = await prisma.consumeSize.count();
-  if (consumeSizeCount === 0) {
-    Logger.log('🪄 Seeding consume_sizes...');
+    // =======================
+    // 14. Seed ConsumeSize
+    // =======================
+    const consumeSizeCount = await prisma.consumeSize.count();
+    if (consumeSizeCount === 0) {
+        Logger.log('🪄 Seeding consume_sizes...');
 
-    const sizes = await prisma.size.findMany();
-    const latteRecipe = await prisma.recipe.findFirst({
-      where: { Product: { name: 'Latte' } },
-      include: { MaterialRecipe: true },
-    });
+        // **FIX**: Get ProductSize IDs, not Size IDs
+        const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
+        if (!latte) throw new Error('Latte product not found');
 
-    if (!latteRecipe) throw new Error('❌ Latte recipe not found');
+        const latteSizes = await prisma.productSize.findMany({
+            where: { product_id: latte.id },
+            include: { size: true },
+        });
 
-    const sizeMap = Object.fromEntries(sizes.map((s) => [s.name, s.id]));
-    const recipes = latteRecipe.MaterialRecipe;
+        const latteRecipe = await prisma.recipe.findFirst({
+            where: { product_id: latte.id },
+            include: { MaterialRecipe: true },
+        });
+        if (!latteRecipe) throw new Error('❌ Latte recipe not found');
 
-    // For Large size → +20% material usage, Small → -20%
-    for (const mr of recipes) {
-      await prisma.consumeSize.createMany({
-        data: [
-          {
-            productSizeId: sizeMap['Small'],
-            materialRecipeId: mr.id,
-            additionalConsume: 4, // rough estimate, e.g., less coffee, milk...
-          },
-          {
-            productSizeId: sizeMap['Medium'],
-            materialRecipeId: mr.id,
-            additionalConsume: 6,
-          },
-          {
-            productSizeId: sizeMap['Large'],
-            materialRecipeId: mr.id,
-            additionalConsume: 8,
-          },
-        ],
-      });
-    }
+        const latteSizeMap = Object.fromEntries(
+            latteSizes.map((ps) => [ps.size.name, ps.id]),
+        );
+        const recipes = latteRecipe.MaterialRecipe;
+
+        // The original script's logic here is unclear (4, 6, 8).
+        // Assuming this is "additional percentage"
+        for (const mr of recipes) {
+            await prisma.consumeSize.createMany({
+                data: [
+                    {
+                        productSizeId: latteSizeMap['Small'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: 0, // e.g., 0% (Base Standard)
+                    },
+                    {
+                        productSizeId: latteSizeMap['Medium'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: 20, // e.g., +20% more than Small
+                    },
+                    {
+                        productSizeId: latteSizeMap['Large'],
+                        materialRecipeId: mr.id,
+                        additionalConsume: 40, // e.g., +40% more than Small
+                    },
+                ],
+            });
+        }
 
     Logger.log('✅ Seeded ConsumeSize');
   } else {
     Logger.warn('⚠️ ConsumeSize already exists, skipping...');
   }
 
-  // =======================
-  // 12. Seed MaterialImportation
-  // =======================
-  const importCount = await prisma.materialImportation.count();
-  if (importCount === 0) {
-    Logger.log('🪄 Seeding MaterialImportation...');
+    // =======================
+    // 15. Seed MaterialImportation
+    // =======================
+    const importCount = await prisma.materialImportation.count();
+    if (importCount === 0) {
+        Logger.log('🪄 Seeding MaterialImportation...');
 
     const owner = await prisma.user.findFirst({
       where: { email: 'huynhtandat184@gmail.com' },
     });
     if (!owner) throw new Error('❌ Owner not found');
 
-    const materials = await prisma.material.findMany();
-    for (const m of materials) {
-      await prisma.materialImportation.create({
-        data: {
-          materialId: m.id,
-          importQuantity: m.remain,
-          employeeId: owner.id,
-          importDate: new Date(),
-        },
-      });
+        const materials = await prisma.material.findMany();
+        for (const m of materials) {
+            await prisma.materialImportation.create({
+                data: {
+                    materialId: m.id,
+                    importQuantity: m.remain, // Initial import matches 'remain'
+                    pricePerUnit: 10000, // Placeholder price
+                    employeeId: owner.id,
+                    importDate: new Date(),
+                },
+            });
+        }
+
+        Logger.log('✅ Seeded MaterialImportation');
+    } else {
+        Logger.warn('⚠️ MaterialImportation already exists, skipping...');
     }
+
     // =======================
-    // 13. Seed Loyal Levels
+    // 16. Seed Loyal Levels
     // =======================
     const loyalLevelCount = await prisma.loyalLevel.count();
     if (loyalLevelCount === 0) {
@@ -480,9 +555,8 @@ async function main() {
     }
 
     // =======================
-    // 14. Seed Customer User (for points)
+    // 17. Seed Customer User (for points)
     // =======================
-    // This is a new customer user, separate from the owner, to test customer points
     const customerEmail = 'customer@example.com';
     let customerUser = await prisma.user.findUnique({
         where: { email: customerEmail },
@@ -522,23 +596,21 @@ async function main() {
     }
 
     // =======================
-    // 15. Seed Customer Points
+    // 18. Seed Customer Points
     // =======================
     const customerPointCount = await prisma.customerPoint.count();
     if (customerPointCount === 0) {
         Logger.log('🪄 Seeding Customer Points...');
 
-        // Find the Bronze loyal level
         const bronzeLevel = await prisma.loyalLevel.findUnique({
             where: { name: 'Bronze' },
         });
 
         if (customerUser && bronzeLevel) {
-            // The schema links customerPhone (Int) to User.id (Int)
             await prisma.customerPoint.create({
                 data: {
                     points: 25, // Give them some starting points
-                    customerPhone: customerUser.phone_number, // This is the user phone number as per schema
+                    customerPhone: customerUser.phone_number,
                     loyalLevelId: bronzeLevel.id,
                 },
             });
@@ -551,7 +623,7 @@ async function main() {
     }
 
     // =======================
-    // 16. Seed Promotions
+    // 19. Seed Promotions
     // =======================
     const promotionCount = await prisma.promotion.count();
     let summerSale;
@@ -580,69 +652,151 @@ async function main() {
     }
 
     // =======================
-    // 17. Seed Vouchers
+    // 20. Seed ProductPromotion (NEW)
+    // =======================
+    const productPromoCount = await prisma.productPromotion.count();
+    if (productPromoCount === 0) {
+        Logger.log('🪄 Seeding ProductPromotions...');
+        const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
+
+        if (summerSale && latte) {
+            await prisma.productPromotion.create({
+                data: {
+                    productId: latte.id,
+                    promotionId: summerSale.id,
+                    new_price: 30000, // Latte base price (M) is 35k, sale price is 30k
+                },
+            });
+            Logger.log('✅ Seeded ProductPromotion (Latte on Summer Sale)');
+        } else {
+            Logger.error('❌ Could not seed ProductPromotion. Missing Latte or SummerSale.');
+        }
+    } else {
+        Logger.warn('⚠️ ProductPromotions already exist, skipping...');
+    }
+
+    // =======================
+    // 21. Seed Vouchers (Was 17)
     // =======================
     const voucherCount = await prisma.voucher.count();
     if (voucherCount === 0) {
         Logger.log('🪄 Seeding Vouchers...');
 
-        if (summerSale) {
-            await prisma.voucher.create({
-                data: {
-                    code: 'SUMMER20',
-                    discount_percentage: 0.20, // 20%
-                    valid_from: summerSale.start_date,
-                    valid_to: summerSale.end_date,
+        const today = new Date();
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(today.getMonth() + 1);
+
+        const customerUser = await prisma.user.findFirst({
+            where: { email: 'customer@example.com' },
+        });
+
+        await prisma.voucher.createMany({
+            data: [
+                {
+                    code: 'WELCOME10',
+                    discount_percentage: 10,
+                    valid_from: today,
+                    valid_to: nextMonth,
                     is_active: true,
-                    promotionId: summerSale.id,
                 },
-            });
-            Logger.log('✅ Seeded Vouchers');
-        } else {
-            Logger.error('❌ Could not seed Voucher. "Summer Sale 2025" promotion not found.');
-        }
+                {
+                    code: 'JOHNDOE20',
+                    discount_percentage: 20,
+                    valid_from: today,
+                    valid_to: nextMonth,
+                    is_active: true,
+                    userId: customerUser?.id, // Link to specific customer
+                },
+            ],
+        });
+        Logger.log('✅ Seeded Vouchers');
     } else {
         Logger.warn('⚠️ Vouchers already exist, skipping...');
     }
 
     // =======================
-    // 18. Seed Product Promotions
+    // 22. Seed Order (NEW)
     // =======================
-    const productPromotionCount = await prisma.productPromotion.count();
-    if (productPromotionCount === 0) {
-        Logger.log('🪄 Seeding Product Promotions...');
+    const orderCount = await prisma.order.count();
+    if (orderCount === 0) {
+        Logger.log('🪄 Seeding a test Order...');
 
-        const latte = await prisma.product.findFirst({
-            where: { name: 'Latte' },
+        const customer = await prisma.user.findFirst({
+            where: { email: 'customer@example.com' },
+        });
+        const staff = await prisma.user.findFirst({
+            where: { email: 'huynhtandat184@gmail.com' },
+        });
+        const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
+        const latteMedium = await prisma.productSize.findFirst({
+            where: {
+                product_id: latte!.id,
+                size: { name: 'Medium' },
+            },
+            include: { size: true }
+        });
+        const pearlTopping = await prisma.product.findFirst({
+            where: { name: 'Pearl' },
+        });
+        const cashMethod = await prisma.paymentMethod.findFirst({
+            where: { name: 'cash' },
         });
 
-        if (latte && summerSale) {
-            await prisma.productPromotion.create({
-                data: {
-                    productId: latte.id,
-                    promotionId: summerSale.id,
-                },
-            });
-            Logger.log('✅ Seeded Product Promotions (Latte + Summer Sale)');
-        } else {
-            Logger.error('❌ Could not seed Product Promotion. Missing Latte or Summer Sale.');
+        if (!customer || !staff || !latte || !latteMedium || !pearlTopping || !cashMethod) {
+            throw new Error('❌ Missing data to create test order.');
         }
-    } else {
-        Logger.warn('⚠️ Product Promotions already exist, skipping...');
-    }
 
-    Logger.log('✅ Seeded MaterialImportation');
-  } else {
-    Logger.warn('⚠️ MaterialImportation already exists, skipping...');
-  }
+        const lattePrice = latteMedium.price; // 35000
+        const pearlPrice = pearlTopping.price!; // 5000
+        const originalPrice = lattePrice + pearlPrice;
+
+        // 1. Create PaymentDetail
+        const payment = await prisma.paymentDetail.create({
+            data: {
+                payment_method_id: cashMethod.id,
+                amount: originalPrice,
+                status: 'completed',
+            },
+        });
+
+        // 2. Create Order
+        await prisma.order.create({
+            data: {
+                original_price: originalPrice,
+                final_price: originalPrice,
+                status: 'delivered',
+                customerPhone: customer.phone_number,
+                staffId: staff.id,
+                paymentDetailId: payment.id,
+                order_details: {
+                    create: {
+                        quantity: 1,
+                        unit_price: lattePrice,
+                        product_name: latte.name,
+                        product_id: latte.id,
+                        size_id: latteMedium.size_id,
+                        ToppingOrderDetail: {
+                            create: {
+                                quantity: 1,
+                                unit_price: pearlPrice,
+                                topping_id: pearlTopping.id,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        Logger.log('✅ Seeded 1 test order');
+    } else {
+        Logger.warn('⚠️ Orders already exist, skipping...');
+    }
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

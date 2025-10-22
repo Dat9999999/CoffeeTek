@@ -101,18 +101,6 @@ model Category {
   @@map("categories")
 }
 
-model Topping {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  price              Float
-  image_name         String?
-  sort_index         Int
-  ProductTopping     ProductTopping[]
-  ToppingOrderDetail ToppingOrderDetail[]
-
-  @@map("toppings")
-}
-
 model Product {
   id             Int     @id @default(autoincrement())
   name           String
@@ -126,11 +114,19 @@ model Product {
 
   sizes            ProductSize[] // 1 product có nhiều size
   optionValues     ProductOptionValue[] // 1 product có nhiều option value
-  toppings         ProductTopping[] // 1 product có nhiều topping
   images           ProductImage[]
   orderDetails     OrderDetail[]
   Recipe           Recipe[]             @relation("RecipeProduct")
   ProductPromotion ProductPromotion[]
+
+  // "I am a base product (e.g., Latte) and these are my available toppings"
+  toppings ProductTopping[] @relation("BaseProduct")
+
+  // "I am a topping (e.g., Pearl) and I am available on these base products"
+  toppingOn ProductTopping[] @relation("Topping")
+
+  // "I am a topping and I am part of this order detail"
+  ToppingOrderDetail ToppingOrderDetail[] @relation("ToppingOrder")
 
   @@map("products")
 }
@@ -164,11 +160,14 @@ model ProductOptionValue {
 model ProductTopping {
   id Int @id @default(autoincrement())
 
-  product_id Int
-  topping_id Int
+  product_id Int // ID of the base product (e.g., Latte)
+  topping_id Int // ID of the topping product (e.g., Pearl)
 
-  product Product @relation(fields: [product_id], references: [id])
-  topping Topping @relation(fields: [topping_id], references: [id])
+  // Relation for the base product
+  baseProduct Product @relation("BaseProduct", fields: [product_id], references: [id], onDelete: Cascade)
+
+  // Relation for the topping
+  topping Product @relation("Topping", fields: [topping_id], references: [id], onDelete: Cascade)
 
   @@map("product_toppings")
 }
@@ -233,7 +232,7 @@ model ToppingOrderDetail {
   order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id], onDelete: Cascade)
 
   topping_id Int
-  topping    Topping @relation(fields: [topping_id], references: [id], onDelete: Cascade)
+  topping    Product @relation("ToppingOrder", fields: [topping_id], references: [id], onDelete: Cascade)
 
   @@map("topping_order_details")
 }

@@ -377,10 +377,10 @@ async function main() {
     }
 
     const materials = [
-      { name: 'Coffee Beans', remain: 50, unitId: kg.id }, // 50kg
-      { name: 'Fresh Milk', remain: 100, unitId: l.id }, // 100l
-      { name: 'Sugar', remain: 20, unitId: kg.id }, // 20kg
-      { name: 'Ice Cubes', remain: 50, unitId: l.id }, // 50l (as proxy for kg)
+      { name: 'Coffee Beans', remain: 50, unitId: kg.id, code: "cb" }, // 50kg
+      { name: 'Fresh Milk', remain: 100, unitId: l.id, code: "fm" }, // 100l
+      { name: 'Sugar', remain: 20, unitId: kg.id, code: "sg" }, // 20kg
+      { name: 'Ice Cubes', remain: 50, unitId: l.id, code: "ic" }, // 50l (as proxy for kg)
     ];
 
     await prisma.material.createMany({ data: materials });

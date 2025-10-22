@@ -4,8 +4,8 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ImportMaterialDto } from './dto/import-material.dto';
 import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
-import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
-import { Prisma } from '@prisma/client';
+import { GetAllDto, ResponseGetAllDto } from 'src/common/dto/pagination.dto';
+import { Material, Prisma, Unit } from '@prisma/client';
 import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto';
 
 @Injectable()
@@ -166,6 +166,7 @@ export class MaterialService {
       data: {
         name: createMaterialDto.name,
         unitId: createMaterialDto.unitId,
+        code: createMaterialDto.code,
       },
     });
   }
@@ -197,19 +198,79 @@ export class MaterialService {
     );
     return material;
   }
+  async findAll(query: GetAllDto) {
+    const { page, size, searchName, orderBy = 'id', orderDirection = 'asc' } = query;
+    if (!page || !size) {
+      throw new Error("page and size are required");
+    }
 
-  async findAll() {
-    const materials = await this.prisma.material.findMany({
-      include: { Unit: true }, // giữ nguyên nếu relation trong schema là 'Unit'
-    });
+    const skip = (page - 1) * size;
 
-    return materials.map((m) => ({
+    let materials: any[] = [];
+    let total = 0;
+
+    if (searchName) {
+      // Kiểm tra xem có material nào có code === searchName không
+      const exactMatch = await this.prisma.material.findFirst({
+        where: { code: searchName },
+        include: { Unit: true },
+      });
+
+      if (exactMatch) {
+        // Nếu tìm thấy code khớp -> trả về đúng 1 phần tử này
+        materials = [exactMatch];
+        total = 1;
+      } else {
+        // Nếu không tìm thấy code, tìm theo name như bình thường
+        [materials, total] = await Promise.all([
+          this.prisma.material.findMany({
+            skip,
+            take: size,
+            where: {
+              name: { contains: searchName, mode: 'insensitive' },
+            },
+            include: { Unit: true },
+            orderBy: { [orderBy]: orderDirection },
+          }),
+          this.prisma.material.count({
+            where: { name: { contains: searchName, mode: 'insensitive' } },
+          }),
+        ]);
+      }
+    } else {
+      // Trường hợp không có searchName
+      [materials, total] = await Promise.all([
+        this.prisma.material.findMany({
+          skip,
+          take: size,
+          include: { Unit: true },
+          orderBy: { [orderBy]: orderDirection },
+        }),
+        this.prisma.material.count(),
+      ]);
+    }
+
+    const data = materials.map((m) => ({
       id: m.id,
       name: m.name,
       remain: m.remain,
+      code: m.code,
       unit: m.Unit,
     }));
+
+    const res: ResponseGetAllDto<any> = {
+      data,
+      meta: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+
+    return res;
   }
+
 
   async findOne(id: number) {
     const m = await this.prisma.material.findUnique({
@@ -221,6 +282,7 @@ export class MaterialService {
       id: m.id,
       name: m.name,
       remain: m.remain,
+      code: m.code,
       unit: m.Unit,
     };
   }
@@ -231,6 +293,7 @@ export class MaterialService {
       data: {
         name: updateMaterialDto.name,
         unitId: updateMaterialDto.unitId,
+        code: updateMaterialDto.code
       },
     });
     return material;
@@ -249,5 +312,20 @@ export class MaterialService {
     return await this.prisma.material.delete({
       where: { id: id },
     });
+  }
+
+  async removeMany(ids: number[]) {
+    const deleted = await this.prisma.material.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      message: `Successfully deleted ${deleted.count} materials`,
+      count: deleted.count,
+    };
   }
 }

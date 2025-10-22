@@ -9,6 +9,7 @@ import { Role } from 'src/auth/decorator/role.decorator';
 import { ParseDatePipe } from 'src/common/pipe/binding-pipe/parse-date.pipe';
 import { GetAllAdjustmentHistoryDto } from './dto/get-all-adjustment-history.dto';
 import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto';
+import { GetAllDto } from 'src/common/dto/pagination.dto';
 
 @Controller('material')
 // @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -22,8 +23,8 @@ export class MaterialController {
   }
 
   @Get()
-  findAll() {
-    return this.materialService.findAll();
+  findAll(@Query() query: GetAllDto) {
+    return this.materialService.findAll(query);
   }
   @Get('adjustment-history')
   getAdjustmentHistory(@Query() query: GetAllAdjustmentHistoryDto) {
@@ -53,5 +54,11 @@ export class MaterialController {
   @Post('import')
   importMaterial(@Body() dto: ImportMaterialDto) {
     return this.materialService.importMaterial(dto);
+  }
+
+
+  @Delete()
+  removeMany(@Body() body: { ids: number[] }) {
+    return this.materialService.removeMany(body.ids);
   }
 }

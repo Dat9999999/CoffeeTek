@@ -6,7 +6,7 @@ import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { materialService } from "@/services/materialService";
 import type { Material } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
-import { CreateMaterialModal, DeleteMaterialModal } from "@/components/features/materials";
+import { CreateMaterialModal, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
 
 export default function MaterialPage() {
     const { tableState, setTableState } = useTableState();
@@ -25,9 +25,15 @@ export default function MaterialPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res: Material[] = await materialService.getAll();
-            setData(res);
-            setTotal(res.length); // tạm tính total bằng length
+            const res: any = await materialService.getAll({
+                page: tableState.currentPage,
+                size: tableState.pageSize,
+                searchName: tableState.search,
+                orderBy: tableState.orderBy || "id",
+                orderDirection: tableState.orderDirection || "asc",
+            });
+            setData(res.data);
+            setTotal(res.meta.total);
         } finally {
             setLoading(false);
         }
@@ -38,10 +44,16 @@ export default function MaterialPage() {
     }, [tableState]);
 
     const handleDeleteMany = () => setOpenDeleteManyModal(true);
+
     const handleDeleteSuccess = (isDeleteMany: boolean, newPage?: number) => {
-        fetchData();
+        if (newPage && newPage !== tableState.currentPage) {
+            setTableState({ ...tableState, currentPage: newPage });
+        } else {
+            fetchData();
+        }
         isDeleteMany ? setSelectedRowKeys([]) : setDeleteRecord(null);
     };
+
 
     return (
         <>
@@ -68,7 +80,8 @@ export default function MaterialPage() {
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
                     { title: "Remain", dataIndex: "remain", sorter: true },
-                    { title: "Unit", dataIndex: ["unit", "name"], sorter: true },
+                    { title: "Code", dataIndex: "code", sorter: true },
+                    { title: "Unit", dataIndex: ["unit", "name"] },
                 ]}
                 onDetail={(record) => setDetailRecord(record)}
                 onEdit={(record) => setEditRecord(record)}
@@ -85,17 +98,22 @@ export default function MaterialPage() {
             />
 
             {/* DETAIL - static */}
-            {/* TODO: phát triển modal detail */}
-            {/* <MaterialDetailModal open={!!detailRecord} record={detailRecord} onClose={() => setDetailRecord(null)} /> */}
+            <MaterialDetailModal open={!!detailRecord} record={detailRecord} onClose={() => setDetailRecord(null)} />
 
             {/* EDIT - static */}
-            {/* <EditMaterialModal open={!!editRecord} record={editRecord} onClose={() => setEditRecord(null)} onSuccess={fetchData} /> */}
+            <EditMaterialModal open={!!editRecord} materialId={editRecord?.id} onClose={() => setEditRecord(null)} onSuccess={fetchData} />
 
             {/* DELETE ONE - static */}
             <DeleteMaterialModal open={!!deleteRecord} record={deleteRecord} onClose={() => setDeleteRecord(null)} onSuccess={handleDeleteSuccess} totalItems={total} tableState={tableState} />
 
             {/* DELETE MANY - static */}
-            {/* <DeleteManyMaterialsModal open={openDeleteManyModal} selectedRowKeys={selectedRowKeys} onClose={() => setOpenDeleteManyModal(false)} onSuccess={handleDeleteSuccess} totalItems={total} tableState={tableState} /> */}
+            <DeleteManyMaterialsModal
+                open={openDeleteManyModal}
+                selectedRowKeys={selectedRowKeys}
+                onClose={() => setOpenDeleteManyModal(false)}
+                onSuccess={handleDeleteSuccess}
+                totalItems={total} tableState={tableState}
+            />
         </>
     );
 }

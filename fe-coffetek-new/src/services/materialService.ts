@@ -3,8 +3,8 @@ import api from "@/lib/api";
 
 
 export const materialService = {
-    async getAll() {
-        const res = await api.get<Material[]>("/material");
+    async getAll(params?: { page?: number; size?: number; searchName?: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+        const res = await api.get("/material", { params });
         return res.data;
     },
 
@@ -25,18 +25,23 @@ export const materialService = {
 
 
 
-    async create(data: { name: string; unitId: number }) {
+    async create(data: { name: string; unitId: number, code: string }) {
         const res = await api.post("/material", data);
         return res.data;
     },
 
-    async update(id: number, data: { name: string; unitId: number }) {
+    async update(id: number, data: { name: string; unitId: number, code: string }) {
         const res = await api.put(`/material/${id}`, data);
         return res.data;
     },
 
     async delete(id: number) {
         const res = await api.delete(`/material/${id}`);
+        return res.data;
+    },
+
+    async deleteMany(ids: number[]) {
+        const res = await api.delete("/material", { data: { ids } });
         return res.data;
     },
 

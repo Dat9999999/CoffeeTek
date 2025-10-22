@@ -14,6 +14,7 @@ export interface Material {
     id: number;
     name: string;
     remain: number;
+    code: string;
     unit: Unit;
 }
 

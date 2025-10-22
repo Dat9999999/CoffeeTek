@@ -7,4 +7,8 @@ export class CreateMaterialDto {
     @IsNotEmpty()
     @Type(() => Number)
     unitId: number;
+
+    @IsNotEmpty()
+    @Type(() => String)
+    code: string;
 }

@@ -266,7 +266,6 @@ model Unit {
   name   String
   symbol String @unique
   class  String // weight or volume or count
-
   fromConversions UnitConversion[] @relation("FromUnit")
   toConversions   UnitConversion[] @relation("ToUnit")
   Material        Material[]
@@ -300,6 +299,7 @@ model Material {
   name                String                @unique
   remain              Float                 @default(0)
   unitId              Int
+  code                String                @unique
   Unit                Unit                  @relation(fields: [unitId], references: [id])
   MaterialRecipe      MaterialRecipe[]
   MaterialImportation MaterialImportation[]

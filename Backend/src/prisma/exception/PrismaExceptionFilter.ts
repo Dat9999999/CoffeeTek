@@ -21,7 +21,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
             switch (exception.code) {
                 case 'P2002':
                     errorResponse = new ConflictException(
-                        `Unique constraint failed on field: ${exception.meta?.target}`,
+                        `This '${exception.meta?.target}' is already in use. Please check your input and try again.`,
                     );
                     break;
 

@@ -78,6 +78,14 @@ export function CreateMaterialModal({ open, onClose, onSuccess }: CreateMaterial
                 </Form.Item>
 
                 <Form.Item
+                    name="code"
+                    label="Material Code"
+                    rules={[{ required: true, message: "Please input material code!" }]}
+                >
+                    <Input placeholder="Enter material code" />
+                </Form.Item>
+
+                <Form.Item
                     name="unitId"
                     label="Unit"
                     rules={[{ required: true, message: "Please select a unit!" }]}

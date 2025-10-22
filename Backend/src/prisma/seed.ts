@@ -460,6 +460,176 @@ async function main() {
         },
       });
     }
+    // =======================
+    // 13. Seed Loyal Levels
+    // =======================
+    const loyalLevelCount = await prisma.loyalLevel.count();
+    if (loyalLevelCount === 0) {
+        Logger.log('🪄 Seeding Loyal Levels...');
+        await prisma.loyalLevel.createMany({
+            data: [
+                { name: 'Bronze', required_points: 0 },
+                { name: 'Silver', required_points: 100 },
+                { name: 'Gold', required_points: 500 },
+                { name: 'Platinum', required_points: 1000 },
+            ],
+        });
+        Logger.log('✅ Seeded Loyal Levels');
+    } else {
+        Logger.warn('⚠️ Loyal Levels already exist, skipping...');
+    }
+
+    // =======================
+    // 14. Seed Customer User (for points)
+    // =======================
+    // This is a new customer user, separate from the owner, to test customer points
+    const customerEmail = 'customer@example.com';
+    let customerUser = await prisma.user.findUnique({
+        where: { email: customerEmail },
+    });
+
+    if (!customerUser) {
+        Logger.log('🪄 Seeding customer user...');
+        const customerRole = await prisma.role.findUnique({
+            where: { role_name: 'customer' },
+        });
+        if (!customerRole) throw new Error('❌ Customer role not found. Seed roles first!');
+
+        customerUser = await prisma.user.create({
+            data: {
+                phone_number: '0123456789',
+                email: customerEmail,
+                first_name: 'John',
+                last_name: 'Doe',
+                hash: await argon.hash('password123'), // Simple password for test user
+                is_locked: false,
+                detail: {
+                    create: {
+                        birthday: new Date('1995-05-15'),
+                        sex: 'male',
+                        avatar_url: 'default.png',
+                        address: '123 Main St',
+                    },
+                },
+                roles: {
+                    connect: { id: customerRole.id },
+                },
+            },
+        });
+        Logger.log('✅ Seeded customer user:', customerUser.email);
+    } else {
+        Logger.warn('⚠️ Customer user already exists, skipping...');
+    }
+
+    // =======================
+    // 15. Seed Customer Points
+    // =======================
+    const customerPointCount = await prisma.customerPoint.count();
+    if (customerPointCount === 0) {
+        Logger.log('🪄 Seeding Customer Points...');
+
+        // Find the Bronze loyal level
+        const bronzeLevel = await prisma.loyalLevel.findUnique({
+            where: { name: 'Bronze' },
+        });
+
+        if (customerUser && bronzeLevel) {
+            // The schema links customerPhone (Int) to User.id (Int)
+            await prisma.customerPoint.create({
+                data: {
+                    points: 25, // Give them some starting points
+                    customerPhone: customerUser.phone_number, // This is the user phone number as per schema
+                    loyalLevelId: bronzeLevel.id,
+                },
+            });
+            Logger.log('✅ Seeded Customer Points');
+        } else {
+            Logger.error('❌ Could not seed Customer Points. Missing customer or bronze level.');
+        }
+    } else {
+        Logger.warn('⚠️ Customer Points already exist, skipping...');
+    }
+
+    // =======================
+    // 16. Seed Promotions
+    // =======================
+    const promotionCount = await prisma.promotion.count();
+    let summerSale;
+    if (promotionCount === 0) {
+        Logger.log('🪄 Seeding Promotions...');
+
+        const today = new Date();
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(today.getMonth() + 1);
+
+        summerSale = await prisma.promotion.create({
+            data: {
+                name: 'Summer Sale 2025',
+                description: 'Get 20% off all summer drinks!',
+                start_date: today,
+                end_date: nextMonth,
+                is_active: true,
+            },
+        });
+        Logger.log('✅ Seeded Promotions');
+    } else {
+        summerSale = await prisma.promotion.findFirst({
+            where: { name: 'Summer Sale 2025' },
+        });
+        Logger.warn('⚠️ Promotions already exist, skipping...');
+    }
+
+    // =======================
+    // 17. Seed Vouchers
+    // =======================
+    const voucherCount = await prisma.voucher.count();
+    if (voucherCount === 0) {
+        Logger.log('🪄 Seeding Vouchers...');
+
+        if (summerSale) {
+            await prisma.voucher.create({
+                data: {
+                    code: 'SUMMER20',
+                    discount_percentage: 0.20, // 20%
+                    valid_from: summerSale.start_date,
+                    valid_to: summerSale.end_date,
+                    is_active: true,
+                    promotionId: summerSale.id,
+                },
+            });
+            Logger.log('✅ Seeded Vouchers');
+        } else {
+            Logger.error('❌ Could not seed Voucher. "Summer Sale 2025" promotion not found.');
+        }
+    } else {
+        Logger.warn('⚠️ Vouchers already exist, skipping...');
+    }
+
+    // =======================
+    // 18. Seed Product Promotions
+    // =======================
+    const productPromotionCount = await prisma.productPromotion.count();
+    if (productPromotionCount === 0) {
+        Logger.log('🪄 Seeding Product Promotions...');
+
+        const latte = await prisma.product.findFirst({
+            where: { name: 'Latte' },
+        });
+
+        if (latte && summerSale) {
+            await prisma.productPromotion.create({
+                data: {
+                    productId: latte.id,
+                    promotionId: summerSale.id,
+                },
+            });
+            Logger.log('✅ Seeded Product Promotions (Latte + Summer Sale)');
+        } else {
+            Logger.error('❌ Could not seed Product Promotion. Missing Latte or Summer Sale.');
+        }
+    } else {
+        Logger.warn('⚠️ Product Promotions already exist, skipping...');
+    }
 
     Logger.log('✅ Seeded MaterialImportation');
   } else {

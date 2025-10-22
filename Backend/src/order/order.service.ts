@@ -52,6 +52,13 @@ export class OrderService {
       createOrderDto.order_details.map(async (item) => {
         const product = await this.prisma.product.findUnique({
           where: { id: parseInt(item.productId) },
+          include: {
+            Recipe: {
+              include: {
+                MaterialRecipe: true
+              }
+            },
+          }
         });
 
         const toppings = item.toppingItems?.length
@@ -105,52 +112,72 @@ export class OrderService {
     // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
     const final_price = original_price;
     //create order
-    const order = await this.prisma.order.create({
-      data: {
-        customerPhone: createOrderDto.customerPhone,
-        original_price: original_price,
-        final_price: final_price,
-        note: createOrderDto.note,
-        staffId: parseInt(createOrderDto.staffId),
-        order_details: {
-          create: order_details.map(item => ({
-            product_name: item.product?.name,
-            quantity: parseInt(item.quantity),
-            unit_price: item.product?.price || 0,
 
-            product: {
-              connect: { id: parseInt(item.productId) }
-            },
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of order_details) {
 
-            size: item.sizeId
-              ? { connect: { id: parseInt(item.sizeId) } }
-              : undefined,
-
-            ToppingOrderDetail: item.toppingItems?.length
-              ? {
-                create: item.toppingItems.map(t => ({
-                  quantity: parseInt(t.quantity),
-                  unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
-                  topping: { connect: { id: parseInt(t.toppingId) } }
-                }))
-              }
-              : undefined,
-          }))
+        //throw error if product is inactive
+        if (
+          !item.product ||
+          !item.product.isActive ||
+          !item.product.Recipe ||
+          item.product.Recipe.length === 0 ||
+          // if Recipe is an array, ensure at least one recipe has MaterialRecipe entries
+          item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
+        ) {
+          const productNameOrId = item.product?.name ?? item.productId;
+          throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
         }
-      },
-      include: {
-        order_details: {
-          include: {
-            product: true,
-            size: true,
-            ToppingOrderDetail: {
-              include: {
-                topping: true
+      }
+
+      const order = await tx.order.create({
+        data: {
+          customerPhone: createOrderDto.customerPhone,
+          original_price: original_price,
+          final_price: final_price,
+          note: createOrderDto.note,
+          staffId: parseInt(createOrderDto.staffId),
+          order_details: {
+            create: order_details.map(item => ({
+              product_name: item.product?.name,
+              quantity: parseInt(item.quantity),
+              unit_price: item.product?.price || 0,
+
+              product: {
+                connect: { id: parseInt(item.productId) }
+              },
+
+              size: item.sizeId
+                ? { connect: { id: parseInt(item.sizeId) } }
+                : undefined,
+
+              ToppingOrderDetail: item.toppingItems?.length
+                ? {
+                  create: item.toppingItems.map(t => ({
+                    quantity: parseInt(t.quantity),
+                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0,
+                    topping: { connect: { id: parseInt(t.toppingId) } }
+                  }))
+                }
+                : undefined,
+            }))
+          }
+        },
+        include: {
+          order_details: {
+            include: {
+              product: true,
+              size: true,
+              ToppingOrderDetail: {
+                include: {
+                  topping: true
+                }
               }
             }
           }
         }
-      }
+      });
+
     });
     return createOrderDto;
   }

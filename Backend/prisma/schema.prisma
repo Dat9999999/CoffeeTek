@@ -30,6 +30,7 @@ model User {
 
   staffOrders         Order[]               @relation("StaffOrders")
   MaterialImportation MaterialImportation[]
+  CustomerPoint       CustomerPoint?
 
   @@map("users")
 }
@@ -117,16 +118,18 @@ model Product {
   is_multi_size  Boolean @default(false)
   product_detail String?
   price          Float?
+  isActive       Boolean @default(true)
 
   category_id Int? // FK có thể null
   category    Category? @relation(fields: [category_id], references: [id])
 
-  sizes        ProductSize[] // 1 product có nhiều size
-  optionValues ProductOptionValue[] // 1 product có nhiều option value
-  toppings     ProductTopping[] // 1 product có nhiều topping
-  images       ProductImage[]
-  orderDetails OrderDetail[]
-  Recipe       Recipe[]             @relation("RecipeProduct")
+  sizes            ProductSize[] // 1 product có nhiều size
+  optionValues     ProductOptionValue[] // 1 product có nhiều option value
+  toppings         ProductTopping[] // 1 product có nhiều topping
+  images           ProductImage[]
+  orderDetails     OrderDetail[]
+  Recipe           Recipe[]             @relation("RecipeProduct")
+  ProductPromotion ProductPromotion[]
 
   @@map("products")
 }
@@ -356,4 +359,61 @@ model InventoryAdjustment {
   adjustedAt     DateTime @default(now())
 
   @@map("inventory_adjustments")
+}
+
+model LoyalLevel {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  required_points Int
+  CustomerPoint   CustomerPoint[]
+
+  @@map("loyal_levels")
+}
+
+model CustomerPoint {
+  id            Int         @id @default(autoincrement())
+  points        Int         @default(0)
+  customerPhone String      @unique
+  Customer      User        @relation(fields: [customerPhone], references: [phone_number])
+  loyalLevel    LoyalLevel? @relation(fields: [loyalLevelId], references: [id])
+  loyalLevelId  Int?
+
+  @@map("customer_points")
+}
+
+model Promotion {
+  id               Int                @id @default(autoincrement())
+  name             String
+  description      String?
+  start_date       DateTime
+  end_date         DateTime
+  is_active        Boolean            @default(true)
+  Voucher          Voucher[]
+  ProductPromotion ProductPromotion[]
+
+  @@map("promotions")
+}
+
+model ProductPromotion {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  promotionId Int
+  Product     Product   @relation(fields: [productId], references: [id])
+  Promotion   Promotion @relation(fields: [promotionId], references: [id])
+
+  @@unique([productId, promotionId])
+  @@map("product_promotions")
+}
+
+model Voucher {
+  id                  Int       @id @default(autoincrement())
+  code                String    @unique
+  discount_percentage Float
+  valid_from          DateTime
+  valid_to            DateTime
+  is_active           Boolean   @default(true)
+  Promotion           Promotion @relation(fields: [promotionId], references: [id])
+  promotionId         Int
+
+  @@map("vouchers")
 }

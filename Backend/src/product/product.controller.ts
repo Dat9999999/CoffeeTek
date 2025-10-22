@@ -7,6 +7,9 @@ import {
   Delete,
   Put,
   Query,
+  Patch,
+  ParseBoolPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ProductsService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -15,7 +18,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Post()
   create(@Body() dto: CreateProductDto) {
@@ -45,5 +48,12 @@ export class ProductsController {
   @Delete()
   removeMany(@Body() body: { ids: number[] }) {
     return this.productsService.removeMany(body.ids);
+  }
+  @Patch()
+  toggleActiveStatus(
+    @Query('id', ParseIntPipe) id: number,
+    @Query('isActive', ParseBoolPipe) isActive: boolean,
+  ) {
+    return this.productsService.toggleActiveStatus(id, isActive);
   }
 }

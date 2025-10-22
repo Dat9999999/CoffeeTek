@@ -10,17 +10,17 @@ import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto
 
 @Injectable()
 export class MaterialService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async adjustMaterialStock(
     date: Date,
     updateAdjustmentDto: UpdateConsumeInventoryDto,
   ) {
     //update material consume if any change'
-    let startDate = new Date(date);
+    const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
 
-    let endDate = new Date(date);
+    const endDate = new Date(date);
     endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
     endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
@@ -38,7 +38,7 @@ export class MaterialService {
     });
 
     // map materialId to consume
-    let record = new Map<number, number>();
+    const record = new Map<number, number>();
 
     for (const consumeRecord of consumeRecords) {
       const materialId = consumeRecord.materialId;
@@ -65,7 +65,7 @@ export class MaterialService {
       }
     }
     for (const materailId of record.keys()) {
-      this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx) => {
         const totalConsume = record.get(materailId) ?? 0;
         const remainToDeduct = await tx.material.findUnique({
           where: {
@@ -95,39 +95,60 @@ export class MaterialService {
       orderBy = 'id',
       orderDirection = 'asc',
     } = query;
-    if (type !== 'import' && type !== 'consume') {
-      throw new NotFoundException(
-        `Adjustment history type ${type} is not valid`,
-      );
-    }
+
     Logger.log(
       `Getting adjustment history for type ${type} and date ${date.toISOString()}`,
       'MaterialService',
     );
-    let startDate = new Date(date);
+    const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
 
-    let endDate = new Date(date);
+    const endDate = new Date(date);
     endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
     endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
     const skip = query.size * (query.page - 1);
+    let data;
+    let total;
 
-    const data = await this.prisma.inventoryAdjustment.findMany({
-      where: {
-        adjustedAt: {
-          gte: startDate,
-          lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
-        },
-        materialId: materialId,
-      },
-      skip: skip,
-      take: query.size,
-      orderBy: { [orderBy]: orderDirection },
-    });
-    const total = await this.prisma.inventoryAdjustment.count();
+    switch (type) {
+      case 'consume':
+        data = await this.prisma.inventoryAdjustment.findMany({
+          where: {
+            adjustedAt: {
+              gte: startDate,
+              lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+            },
+            materialId: materialId,
+          },
+          skip: skip,
+          take: query.size,
+          orderBy: { [orderBy]: orderDirection },
+        });
+        total = await this.prisma.inventoryAdjustment.count();
+        break;
+      case 'import':
+        data = await this.prisma.materialImportation.findMany({
+          where: {
+            importDate: {
+              gte: startDate,
+              lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+            },
+            materialId: materialId,
+          },
+          skip: skip,
+          take: query.size,
+          orderBy: { [orderBy]: orderDirection },
+        });
+        total = await this.prisma.materialImportation.count();
+        break;
+      default:
+        throw new NotFoundException(
+          `Adjustment history type ${type} is not valid`,
+        );
+    }
     const response: ResponseGetAllDto<
-      Prisma.InventoryAdjustmentGetPayload<{}>
+      any
     > = {
       data: data,
       meta: {

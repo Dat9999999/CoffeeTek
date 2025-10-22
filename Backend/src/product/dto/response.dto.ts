@@ -15,7 +15,7 @@ export interface ProductOptionValueGroup {
 interface Topping {
   id: number;
   price: number;
-  image_name: string;
+  image_name: string | null;
   sort_index: number;
 }
 

@@ -137,7 +137,15 @@ export class ProductsService {
           category: true,
           images: true,
           sizes: { include: { size: true } },
-          toppings: { select: { topping: true } },
+          toppings: {
+            select: {
+              topping: {
+                include: {
+                  images: true,
+                }
+              }
+            }
+          },
           optionValues: {
             include: {
               option_value: {
@@ -145,6 +153,7 @@ export class ProductsService {
               },
             },
           },
+
         },
         orderBy: { [orderBy]: orderDirection },
         skip: (page - 1) * size,
@@ -189,7 +198,14 @@ export class ProductsService {
           price: s.price,
           size: s.size,
         })),
-        toppings: product.toppings.map((t) => t.topping),
+        toppings: product.toppings.map((t) => {
+          return {
+            id: t.topping.id,
+            price: t.topping.price ?? 0,
+            image_name: t.topping.images[0]?.image_name || null,
+            sort_index: t.topping.images[0]?.sort_index || 0,
+          }
+        }),
         optionGroups: Array.from(optionGroupsMap.values()),
       };
     });
@@ -217,7 +233,11 @@ export class ProductsService {
           include: { size: true },
         },
         toppings: {
-          select: { topping: true },
+          select: {
+            topping: {
+              include: { images: true },
+            },
+          },
         },
         optionValues: {
           include: {
@@ -266,7 +286,14 @@ export class ProductsService {
         price: s.price,
         size: s.size,
       })),
-      toppings: product.toppings.map((t) => t.topping),
+      toppings: product.toppings.map((t) => {
+        return {
+          id: t.topping.id,
+          price: t.topping.price ?? 0,
+          image_name: t.topping.images[0]?.image_name || null,
+          sort_index: t.topping.images[0]?.sort_index || 0,
+        }
+      }),
       optionGroups: Array.from(optionGroupsMap.values()),
     };
   }

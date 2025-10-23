@@ -6,23 +6,34 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class LoyalLevelService {
   constructor(private readonly prisma: PrismaService) { }
-  create(createLoyalLevelDto: CreateLoyalLevelDto) {
-    return 'This action adds a new loyalLevel';
+  async create(createLoyalLevelDto: CreateLoyalLevelDto) {
+    return await this.prisma.loyalLevel.create({
+      data: {
+        name: createLoyalLevelDto.name,
+        required_points: createLoyalLevelDto.requirePoint
+      }
+    });
   }
 
   async findAll() {
     return await this.prisma.loyalLevel.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} loyalLevel`;
+  async findOne(id: number) {
+    return await this.prisma.loyalLevel.findUnique({ where: { id } });
   }
 
-  update(id: number, updateLoyalLevelDto: UpdateLoyalLevelDto) {
-    return `This action updates a #${id} loyalLevel`;
+  async update(id: number, updateLoyalLevelDto: UpdateLoyalLevelDto) {
+    return await this.prisma.loyalLevel.update({
+      where: { id },
+      data: {
+        name: updateLoyalLevelDto.name,
+        required_points: updateLoyalLevelDto.requirePoint
+      }
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} loyalLevel`;
+  async remove(id: number) {
+    return await this.prisma.loyalLevel.delete({ where: { id } });
   }
 }

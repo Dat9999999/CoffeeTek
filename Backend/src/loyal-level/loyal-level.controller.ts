@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { LoyalLevelService } from './loyal-level.service';
 import { CreateLoyalLevelDto } from './dto/create-loyal-level.dto';
 import { UpdateLoyalLevelDto } from './dto/update-loyal-level.dto';
 
 @Controller('loyal-level')
 export class LoyalLevelController {
-  constructor(private readonly loyalLevelService: LoyalLevelService) {}
+  constructor(private readonly loyalLevelService: LoyalLevelService) { }
 
   @Post()
   create(@Body() createLoyalLevelDto: CreateLoyalLevelDto) {
@@ -22,7 +22,7 @@ export class LoyalLevelController {
     return this.loyalLevelService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateLoyalLevelDto: UpdateLoyalLevelDto) {
     return this.loyalLevelService.update(+id, updateLoyalLevelDto);
   }

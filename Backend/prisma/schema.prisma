@@ -265,10 +265,10 @@ model PaymentDetail {
 }
 
 model Unit {
-  id     Int    @id @default(autoincrement())
-  name   String
-  symbol String @unique
-  class  String // weight or volume or count
+  id              Int              @id @default(autoincrement())
+  name            String
+  symbol          String           @unique
+  class           String // weight or volume or count
   fromConversions UnitConversion[] @relation("FromUnit")
   toConversions   UnitConversion[] @relation("ToUnit")
   Material        Material[]
@@ -400,8 +400,8 @@ model ProductPromotion {
   id          Int       @id @default(autoincrement())
   productId   Int
   promotionId Int
-  Product     Product   @relation(fields: [productId], references: [id])
-  Promotion   Promotion @relation(fields: [promotionId], references: [id])
+  Product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
   new_price   Float     @default(0)
 
   @@unique([productId, promotionId])

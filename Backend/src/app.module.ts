@@ -19,6 +19,7 @@ import { MaterialModule } from './material/material.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { UnitModule } from './unit/unit.module';
+import { PromotionModule } from './promotion/promotion.module';
 
 
 @Module({
@@ -45,6 +46,7 @@ import { UnitModule } from './unit/unit.module';
     RecipeModule,
     InventoryModule,
     UnitModule,
+    PromotionModule,
   ],
 })
 export class AppModule { }

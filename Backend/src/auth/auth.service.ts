@@ -58,8 +58,19 @@ export class AuthService {
                     //signup user with customer role
                     roles: {
                         connect: { role_name: 'customer' }
-                    }
-                    // 
+                    },
+                    // create customer point 
+                    CustomerPoint: {
+                        create: {
+                            points: 0,
+                            loyalLevel: {
+                                connect: {
+                                    id: 1
+                                }
+                            }
+                        }
+                    },
+
                 }
             });
         return this.signToken(user.id, user.phone_number);

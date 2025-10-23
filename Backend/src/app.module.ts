@@ -20,6 +20,7 @@ import { RecipeModule } from './recipe/recipe.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { UnitModule } from './unit/unit.module';
 import { PromotionModule } from './promotion/promotion.module';
+import { LoyalLevelModule } from './loyal-level/loyal-level.module';
 
 
 @Module({
@@ -47,6 +48,7 @@ import { PromotionModule } from './promotion/promotion.module';
     InventoryModule,
     UnitModule,
     PromotionModule,
+    LoyalLevelModule,
   ],
 })
 export class AppModule { }

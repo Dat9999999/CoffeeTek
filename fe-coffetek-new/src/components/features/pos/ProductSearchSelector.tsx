@@ -71,7 +71,7 @@ export const ProductSearchSelector = ({
         return debounce(loadOptions, 300);
     }, []);
 
-    const handleChange = (newValue: ProductValue) => {
+    const handleChange = (newValue: ProductValue, option: any) => {
         // Gọi callback onSelect
         if (onSelect) {
             onSelect(newValue ? newValue.product : null);

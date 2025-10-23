@@ -198,7 +198,9 @@ export const ProductPosItemModal = ({
                                     height: 220,
                                     width: 220,
                                     borderRadius: token.borderRadiusSM,
+
                                 }}
+                                isContain={false}
                             />
                         </div>
 
@@ -311,7 +313,7 @@ export const ProductPosItemModal = ({
                             return (
                                 <div key={optionGroup.id} style={{ marginTop: token.marginLG }}>
                                     <Typography.Text strong>{optionGroup.name}</Typography.Text>
-                                    <Radio.Group
+                                    {/* <Radio.Group
                                         buttonStyle="solid"
                                         onChange={(e) => {
                                             const optionValueId = parseInt(e.target.value);
@@ -335,7 +337,40 @@ export const ProductPosItemModal = ({
                                                 {optionValue.name}
                                             </Radio.Button>
                                         ))}
+                                    </Radio.Group> */}
+                                    <Radio.Group
+                                        buttonStyle="solid"
+                                        value={selectedOption?.optionValue.id}
+                                        style={{ display: "flex", flexWrap: "wrap", marginTop: token.marginSM }}
+                                    >
+                                        {optionGroup.values.map((optionValue: OptionValue) => {
+                                            const isSelected = selectedOption?.optionValue.id === optionValue.id;
+                                            return (
+                                                <Radio.Button
+                                                    key={optionValue.id}
+                                                    value={optionValue.id}
+                                                    onClick={() => {
+                                                        if (isSelected) {
+                                                            //  Nếu click lại cùng option → uncheck
+                                                            setSelectedOptions(prev =>
+                                                                prev.filter(item => item.optionGroup.id !== optionGroup.id)
+                                                            );
+                                                        } else {
+                                                            //  Nếu chọn option khác → chọn mới
+                                                            handleOptionSelect(optionGroup, optionValue);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        borderRadius: token.borderRadiusSM,
+                                                        marginRight: token.marginXS,
+                                                    }}
+                                                >
+                                                    {optionValue.name}
+                                                </Radio.Button>
+                                            );
+                                        })}
                                     </Radio.Group>
+
                                 </div>
                             );
                         })}
@@ -344,7 +379,7 @@ export const ProductPosItemModal = ({
                     {/* TOPPINGS SECTION */}
                     {(productPosItem.product.toppings || []).length > 0 && (
                         // đặt toàn bộ section vào 1 Col để Row parent vẫn giữ thứ tự theo order
-                        <Col xs={{ span: 24, order: 3 }} lg={{ span: 24, order: 3 }} style={{ marginTop: token.marginLG }}>
+                        <Col xs={{ span: 24, order: 3 }} lg={{ span: 24, order: 3 }} style={{ marginTop: token.marginSM }}>
                             <Typography.Text strong>Select Toppings</Typography.Text>
 
                             <Row gutter={[12, 8]} style={{ marginTop: token.marginSM }}>

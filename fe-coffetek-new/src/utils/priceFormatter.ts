@@ -3,8 +3,15 @@ export const globalCurrency = 'VND' as Currency;
 
 export type Currency = 'VND' | 'USD';
 
+
 export interface FormatPriceOptions {
     includeSymbol?: boolean;
+}
+
+export const getPriceSymbol = () => {
+    if (globalCurrency === 'VND') return "₫";
+    if (globalCurrency === 'USD') return "$";
+    return ""
 }
 
 export const formatPrice = (value: number | undefined | null, options: FormatPriceOptions): string => {

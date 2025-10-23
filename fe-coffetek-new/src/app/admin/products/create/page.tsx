@@ -165,7 +165,11 @@ export default function CreateProductPage() {
                     <Button
                         icon={<ArrowLeftOutlined />}
                         type="text"
-                        onClick={() => router.push('/admin/products')}
+                        onClick={() => {
+                            console.log("Clicked back button");
+                            router.push('/admin/products');
+
+                        }}
                         aria-label="Back"
                     />
 

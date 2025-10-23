@@ -36,9 +36,17 @@ export const OnlyNewImageUploader: React.FC<ProductImageUploaderProps> = ({
     const sensor = useSensor(PointerSensor, { activationConstraint: { distance: 8 } });
     const [error, setError] = useState<string | null>(null);
 
+    // useEffect(() => {
+    //     setFileList(value);
+    // }, [value]);
     useEffect(() => {
-        setFileList(value);
+        if (!value) return;
+        if (value.length !== fileList.length ||
+            value.some((v, i) => v.uid !== fileList[i]?.uid)) {
+            setFileList(value);
+        }
     }, [value]);
+
 
     const handleChange: UploadProps["onChange"] = ({ fileList: newList }) => {
         const limited = newList.slice(-maxCount);

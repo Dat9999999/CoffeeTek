@@ -7,6 +7,7 @@ interface TableToolbarProps {
     search?: string;
     onSearchChange?: (value: string) => void;
     filters?: React.ReactNode;
+    buttonRights?: React.ReactNode;
     onAdd?: () => void;
     addLabel?: string;
     onDeleteMany?: () => void;
@@ -20,6 +21,7 @@ export function TableToolbar({
     onAdd,
     addLabel = "Add",
     onDeleteMany,
+    buttonRights,
     deleteManyLabel = "Delete Selected",
 }: TableToolbarProps) {
 
@@ -55,6 +57,7 @@ export function TableToolbar({
                             {deleteManyLabel}
                         </Button>
                     )}
+                    {buttonRights}
                     {onAdd && (
                         <Button type="primary" icon={<PlusCircleOutlined />} onClick={onAdd}>
                             {addLabel}

@@ -6,7 +6,7 @@ import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { materialService } from "@/services/materialService";
 import type { Material } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
-import { CreateMaterialModal, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
+import { CreateMaterialModal, ImportMaterialButton, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
 
 export default function MaterialPage() {
     const { tableState, setTableState } = useTableState();
@@ -68,6 +68,7 @@ export default function MaterialPage() {
                 addLabel="Add"
                 onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
                 deleteManyLabel="Delete"
+                buttonRights={<ImportMaterialButton />}
             />
 
             <DataTable<Material>

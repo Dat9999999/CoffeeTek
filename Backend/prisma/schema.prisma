@@ -78,11 +78,12 @@ model OptionValue {
 }
 
 model Size {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique
-  sort_index  Int
-  OrderDetail OrderDetail[]
-  ProductSize ProductSize[]
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  sort_index     Int
+  OrderDetail    OrderDetail[]
+  ProductSize    ProductSize[]
+  MaterialRecipe MaterialRecipe[]
 
   @@map("sizes")
 }
@@ -139,9 +140,8 @@ model ProductSize {
   product_id Int
   size_id    Int
 
-  product     Product       @relation(fields: [product_id], references: [id])
-  size        Size          @relation(fields: [size_id], references: [id])
-  ConsumeSize ConsumeSize[]
+  product Product @relation(fields: [product_id], references: [id])
+  size    Size    @relation(fields: [size_id], references: [id])
 
   @@map("product_sizes")
 }
@@ -317,23 +317,13 @@ model MaterialRecipe {
   Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeId Int
 
-  Material    Material      @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  materialId  Int
-  ConsumeSize ConsumeSize[]
+  Material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId Int
+
+  Size   Size @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  sizeId Int
 
   @@map("material_recipes")
-}
-
-model ConsumeSize {
-  id            Int         @id @default(autoincrement())
-  Size          ProductSize @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
-  productSizeId Int
-
-  additionalConsume Int
-  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id], onDelete: Cascade)
-  materialRecipeId  Int
-
-  @@map("consume_sizes")
 }
 
 model MaterialImportation {

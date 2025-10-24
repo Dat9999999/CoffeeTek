@@ -440,9 +440,9 @@ async function main() {
     // base consumption (in kg/l) for a Medium Latte
     await prisma.materialRecipe.createMany({
       data: [
-        { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 0.02 }, // 20g
-        { recipeId: latteRecipe.id, materialId: milk.id, consume: 0.18 }, // 180ml
-        { recipeId: latteRecipe.id, materialId: sugar.id, consume: 0.01 }, // 10g
+        { recipeId: latteRecipe.id, materialId: coffeeBeans.id, consume: 0.02, sizeId: 1 }, // 20g
+        { recipeId: latteRecipe.id, materialId: milk.id, consume: 0.18, sizeId: 1 }, // 180ml
+        { recipeId: latteRecipe.id, materialId: sugar.id, consume: 0.01, sizeId: 1 }, // 10g
       ],
     });
 
@@ -451,61 +451,6 @@ async function main() {
     Logger.warn('⚠️ MaterialRecipe already exists, skipping...');
   }
 
-  // =======================
-  // 14. Seed ConsumeSize
-  // =======================
-  const consumeSizeCount = await prisma.consumeSize.count();
-  if (consumeSizeCount === 0) {
-    Logger.log('🪄 Seeding consume_sizes...');
-
-    // **FIX**: Get ProductSize IDs, not Size IDs
-    const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
-    if (!latte) throw new Error('Latte product not found');
-
-    const latteSizes = await prisma.productSize.findMany({
-      where: { product_id: latte.id },
-      include: { size: true },
-    });
-
-    const latteRecipe = await prisma.recipe.findFirst({
-      where: { product_id: latte.id },
-      include: { MaterialRecipe: true },
-    });
-    if (!latteRecipe) throw new Error('❌ Latte recipe not found');
-
-    const latteSizeMap = Object.fromEntries(
-      latteSizes.map((ps) => [ps.size.name, ps.id]),
-    );
-    const recipes = latteRecipe.MaterialRecipe;
-
-    // The original script's logic here is unclear (4, 6, 8).
-    // Assuming this is "additional percentage"
-    for (const mr of recipes) {
-      await prisma.consumeSize.createMany({
-        data: [
-          {
-            productSizeId: latteSizeMap['Small'],
-            materialRecipeId: mr.id,
-            additionalConsume: 0, // e.g., 0% (Base Standard)
-          },
-          {
-            productSizeId: latteSizeMap['Medium'],
-            materialRecipeId: mr.id,
-            additionalConsume: 20, // e.g., +20% more than Small
-          },
-          {
-            productSizeId: latteSizeMap['Large'],
-            materialRecipeId: mr.id,
-            additionalConsume: 40, // e.g., +40% more than Small
-          },
-        ],
-      });
-    }
-
-    Logger.log('✅ Seeded ConsumeSize');
-  } else {
-    Logger.warn('⚠️ ConsumeSize already exists, skipping...');
-  }
 
   // =======================
   // 15. Seed MaterialImportation

@@ -16,4 +16,7 @@ export class CreateRecipeDto {
     @Type(() => ImportMaterialDto)
     materials: ImportMaterialDto[];
 
+    @IsNotEmpty()
+    sizeId: number
+
 }

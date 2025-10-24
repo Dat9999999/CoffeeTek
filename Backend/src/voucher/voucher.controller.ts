@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@
 import { VoucherService } from './voucher.service';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
+import { ExchangeVoucherDTO } from './dto/exchange-voucher.dto';
 
 @Controller('voucher')
 export class VoucherController {
@@ -22,9 +23,9 @@ export class VoucherController {
     return this.voucherService.findOne(+id);
   }
 
-  @Put(':id')
-  update(@Query('id') id: string, @Body() updateVoucherDto: UpdateVoucherDto) {
-    return this.voucherService.update(+id, updateVoucherDto);
+  @Put()
+  exchangeVoucher(@Query('id') id: number, @Body() dto: ExchangeVoucherDTO) {
+    return this.voucherService.exchangeVoucher(id, dto);
   }
 
   @Delete()

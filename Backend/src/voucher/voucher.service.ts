@@ -1,11 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as voucher_codes from 'voucher-code-generator';
+import { ExchangeVoucherDTO } from './dto/exchange-voucher.dto';
 
 @Injectable()
 export class VoucherService {
+  async exchangeVoucher(id: number, dto: ExchangeVoucherDTO) {
+    await this.prisma.$transaction(async (tx) => {
+      const voucher = await tx.voucher.findUnique({ where: { id } });
+      if (!voucher) throw new NotFoundException(`not found voucher id : ${id}`);
+
+
+      const customer = await tx.user.findUnique({
+        where: { phone_number: dto.customerPhone }, include: {
+          CustomerPoint: true
+        }
+      });
+      if (!customer || !customer.CustomerPoint) throw new NotFoundException(`not found customer phone  : ${dto.customerPhone}`);
+
+      if (voucher.requirePoint > customer.CustomerPoint?.points) throw new BadRequestException(`Customer point is not enough to exchange this voucher`);
+
+
+      // user exchange voucher 
+      await tx.voucher.update({
+        where: { id },
+        data: {
+          customerPhone: dto.customerPhone
+
+        }
+      })
+    })
+    return dto;
+  }
   constructor(private readonly prisma: PrismaService) { }
   async generateUniqueVoucherCode(): Promise<string> {
     let code: string;
@@ -43,9 +71,7 @@ export class VoucherService {
         code: code,
         valid_from: voucherDetails.validFrom,
         valid_to: voucherDetails.validTo,
-        requireLevel: {
-          connect: { id: voucherDetails.requireLevelId }
-        },
+        requirePoint: voucherDetails.requirePoint,
         minAmountOrder: voucherDetails.minAmountOrder,
         discount_percentage: voucherDetails.discountRate
       }

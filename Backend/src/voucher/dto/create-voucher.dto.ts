@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsNumber } from "class-validator";
 
 export class CreateVoucherDto {
     @IsNotEmpty()
@@ -13,7 +13,9 @@ export class CreateVoucherDto {
     @Type(() => Date)
     validTo: string;
     @IsNotEmpty()
-    requireLevelId: number;
-    @IsNotEmpty()
     minAmountOrder: number;
+
+    @IsNotEmpty()
+    @IsNumber()
+    requirePoint: number;
 }

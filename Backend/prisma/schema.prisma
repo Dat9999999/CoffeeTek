@@ -359,7 +359,6 @@ model LoyalLevel {
   name            String          @unique
   required_points Int
   CustomerPoint   CustomerPoint[]
-  Voucher         Voucher[]
 
   @@map("loyal_levels")
 }
@@ -400,12 +399,11 @@ model ProductPromotion {
 }
 
 model Voucher {
-  id                  Int        @id @default(autoincrement())
-  code                String     @unique
+  id                  Int    @id @default(autoincrement())
+  code                String @unique
   discount_percentage Float
   minAmountOrder      Float
-  requireLevel        LoyalLevel @relation(fields: [loyalLevelId], references: [id])
-  loyalLevelId        Int
+  requirePoint        Float
 
   valid_from    DateTime
   valid_to      DateTime

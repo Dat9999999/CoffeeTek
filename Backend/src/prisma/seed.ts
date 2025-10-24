@@ -645,6 +645,8 @@ async function main() {
           valid_from: today,
           valid_to: nextMonth,
           is_active: true,
+          loyalLevelId: 1,
+          minAmountOrder: 30000
         },
         {
           code: 'JOHNDOE20',
@@ -652,7 +654,9 @@ async function main() {
           valid_from: today,
           valid_to: nextMonth,
           is_active: true,
-          userId: customerUser?.id, // Link to specific customer
+          loyalLevelId: 1,
+          minAmountOrder: 30000,
+          customerPhone: customerUser?.phone_number, // Link to specific customer
         },
       ],
     });

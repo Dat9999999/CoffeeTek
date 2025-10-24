@@ -21,6 +21,8 @@ interface DataTableProps<T> {
     onRowSelectionChange?: (selectedRowKeys: number[]) => void;
     enableRowSelection?: boolean; // Thêm prop mới để bật/tắt rowSelection
     renderActions?: (record: T) => React.ReactNode;
+    isNoActions?: boolean;
+    onRowClick?: (record: T) => void;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -36,6 +38,8 @@ export function DataTable<T extends { id: number | string }>({
     onRowSelectionChange,
     enableRowSelection = false, // Mặc định tắt rowSelection
     renderActions,
+    isNoActions = false,
+    onRowClick
 }: DataTableProps<T>) {
     const handleChange = (
         newPagination: TablePaginationConfig,
@@ -61,6 +65,30 @@ export function DataTable<T extends { id: number | string }>({
         onChangeState(newState);
     };
 
+    const finalColumns: ColumnsType<T> = isNoActions
+        ? columns
+        : [
+            ...columns,
+            {
+                title: "Actions",
+                key: "actions",
+                width: 40,
+                fixed: "right",
+                align: "center",
+                render: (_, record) =>
+                    renderActions ? (
+                        renderActions(record)
+                    ) : (
+                        <TableActions
+                            record={record}
+                            onDetail={onDetail}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                        />
+                    ),
+            },
+        ];
+
     return (
         <Table<T>
             rowKey="id"
@@ -74,27 +102,7 @@ export function DataTable<T extends { id: number | string }>({
                     }
                     : undefined
             }
-            columns={[
-                ...columns,
-                {
-                    title: "Actions",
-                    key: "actions",
-                    width: 40,
-                    fixed: "right",
-                    align: "center",
-                    render: (_, record) =>
-                        renderActions ? (
-                            renderActions(record)
-                        ) : (
-                            <TableActions
-                                record={record}
-                                onDetail={onDetail}
-                                onEdit={onEdit}
-                                onDelete={onDelete}
-                            />
-                        ),
-                },
-            ]}
+            columns={finalColumns}
             dataSource={data}
             loading={loading}
             pagination={{
@@ -105,6 +113,9 @@ export function DataTable<T extends { id: number | string }>({
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "15", "20"],
             }}
+            onRow={(record) => ({
+                onClick: () => onRowClick?.(record),
+            })}
             onChange={handleChange}
             scroll={data && data.length > 0 ? { x: "max-content" } : undefined}
         />

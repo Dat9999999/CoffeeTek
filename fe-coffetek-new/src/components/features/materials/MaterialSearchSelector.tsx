@@ -123,7 +123,7 @@ export const MaterialSearchSelector = ({
             labelInValue
             searchValue={value} // ✅ controlled
             placeholder="Search materials..."
-            style={{ backgroundColor: token.colorBgBase, ...style }}
+            style={{ ...style }}
             filterOption={false}
             onSearch={(val) => {
                 setValue(val);
@@ -178,6 +178,14 @@ export const MaterialSearchSelector = ({
                 value: option.value,
                 material: option.material,
             }))}
+            styles={{
+                popup: {
+                    root:
+                        !fetching && options.length === 0 && !searchTextRef.current.trim()
+                            ? { display: "none" }
+                            : {},
+                },
+            }}
             optionRender={(option) => {
                 const m = option.data.material as Material;
                 return (

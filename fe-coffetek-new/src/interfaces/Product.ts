@@ -65,6 +65,7 @@ export interface CreateProductDto {
     optionValueIds?: number[];
     toppingIds?: number[];
     images?: ProductImageInput[];
+    isTopping?: boolean
 }
 
 export interface UpdateProductDto {

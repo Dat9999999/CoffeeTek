@@ -74,6 +74,9 @@ export function useTableState(initial?: Partial<TableState>) {
     // }, [tableState]);
 
     useEffect(() => {
+        // 🛑 Bỏ qua các trang con như /create hoặc /edit
+        if (pathname.includes('/create') || pathname.includes('/edit')) return;
+
         const params = new URLSearchParams();
         params.set("page", String(tableState.currentPage));
         params.set("pageSize", String(tableState.pageSize));

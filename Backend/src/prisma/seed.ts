@@ -518,7 +518,7 @@ async function main() {
 
     customerUser = await prisma.user.create({
       data: {
-        phone_number: '0123456789',
+        phone_number: '0985954408',
         email: customerEmail,
         first_name: 'John',
         last_name: 'Doe',
@@ -645,7 +645,7 @@ async function main() {
           valid_from: today,
           valid_to: nextMonth,
           is_active: true,
-          loyalLevelId: 1,
+          requirePoint: 200,
           minAmountOrder: 30000
         },
         {
@@ -654,7 +654,7 @@ async function main() {
           valid_from: today,
           valid_to: nextMonth,
           is_active: true,
-          loyalLevelId: 1,
+          requirePoint: 200,
           minAmountOrder: 30000,
           customerPhone: customerUser?.phone_number, // Link to specific customer
         },

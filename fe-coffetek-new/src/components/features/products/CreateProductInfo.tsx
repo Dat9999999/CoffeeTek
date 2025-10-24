@@ -38,10 +38,11 @@ import { ToppingSelectorModal } from '@/components/features/toppings';
 import { CategorySelector } from '@/components/features/categories/CategorySelector';
 import { OptionGroupSelector } from '@/components/features/option-groups/OptionGroupSelector';
 import { useRouter } from 'next/navigation';
+import { ProductInfo } from '@/app/admin/products/create/page';
 
 const { Title } = Typography;
 interface CreateProductInfoProps {
-    onProductCreated: (id: number) => void;
+    onProductCreated: (productInfo: ProductInfo) => void;
     onCancel: () => void;
 }
 export function CreateProductInfo({ onProductCreated, onCancel }: CreateProductInfoProps) {
@@ -153,8 +154,12 @@ export function CreateProductInfo({ onProductCreated, onCancel }: CreateProductI
 
             const response = await productService.create(payload);
 
-            // Trả về product ID cho step tiếp theo
-            onProductCreated(response.id);
+            onProductCreated({
+                name: response.name,
+                type: values.is_multi_size ? 'multi_size' : 'no_size',
+                productId: response.id,
+                sizes: response.sizes.map((s: any) => s.size),
+            });
         } catch (err: any) {
             if (err?.response?.status === 409) {
                 message.error(err.response.data?.message || 'Conflict error');

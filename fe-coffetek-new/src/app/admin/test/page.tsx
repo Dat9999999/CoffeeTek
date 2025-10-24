@@ -11,7 +11,7 @@ export default function Testpage({ params }: { params: { id: string } }) {
 
 
         <>
-            <CreateRecipe />
+            {/* <CreateRecipe /> */}
         </>
     )
 }

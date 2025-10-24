@@ -1,8 +1,5 @@
-export type Size = {
-    id: number
-    name: string
-    sort_index: number
-}
+import { Size } from "./types";
+
 
 
 export interface SizeResponsePaging {

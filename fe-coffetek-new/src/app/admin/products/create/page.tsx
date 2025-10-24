@@ -16,6 +16,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { CreateRecipe } from '@/components/features/recipes';
 import { CreateProductInfo } from '@/components/features/products';
+import { Size } from '@/interfaces';
 
 
 
@@ -32,11 +33,18 @@ const steps = [
     },
 ];
 
+export interface ProductInfo {
+    name: string;
+    type: 'topping' | 'no_size' | 'multi_size';
+    productId: number;
+    sizes?: Size[];
+}
+
 const CreateProductWithSteps: React.FC = () => {
     const router = useRouter();
     const { token } = theme.useToken();
     const [current, setCurrent] = useState(0);
-    const [productId, setProductId] = useState<number | null>(null);
+    const [ProductInfo, setProductInfo] = useState<ProductInfo | null>(null);
 
     const items = steps.map((item) => ({ key: item.title, title: item.title }));
 
@@ -48,10 +56,14 @@ const CreateProductWithSteps: React.FC = () => {
         setCurrent(current - 1);
     };
 
-    const handleProductCreated = (id: number) => {
-        setProductId(id);
+    const handleProductCreated = (productInfo: ProductInfo) => {
+        setProductInfo(productInfo);
         next();
-        message.success('Product created successfully! Now create recipe.');
+        if (productInfo.type === 'topping') {
+            message.success('Topping created successfully! Now create recipe.');
+        } else {
+            message.success('Product created successfully! Now create recipe.');
+        }
     };
 
     const handleRecipeCreated = () => {
@@ -75,7 +87,8 @@ const CreateProductWithSteps: React.FC = () => {
             case 1:
                 return (
                     <CreateRecipe
-                        productId={productId!}
+
+                        productInfo={ProductInfo!}
                         onRecipeCreated={handleRecipeCreated}
                         onCancel={handleBackToProducts}
                     />

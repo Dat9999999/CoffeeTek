@@ -1,7 +1,6 @@
 // types.ts
 import type { UploadFile } from "antd";
 import { OptionValue } from "./OptionValue";
-import { Size } from "./Size";
 import { GenderEnum } from "@/enum";
 export interface Unit {
     id: number;
@@ -76,6 +75,12 @@ export interface ProductImage {
     product_id: number;
     image_name: string;
     sort_index: number;
+}
+
+export type Size = {
+    id: number
+    name: string
+    sort_index: number
 }
 
 export interface ProductOptionValueGroup {

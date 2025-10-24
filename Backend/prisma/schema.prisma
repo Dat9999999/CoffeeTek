@@ -320,8 +320,8 @@ model MaterialRecipe {
   Material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
   materialId Int
 
-  Size   Size @relation(fields: [sizeId], references: [id], onDelete: Cascade)
-  sizeId Int
+  Size   Size? @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  sizeId Int?
 
   @@map("material_recipes")
 }

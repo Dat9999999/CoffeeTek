@@ -21,6 +21,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { UnitModule } from './unit/unit.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { LoyalLevelModule } from './loyal-level/loyal-level.module';
+import { VoucherModule } from './voucher/voucher.module';
 
 
 @Module({
@@ -49,6 +50,7 @@ import { LoyalLevelModule } from './loyal-level/loyal-level.module';
     UnitModule,
     PromotionModule,
     LoyalLevelModule,
+    VoucherModule,
   ],
 })
 export class AppModule { }

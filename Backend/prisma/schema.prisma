@@ -78,11 +78,12 @@ model OptionValue {
 }
 
 model Size {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique
-  sort_index  Int
-  OrderDetail OrderDetail[]
-  ProductSize ProductSize[]
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  sort_index     Int
+  OrderDetail    OrderDetail[]
+  ProductSize    ProductSize[]
+  MaterialRecipe MaterialRecipe[]
 
   @@map("sizes")
 }
@@ -139,9 +140,8 @@ model ProductSize {
   product_id Int
   size_id    Int
 
-  product     Product       @relation(fields: [product_id], references: [id])
-  size        Size          @relation(fields: [size_id], references: [id])
-  ConsumeSize ConsumeSize[]
+  product Product @relation(fields: [product_id], references: [id])
+  size    Size    @relation(fields: [size_id], references: [id])
 
   @@map("product_sizes")
 }
@@ -265,10 +265,10 @@ model PaymentDetail {
 }
 
 model Unit {
-  id     Int    @id @default(autoincrement())
-  name   String
-  symbol String @unique
-  class  String // weight or volume or count
+  id              Int              @id @default(autoincrement())
+  name            String
+  symbol          String           @unique
+  class           String // weight or volume or count
   fromConversions UnitConversion[] @relation("FromUnit")
   toConversions   UnitConversion[] @relation("ToUnit")
   Material        Material[]
@@ -317,23 +317,13 @@ model MaterialRecipe {
   Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeId Int
 
-  Material    Material      @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  materialId  Int
-  ConsumeSize ConsumeSize[]
+  Material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId Int
+
+  Size   Size @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  sizeId Int
 
   @@map("material_recipes")
-}
-
-model ConsumeSize {
-  id            Int         @id @default(autoincrement())
-  Size          ProductSize @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
-  productSizeId Int
-
-  additionalConsume Int
-  MaterialRecipe    MaterialRecipe @relation(fields: [materialRecipeId], references: [id], onDelete: Cascade)
-  materialRecipeId  Int
-
-  @@map("consume_sizes")
 }
 
 model MaterialImportation {
@@ -369,6 +359,7 @@ model LoyalLevel {
   name            String          @unique
   required_points Int
   CustomerPoint   CustomerPoint[]
+  Voucher         Voucher[]
 
   @@map("loyal_levels")
 }
@@ -400,8 +391,8 @@ model ProductPromotion {
   id          Int       @id @default(autoincrement())
   productId   Int
   promotionId Int
-  Product     Product   @relation(fields: [productId], references: [id])
-  Promotion   Promotion @relation(fields: [promotionId], references: [id])
+  Product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
   new_price   Float     @default(0)
 
   @@unique([productId, promotionId])
@@ -409,14 +400,18 @@ model ProductPromotion {
 }
 
 model Voucher {
-  id                  Int      @id @default(autoincrement())
-  code                String   @unique
+  id                  Int        @id @default(autoincrement())
+  code                String     @unique
   discount_percentage Float
-  valid_from          DateTime
-  valid_to            DateTime
-  is_active           Boolean  @default(true)
-  userId              Int?
-  User                User?    @relation(fields: [userId], references: [id])
+  minAmountOrder      Float
+  requireLevel        LoyalLevel @relation(fields: [loyalLevelId], references: [id])
+  loyalLevelId        Int
+
+  valid_from    DateTime
+  valid_to      DateTime
+  is_active     Boolean  @default(true)
+  customerPhone String?
+  User          User?    @relation(fields: [customerPhone], references: [phone_number])
 
   @@map("vouchers")
 }

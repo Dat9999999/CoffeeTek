@@ -23,30 +23,15 @@ export class InventoryService {
                 if (materialRecipe.consume > material.remain) throw new InternalServerErrorException(`Not enough material id ${material?.name} to produce product id ${productId}`);
 
 
-                // add consume logic for multisize productß
-                var additionalConsume = 0;
-                // if product has multisize 
-                if (recipe?.Product?.is_multi_size) {
-                    const consumeSize = await this.prisma.consumeSize.findFirst({
-                        where: {
-                            materialRecipeId: materialRecipe.id,
-                            productSizeId: sizeId
-
-                        }
-                    })
-                    additionalConsume = consumeSize ? consumeSize.additionalConsume : 0;
-                    Logger.log(`Product id ${productId} with size id ${sizeId} has additional consume ${additionalConsume} for material id ${material?.name}`);
-                }
 
                 //new rermain with out considerate about size of product
                 const newRemain = material.remain - (materialRecipe.consume * productQuantity);
-                Logger.log(`Material id ${material?.name} current remain: ${material.remain}, consume: ${(materialRecipe.consume + additionalConsume) * productQuantity} for product id ${productId}`);
 
                 // store consume value in inventory adjustment table
                 await tx.inventoryAdjustment.create({
                     data: {
                         materialId: material.id,
-                        consume: (materialRecipe.consume + additionalConsume) * productQuantity,
+                        consume: (materialRecipe.consume) * productQuantity,
                         relatedOrderId: orderId,
                         reason: `Consumed for producing product id ${productId}`
                     }

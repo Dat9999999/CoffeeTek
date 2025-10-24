@@ -27,7 +27,8 @@ export class RecipeService {
           data: {
             recipeId: recipe.id,
             materialId: material.materialId,
-            consume: material.consume
+            consume: material.consume,
+            sizeId: createRecipeDto.sizeId
           }
         })
       }
@@ -89,7 +90,8 @@ export class RecipeService {
         data: {
           recipeId: id,
           materialId: material.materialId,
-          consume: material.consume
+          consume: material.consume,
+          sizeId: updateRecipeDto.sizeId ?? 1
         }
       });
     }

@@ -19,6 +19,8 @@ import { MaterialModule } from './material/material.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { UnitModule } from './unit/unit.module';
+import { PromotionModule } from './promotion/promotion.module';
+import { LoyalLevelModule } from './loyal-level/loyal-level.module';
 
 
 @Module({
@@ -45,6 +47,8 @@ import { UnitModule } from './unit/unit.module';
     RecipeModule,
     InventoryModule,
     UnitModule,
+    PromotionModule,
+    LoyalLevelModule,
   ],
 })
 export class AppModule { }

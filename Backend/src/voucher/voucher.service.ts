@@ -72,7 +72,13 @@ export class VoucherService {
     return `This action updates a #${id} voucher`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} voucher`;
+  async remove(ids: number[]) {
+    return await this.prisma.voucher.deleteMany({
+      where: {
+        id: {
+          in: ids
+        }
+      }
+    });
   }
 }

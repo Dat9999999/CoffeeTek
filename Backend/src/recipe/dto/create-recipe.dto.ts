@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { ArrayMinSize, IsArray, IsNotEmpty, IsNumber, ValidateNested } from "class-validator";
+import { ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsOptional, ValidateNested } from "class-validator";
 import { ImportMaterialDto } from "./recipe-item.dto";
 
 export class CreateRecipeDto {
@@ -17,6 +17,7 @@ export class CreateRecipeDto {
     materials: ImportMaterialDto[];
 
     @IsNotEmpty()
+    @IsOptional()
     sizeId: number
 
 }

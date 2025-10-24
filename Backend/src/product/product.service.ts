@@ -44,7 +44,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         name,
         is_multi_size,
@@ -81,13 +81,11 @@ export class ProductsService {
           }
           : undefined,
       },
-      include: {
-        sizes: true,
-        optionValues: true,
-        toppings: true,
-        images: true,
-      },
+
     });
+
+    const new_product_detail = await this.findOne(product.id);
+    return new_product_detail;
   }
 
   async findAll(

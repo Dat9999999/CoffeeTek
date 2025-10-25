@@ -18,9 +18,9 @@ export class VoucherController {
     return this.voucherService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.voucherService.findOne(+id);
+  @Get(':code')
+  findOne(@Param('code') query: string) {
+    return this.voucherService.findOne(query);
   }
 
   @Put()

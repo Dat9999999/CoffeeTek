@@ -90,8 +90,10 @@ export class VoucherService {
     return await this.prisma.voucher.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} voucher`;
+  async findOne(code: string) {
+    return await this.prisma.voucher.findUnique({
+      where: { code }
+    });
   }
 
   update(id: number, updateVoucherDto: UpdateVoucherDto) {

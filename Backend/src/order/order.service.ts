@@ -281,7 +281,7 @@ export class OrderService {
     return deleteOrder
   }
   async payByCash(paymentDTO: PaymentDTO) {
-    const order = await this.prisma.order.findUnique({
+    let order = await this.prisma.order.findUnique({
       where: {
         id: paymentDTO.orderId,
       },
@@ -292,6 +292,33 @@ export class OrderService {
     if (paymentDTO.amount - (paymentDTO.change ?? 0) != order.final_price ||
       paymentDTO.amount < (paymentDTO.change ?? 0)
     ) throw new BadRequestException("Change is invalid");
+
+
+    // validate voucher and apply discount 
+    if (paymentDTO.voucherCode) {
+      const voucher = await this.prisma.voucher.findUnique({ where: { code: paymentDTO.voucherCode } });
+      if (!voucher || !voucher.is_active) throw new BadRequestException(`invalid voucher code or voucher is inactive :${paymentDTO.voucherCode}`);
+
+      //update price for order
+      order = await this.prisma.order.update({
+        where: {
+          id: order.id
+        },
+        data: {
+          final_price: order.original_price - (order.original_price * (voucher.discount_percentage / 100))
+        }
+      })
+
+      //mark voucher was used
+      await this.prisma.voucher.update({
+        where: {
+          id: voucher.id
+        },
+        data: {
+          is_active: false
+        }
+      })
+    }
 
     //create payment detail
     const paymentDetail = await this.createPaymentDetail(PaymentMethod.CASH, order.id, paymentDTO.amount, order.final_price);
@@ -492,10 +519,35 @@ export class OrderService {
   async payOnline(paymentDTO: PaymentDTO) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const order = await this.prisma.order.findUnique({
+    let order = await this.prisma.order.findUnique({
       where: { id: paymentDTO.orderId }
     })
     if (!order) throw new NotFoundException();
+    // validate voucher and apply discount 
+    if (paymentDTO.voucherCode) {
+      const voucher = await this.prisma.voucher.findUnique({ where: { code: paymentDTO.voucherCode } });
+      if (!voucher || !voucher.is_active) throw new BadRequestException(`invalid voucher code or voucher is inactive :${paymentDTO.voucherCode}`);
+
+      //update price for order
+      order = await this.prisma.order.update({
+        where: {
+          id: order.id
+        },
+        data: {
+          final_price: order.original_price - (order.original_price * (voucher.discount_percentage / 100))
+        }
+      })
+
+      //mark voucher was used
+      await this.prisma.voucher.update({
+        where: {
+          id: voucher.id
+        },
+        data: {
+          is_active: false
+        }
+      })
+    }
 
     const paymentUrl = this.vnpayService.buildPaymentUrl({
       vnp_Amount: order.final_price,

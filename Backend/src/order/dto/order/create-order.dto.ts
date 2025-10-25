@@ -7,6 +7,7 @@ export class CreateOrderDto {
     @IsNotEmpty()
     order_details: orderItemDTO[];
 
+    @IsOptional()
     @IsPhoneNumber('VN')
     customerPhone?: string
     // voucherId?: number
@@ -15,7 +16,7 @@ export class CreateOrderDto {
     staffId: string
     note?: string
 
-    
+
 
 
 

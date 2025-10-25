@@ -374,6 +374,21 @@ export class OrderService {
           return error;
         }
       }
+
+      // accumalate point 
+      if(order.customerPhone){
+        let additional_point = order.final_price/ 1000;
+        await this.prisma.customerPoint.update({
+          where:{
+            customerPhone:order.customerPhone
+          },
+          data:{
+            points: {
+              increment: additional_point
+            }
+          }
+        })
+      }
     }
     return order;
   }

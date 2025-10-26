@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsEnum, IsOptional, Min } from 'class-validator';
 import { OrderDirection } from 'src/common/enums/order.enum';
 
@@ -17,6 +17,10 @@ export class GetAllProductsDto {
   @Type(() => Number)
   @IsOptional()
   categoryId?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  isTopping?: boolean;
 
   @IsOptional()
   orderBy?: string = 'name';

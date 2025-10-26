@@ -1,9 +1,9 @@
 import {
   Category,
+  OptionValue,
   ProductImage,
   ProductSize,
   Size,
-  OptionValue,
 } from '@prisma/client';
 
 export interface ProductOptionValueGroup {
@@ -14,6 +14,7 @@ export interface ProductOptionValueGroup {
 
 interface Topping {
   id: number;
+  name: string;
   price: number;
   image_name: string | null;
   sort_index: number;
@@ -24,6 +25,7 @@ export interface ProductDetailResponse {
   name: string;
   is_multi_size: boolean;
   product_detail: string | null;
+  isTopping: boolean;
   price: number | null;
   category_id: number | null;
   category: Category | null;

@@ -1,8 +1,6 @@
 
 import { OptionValue } from "./OptionValue";
-import { Size } from "./Size";
-import { OptionGroup, Product, Topping } from "./types";
-import { v4 as uuidv4 } from "uuid";
+import { OptionGroup, Product, Size, Topping } from "./types";
 
 export interface ProductPosItem {
     posItemId: string;

@@ -122,7 +122,7 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
                         >
                         </Button>
                         <span
-                            style={{ width: 20, textAlign: "center" }}
+                            style={{ width: 20, textAlign: "center", color: token.colorPrimary, fontWeight: 400 }}
                         >
                             {item.quantity}
                         </span>

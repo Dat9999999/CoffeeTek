@@ -8,6 +8,7 @@ export interface GetAllProductsParams {
     categoryId?: number;
     orderBy?: string;
     orderDirection?: "asc" | "desc";
+    isTopping?: boolean;
 }
 
 export const productService = {

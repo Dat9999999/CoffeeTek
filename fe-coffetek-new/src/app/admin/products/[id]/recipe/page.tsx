@@ -14,25 +14,22 @@ import {
     Form,
     Table,
     Divider,
+    Spin,
 } from "antd";
 import {
     EditOutlined,
     DeleteOutlined,
     AppstoreAddOutlined,
     CheckOutlined,
-    FastForwardOutlined,
+    CloseOutlined,
+    ArrowLeftOutlined,
 } from "@ant-design/icons";
-import type { Material } from "@/interfaces";
-import { MaterialListSelector, MaterialSearchSelector } from "../materials";
-import { mapRecipeItemsToDto, recipeService } from "@/services";
-import { ProductInfo } from "@/app/admin/products/create/page";
+import type { Material, ProductDetail, ProductSize, Size } from "@/interfaces";
+import { mapRecipeItemsToDto, recipeService, type RecipeByProductId } from "@/services/recipeService";
+import { productService } from "@/services/productService";
 import { ColumnsType } from "antd/es/table";
-
-interface CreateRecipeProps {
-    productInfo: ProductInfo;
-    onRecipeCreated: () => void;
-    onCancel: () => void;
-}
+import { MaterialListSelector, MaterialSearchSelector } from "@/components/features/materials";
+import { useParams, useRouter } from "next/navigation";
 
 interface RecipeItem {
     material: Material;
@@ -44,15 +41,13 @@ interface RecipeItem {
 
 const { Title, Text } = Typography;
 
-export function CreateRecipe({
-    productInfo,
-    onRecipeCreated,
-    onCancel,
-}: CreateRecipeProps) {
+export default function UpdateRecipePage() {
+    const router = useRouter();
     const { token } = theme.useToken();
     const [consumeForm] = Form.useForm();
     const [openMaterialListSelector, setOpenMaterialListSelector] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
     const [invalidIndexes, setInvalidIndexes] = useState<number[]>([]);
     const [editModal, setEditModal] = useState<{
         open: boolean;
@@ -60,20 +55,84 @@ export function CreateRecipe({
     }>({ open: false, index: null });
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [recipe, setRecipe] = useState<RecipeItem[]>([]);
+    const [recipeData, setRecipeData] = useState<RecipeByProductId | null>(null);
+    const [product, setProduct] = useState<ProductDetail | null>(null);
 
-    const isMultiSize = productInfo.type === "multi_size";
-    const sizes = isMultiSize ? productInfo.sizes || [] : [{ id: null, name: "Default" }];
+    const params = useParams();
+    const productId = Number(params.id);
 
-    // const handleSelectFromSearch = (material: Material | null) => {
-    //     if (!material) return;
-    //     if (recipe.some((r) => r.material.id === material.id)) {
-    //         message.warning("This material is already added");
-    //         return;
-    //     }
-    //     const initialConsume = sizes.map((size) => ({ sizeId: size.id, amount: 0 }));
-    //     setRecipe((prev) => [...prev, { material, consume: initialConsume }]);
-    //     setErrorMessage(null);
-    // };
+    const isMultiSize = product?.is_multi_size ?? false;
+    const sizes = isMultiSize
+        ? (product?.sizes ?? []).map((s) => ({ id: s.size.id, name: s.size.name }))
+        : [{ id: null, name: "Default" }];
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!productId) return;
+            setFetching(true);
+            try {
+                const [productRes, recipeRes] = await Promise.all([
+                    productService.getById(productId),
+                    recipeService.getByProductId(productId).catch(() => null), // Handle case where no recipe exists
+                ]);
+                setProduct(productRes);
+                setRecipeData(recipeRes);
+
+                if (recipeRes && Array.isArray(recipeRes.MaterialRecipe) && recipeRes.MaterialRecipe.length > 0) {
+                    const materialMap = new Map<number, RecipeItem>();
+                    const isMultiSize = productRes?.is_multi_size ?? false;
+                    const sizes = isMultiSize
+                        ? (productRes?.sizes ?? []).map((s: ProductSize) => s.size)
+                        : [{ id: null, name: "Default" }];
+
+                    recipeRes.MaterialRecipe.forEach((mr) => {
+                        if (!mr.Material || typeof mr.materialId !== "number" || typeof mr.consume !== "number") {
+                            console.warn(`Invalid MaterialRecipeItem: ${JSON.stringify(mr)}`);
+                            return;
+                        }
+
+                        const mid = mr.materialId;
+                        if (!materialMap.has(mid)) {
+                            materialMap.set(mid, {
+                                material: {
+                                    id: mr.Material.id,
+                                    name: mr.Material.name || "",
+                                    code: mr.Material.code || "",
+                                    remain: mr.Material.remain || 0,
+                                    unit: mr.Material.Unit || { id: 0, name: "", symbol: "", class: "" },
+                                },
+                                consume: [],
+                            });
+                        }
+                        const item = materialMap.get(mid)!;
+                        item.consume.push({ sizeId: mr.sizeId, amount: mr.consume });
+                    });
+
+                    const recipeItems = Array.from(materialMap.values()).map((item) => {
+                        const consumeMap = new Map(item.consume.map((c) => [c.sizeId, c.amount]));
+                        const completeConsume = sizes.map((size: Size) => ({
+                            sizeId: size.id,
+                            amount: consumeMap.get(size.id) ?? 0,
+                        }));
+                        return { ...item, consume: completeConsume };
+                    });
+
+                    setRecipe(recipeItems);
+                } else {
+                    // Explicitly set empty recipe when no recipe exists
+                    setRecipe([]);
+                    setRecipeData(null);
+                }
+            } catch (error) {
+                console.error("Failed to load data:", error);
+                message.error("Failed to load product or recipe details.");
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchData();
+    }, [productId]);
+
     const handleSelectFromSearch = (material: Material | null) => {
         if (!material) return;
 
@@ -91,16 +150,9 @@ export function CreateRecipe({
                 amount: 0,
             }));
 
-            const updated = [...prev, { material, consume: initialConsume }];
-            console.log("✅ Recipe updated:", updated);
-            return updated;
+            return [...prev, { material, consume: initialConsume }];
         });
     };
-
-
-    useEffect(() => {
-        console.log("Recipe changed:", recipe);
-    }, [recipe]);
 
     const handleDelete = (id: number) => {
         setInvalidIndexes((prev) => prev.filter((idx) => recipe.findIndex((r) => r.material.id === id) !== idx));
@@ -112,8 +164,13 @@ export function CreateRecipe({
     };
 
     const handleSubmit = async () => {
+        if (!product) {
+            message.error("Product data not loaded.");
+            return;
+        }
+
         if (recipe.length === 0) {
-            setErrorMessage("Please add at least one material consume before complete.");
+            setErrorMessage("Please add at least one material consume before update.");
             return;
         }
 
@@ -129,51 +186,50 @@ export function CreateRecipe({
 
         setInvalidIndexes([]);
         setErrorMessage(null);
-
-        const payload = {
-            productId: productInfo.productId,
-            materials: recipe.flatMap((r) =>
-                r.consume.map((c) => ({
-                    materialId: r.material.id,
-                    sizeId: c.sizeId,
-                    amount: c.amount,
-                }))
-            ),
-        };
-
         setLoading(true);
+
         try {
             if (isMultiSize) {
-                const sizes = productInfo.sizes!;
+                if (!recipeData) {
+                    //  Chưa có recipe, tạo mới cho size đầu tiên
+                    const firstSize = sizes[0];
+                    const dto = mapRecipeItemsToDto(product.id.toString(), firstSize.id, recipe);
+                    const created = await recipeService.create(dto);
 
-                if (sizes.length === 0) {
-                    message.error("No sizes found for multi-size product.");
-                    return;
-                }
-
-                // 👉 Tạo recipe cho size đầu tiên
-                const firstSize = sizes[0];
-                const dto = mapRecipeItemsToDto(productInfo.productId.toString(), firstSize.id, recipe);
-                const created = await recipeService.create(dto);
-
-                // 👉 Update cho các size còn lại (nếu có)
-                if (sizes.length > 1) {
+                    //  Sau đó update 
                     await Promise.all(
-                        sizes.slice(1).map(size => {
-                            const dtoUpdate = mapRecipeItemsToDto(productInfo.productId.toString(), size.id, recipe);
-                            return recipeService.update(created.id, dtoUpdate);
+                        sizes.map(size => {
+                            const dto = mapRecipeItemsToDto(product.id.toString(), size.id, recipe);
+                            return recipeService.update(created.id, dto);
+                        })
+                    );
+                } else {
+                    //  Nếu đã có recipe rồi thì update toàn bộ các size
+                    await Promise.all(
+                        sizes.map(size => {
+                            const dto = mapRecipeItemsToDto(product.id.toString(), size.id, recipe);
+                            return recipeService.update(recipeData.id, dto);
                         })
                     );
                 }
             } else {
-                const dto = mapRecipeItemsToDto(productInfo.productId.toString(), null, recipe);
-                await recipeService.create(dto);
+                //  Single size
+                const dto = mapRecipeItemsToDto(product.id.toString(), null, recipe);
+                if (recipeData) {
+                    await recipeService.update(recipeData.id, dto);
+                } else {
+                    await recipeService.create(dto);
+                }
             }
 
 
-            onRecipeCreated();
+            message.success("Recipe saved successfully.");
+            // Optionally, refresh recipe data after creation
+            const updatedRecipe = await recipeService.getByProductId(productId).catch(() => null);
+            setRecipeData(updatedRecipe);
         } catch (err) {
-            message.error("Something went wrong while saving the formula.");
+            console.error("Recipe operation failed:", err);
+            message.error("Something went wrong while saving the recipe.");
         } finally {
             setLoading(false);
         }
@@ -221,12 +277,12 @@ export function CreateRecipe({
             ? [
                 {
                     title: "Usage per Size",
-                    children: productInfo.sizes!.map((size) => ({
+                    children: sizes.map((size) => ({
                         title: size.name,
                         key: `consume_${size.id}`,
                         align: "center" as const,
                         render: (item: RecipeItem) => {
-                            const consumeEntry = item.consume.find(c => c.sizeId === size.id);
+                            const consumeEntry = item.consume.find((c) => c.sizeId === size.id);
                             const amount = consumeEntry?.amount || 0;
                             return (
                                 <Text type={amount <= 0 ? "danger" : undefined}>
@@ -280,8 +336,39 @@ export function CreateRecipe({
         },
     ];
 
+    if (fetching) {
+        return (
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingBlock: token.paddingXL,
+                }}
+            >
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    const handleBackToProducts = () => {
+        router.push("/admin/products");
+    };
+
     return (
         <>
+            <Flex align="center" style={{ marginBottom: 24 }}>
+                <Button
+                    icon={<ArrowLeftOutlined />}
+                    type="text"
+                    onClick={handleBackToProducts}
+                    style={{ marginRight: 12, padding: 0 }}
+                />
+                <Title level={3} style={{ margin: 0, display: "flex", alignItems: "center" }}>
+                    {product ? `Recipe for ${product.name}` : "Edit Recipe"}
+                </Title>
+            </Flex>
+
             <Flex wrap gap={token.marginSM} align="center" style={{ marginBottom: token.marginMD }}>
                 <Tooltip title="Browse materials">
                     <Button
@@ -305,9 +392,10 @@ export function CreateRecipe({
                     />
                 </div>
             </Flex>
+
             {recipe.length === 0 && (
                 <Text type="secondary" style={{ marginBottom: token.marginSM }}>
-                    Select and define at least one material and consume to create the recipe
+                    No recipe exists for this product. Select and define at least one material and its consumption to create a recipe.
                 </Text>
             )}
 
@@ -326,9 +414,7 @@ export function CreateRecipe({
                         pagination={false}
                         rowKey={(item) => item.material.id}
                         rowClassName={(record, index) =>
-                            invalidIndexes.includes(index)
-                                ? "ant-table-row-invalid"
-                                : ""
+                            invalidIndexes.includes(index) ? "ant-table-row-invalid" : ""
                         }
                         style={{ marginBottom: 32 }}
                         scroll={recipe && recipe.length > 0 ? { x: "max-content" } : undefined}
@@ -347,11 +433,8 @@ export function CreateRecipe({
                     )}
                 </div>
                 <Space>
-                    <Button icon={<FastForwardOutlined />} onClick={onCancel}>
-                        Skip this step
-                    </Button>
                     <Button icon={<CheckOutlined />} type="primary" onClick={handleSubmit} loading={loading}>
-                        Create and Finish
+                        Save
                     </Button>
                 </Space>
             </Flex>
@@ -367,11 +450,7 @@ export function CreateRecipe({
                 }}
                 destroyOnClose
             >
-                <Form
-                    form={consumeForm}
-                    layout="vertical"
-                    onFinish={handleSaveConsume}
-                >
+                <Form form={consumeForm} layout="vertical" onFinish={handleSaveConsume}>
                     <Form.List name="consumes">
                         {(fields) =>
                             fields.map((field, idx) => (
@@ -381,7 +460,7 @@ export function CreateRecipe({
                                     label={
                                         isMultiSize ? (
                                             <span>
-                                                Consume for <Text strong>{productInfo.sizes![idx].name}</Text>
+                                                Consume for <Text strong>{sizes[idx].name}</Text>
                                             </span>
                                         ) : (
                                             "Usage"

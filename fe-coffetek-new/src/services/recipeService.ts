@@ -1,5 +1,38 @@
-import { Material } from "@/interfaces";
+import { Material, Product, Size, Unit } from "@/interfaces";
 import api from "@/lib/api";
+
+
+export interface MaterialRecipeItem {
+    id: number;
+    consume: number;
+    recipeId: number;
+    materialId: number;
+    sizeId: number | null;
+    Material: {
+        id: number;
+        name: string;
+        remain: number;
+        code: string;
+        Unit: Unit;
+    };
+    Size: Size | null;
+}
+
+export interface RecipeByProductId {
+    id: number;
+    product_id: number;
+    Product: {
+        id: number;
+        name: string;
+        is_multi_size: boolean;
+        product_detail?: string | null;
+        price?: number | null;
+        isActive: boolean;
+        isTopping: boolean;
+        category_id?: number | null;
+    };
+    MaterialRecipe: MaterialRecipeItem[];
+}
 
 interface RecipeItem {
     material: Material;
@@ -70,6 +103,10 @@ export const recipeService = {
         return res.data;
     },
 
+    async getByProductId(id: number) {
+        const res = await api.get(`/recipe/product/${id}`);
+        return res.data as RecipeByProductId;
+    },
     async create(data: CreateRecipeDto) {
         const res = await api.post("/recipe", data);
         return res.data;

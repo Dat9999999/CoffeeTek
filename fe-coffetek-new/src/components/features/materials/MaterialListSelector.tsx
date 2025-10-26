@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { Modal, message, Button, Flex, Tooltip, Table, Typography, List, Card } from "antd";
 import type { Material } from "@/interfaces";
 import { materialService } from "@/services/materialService";
-import { useTableState } from "@/hooks/useTableState";
-import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { MaterialSearchSelector } from "./MaterialSearchSelector";
 
 interface MaterialListSelectorProps {
@@ -17,14 +15,21 @@ interface MaterialListSelectorProps {
 
 const { Title } = Typography;
 
-
 export function MaterialListSelector({
     open,
     onClose,
     onSuccess,
     materialListCurrent,
 }: MaterialListSelectorProps) {
-    const { tableState, setTableState } = useTableState();
+
+    /** 🧩 State nội bộ (thay cho useTableState) */
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [orderBy, setOrderBy] = useState<string>("id");
+    const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("asc");
+    const [searchName, setSearchName] = useState<string>("");
+
+    /** State dữ liệu */
     const [data, setData] = useState<Material[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -36,11 +41,11 @@ export function MaterialListSelector({
         setLoading(true);
         try {
             const res: any = await materialService.getAll({
-                page: tableState.currentPage,
-                size: tableState.pageSize,
-                searchName: tableState.search,
-                orderBy: tableState.orderBy || "id",
-                orderDirection: tableState.orderDirection || "asc",
+                page: currentPage,
+                size: pageSize,
+                searchName: searchName,
+                orderBy,
+                orderDirection,
             });
             setData(res.data);
             setTotal(res.meta.total);
@@ -51,9 +56,10 @@ export function MaterialListSelector({
         }
     };
 
+    /** Gọi API khi thay đổi trang, kích thước trang, sắp xếp hoặc mở modal */
     useEffect(() => {
         if (open) fetchData();
-    }, [tableState, open]);
+    }, [currentPage, pageSize, orderBy, orderDirection, searchName, open]);
 
     /** Các id không được chọn lại */
     const disabledIds = new Set(materialListCurrent.map((m) => m.id));
@@ -67,10 +73,7 @@ export function MaterialListSelector({
         }
 
         setMaterialsNew((prev) => {
-            if (prev.some((m) => m.id === material.id)) {
-                // message.warning("Material already selected");
-                return prev;
-            }
+            if (prev.some((m) => m.id === material.id)) return prev;
             return [...prev, material];
         });
 
@@ -78,7 +81,6 @@ export function MaterialListSelector({
             prev.includes(material.id) ? prev : [...prev, material.id]
         );
     };
-
 
     /** Chọn/bỏ chọn trong bảng */
     const handleRowSelectionChange = (keys: React.Key[], selectedRows: Material[]) => {
@@ -124,9 +126,6 @@ export function MaterialListSelector({
         {
             title: "Name",
             dataIndex: "name",
-            render: (text: string, record: Material) => (
-                <span>{text}</span>
-            ),
         },
         {
             title: "Unit",
@@ -162,21 +161,29 @@ export function MaterialListSelector({
 
                 {/* Bảng vật liệu */}
                 <Table
-                    style={{
-                        marginTop: 30
-                    }}
+                    style={{ marginTop: 30 }}
                     rowKey="id"
                     loading={loading}
                     columns={columns}
                     dataSource={data}
                     rowSelection={rowSelection}
                     pagination={{
-                        current: tableState.currentPage,
-                        pageSize: tableState.pageSize,
+                        current: currentPage,
+                        pageSize: pageSize,
                         total: total,
                         showTotal: (t, r) => `${r[0]}-${r[1]} of ${t}`,
                         showSizeChanger: true,
                         pageSizeOptions: ["10", "15", "20"],
+                        onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size || 10);
+                        },
+                    }}
+                    onChange={(pagination, filters, sorter) => {
+                        if (sorter && "order" in sorter) {
+                            setOrderBy(sorter.field as string);
+                            setOrderDirection(sorter.order === "descend" ? "desc" : "asc");
+                        }
                     }}
                     onRow={(record) => ({
                         onClick: () => handleRowClick(record),
@@ -185,7 +192,6 @@ export function MaterialListSelector({
                         disabledIds.has(record.id) ? "ant-table-row-disabled" : ""
                     }
                     scroll={data && data.length > 0 ? { x: "max-content" } : undefined}
-
                 />
 
                 {/* Danh sách vật liệu đã chọn */}
@@ -196,9 +202,9 @@ export function MaterialListSelector({
                             grid={{ gutter: 16, column: 3 }}
                             dataSource={materialsNew}
                             renderItem={(m) => (
-                                <List.Item >
+                                <List.Item>
                                     <Card size="small">
-                                        <span className="font-medium" >{m.name}</span> ({m.code})
+                                        <span className="font-medium">{m.name}</span> ({m.code})
                                     </Card>
                                 </List.Item>
                             )}

@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ParseIntPipe, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -6,7 +15,7 @@ import { ValidateRecipePipe } from './pipe/validate-recipe.pipe';
 
 @Controller('recipe')
 export class RecipeController {
-  constructor(private readonly recipeService: RecipeService) { }
+  constructor(private readonly recipeService: RecipeService) {}
 
   @Post()
   //need to check there no duplicate materialIds in createRecipeDto.materials
@@ -24,9 +33,16 @@ export class RecipeController {
     return this.recipeService.findOne(id);
   }
 
-  @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body(new ValidateRecipePipe()) updateRecipeDto: UpdateRecipeDto) {
+  @Get('/product/:id')
+  findOneByProductId(@Param('id', ParseIntPipe) id: number) {
+    return this.recipeService.findOneByProductId(id);
+  }
 
+  @Put(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ValidateRecipePipe()) updateRecipeDto: UpdateRecipeDto,
+  ) {
     return this.recipeService.update(id, updateRecipeDto);
   }
 

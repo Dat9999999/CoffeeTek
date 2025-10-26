@@ -87,6 +87,9 @@ export const MaterialSearchSelector = ({
     }, []);
 
     const handleChange = (newValue: MaterialValue, option: any) => {
+        console.log(" newValue:", newValue);
+        console.log(" option:", option);
+
         if (onSelect) {
             const material = option?.material;
             onSelect(material || null);
@@ -123,7 +126,7 @@ export const MaterialSearchSelector = ({
             labelInValue
             searchValue={value} // ✅ controlled
             placeholder="Search materials..."
-            style={{ ...style }}
+            style={{ backgroundColor: token.colorBgBase, ...style }}
             filterOption={false}
             onSearch={(val) => {
                 setValue(val);
@@ -178,14 +181,8 @@ export const MaterialSearchSelector = ({
                 value: option.value,
                 material: option.material,
             }))}
-            styles={{
-                popup: {
-                    root:
-                        !fetching && options.length === 0 && !searchTextRef.current.trim()
-                            ? { display: "none" }
-                            : {},
-                },
-            }}
+
+
             optionRender={(option) => {
                 const m = option.data.material as Material;
                 return (

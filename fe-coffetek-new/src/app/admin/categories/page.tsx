@@ -7,6 +7,8 @@ import type { Category, CategoryResponsePaging } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import { CreateCategoryModal, CategoryDetailModal, EditCategoryModal, DeleteCategoryModal, DeleteManyCategoriesModal } from "@/components/features/categories";
 import { Tabs } from 'antd';
+import { PageHeader } from "@/components/layouts";
+import { TagsOutlined } from "@ant-design/icons";
 
 export default function CategoryPage() {
     const { tableState, setTableState } = useTableState({ filterType: 'all' });
@@ -62,8 +64,7 @@ export default function CategoryPage() {
 
     return (
         <>
-            <h1>Category Management</h1>
-
+            <PageHeader icon={<TagsOutlined />} title="Category Management" />
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) =>

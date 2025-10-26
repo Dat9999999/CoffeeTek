@@ -31,26 +31,9 @@ import { ToppingSelectorModal } from '@/components/features/toppings';
 import { CategorySelector } from '@/components/features/categories/CategorySelector';
 import { OptionGroupSelector } from '@/components/features/option-groups/OptionGroupSelector';
 import { useRouter, useParams } from 'next/navigation';
-import axios from 'axios';
 import { ProductImageUploader, ProductImageState } from '@/components/features/products';
 
 const { Title } = Typography;
-
-// export interface Product {
-//     id: number;
-//     name: string;
-//     is_multi_size: boolean;
-//     product_detail?: string | null;
-//     price?: number | null;
-//     category_id?: number | null;
-
-//     sizes?: ProductSize[];
-//     optionGroups?: OptionGroup[];
-//     toppings?: Topping[];
-//     images?: ProductImage[];
-//     category?: Category | null;
-// }
-
 
 export default function UpdateProductPage() {
     const router = useRouter();
@@ -66,6 +49,7 @@ export default function UpdateProductPage() {
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [isTopping, setIsTopping] = useState(false);
     const [isMultiSize, setIsMultiSize] = useState(false);
     const [sizes, setSizes] = useState<Size[]>([]);
     const [selectedToppings, setSelectedToppings] = useState<Topping[]>([]);
@@ -103,6 +87,7 @@ export default function UpdateProductPage() {
                         price: s.price,
                     })),
                 });
+                setIsTopping(res.isTopping ?? false);
                 setIsMultiSize(res.is_multi_size);
                 setSelectedToppings(res.toppings ?? []);
                 setSelectedOptionGroups(res.optionGroups ?? []);
@@ -158,7 +143,7 @@ export default function UpdateProductPage() {
         try {
             const values = await form.validateFields();
 
-            if (values.is_multi_size) {
+            if (!isTopping && values.is_multi_size) {
                 if (!values.sizeIds || values.sizeIds.length === 0) {
                     message.error('Please add at least one size with price.');
                     return;
@@ -187,7 +172,7 @@ export default function UpdateProductPage() {
                 const files = newImages.map((img) => img.originFileObj!) as File[];
                 uploadedImageNames = await uploadImages(files);
                 if (uploadedImageNames.length !== newImages.length) {
-                    throw new Error('Upload ảnh thất bại (số lượng ảnh không khớp)');
+                    throw new Error('Upload failed (number of uploaded images does not match)');
                 }
             }
 
@@ -220,14 +205,15 @@ export default function UpdateProductPage() {
                 is_multi_size: values.is_multi_size,
                 product_detail: values.product_detail,
                 categoryId: values.categoryId,
-                price: values.is_multi_size ? null : values.price,
-                sizeIds: values.sizeIds?.map((s: any) => ({
+                price: isTopping || !values.is_multi_size ? values.price : null,
+                sizeIds: !isTopping && values.is_multi_size ? values.sizeIds?.map((s: any) => ({
                     id: Number(s.size_id),
                     price: Number(s.price),
-                })),
-                toppingIds: selectedToppings.map((t) => t.id),
-                optionValueIds,
+                })) : undefined,
+                toppingIds: !isTopping ? selectedToppings.map((t) => t.id) : undefined,
+                optionValueIds: !isTopping ? optionValueIds : undefined,
                 images: payloadImages,
+                isTopping: isTopping,
             };
 
             await productService.update(productId, payload);
@@ -262,7 +248,7 @@ export default function UpdateProductPage() {
                         type="text"
                         onClick={() => router.push('/admin/products')}
                     />
-                    <Title level={3}>Update Product</Title>
+                    <Title level={3}>Update {isTopping ? 'Topping' : 'Product'}</Title>
                 </Space>
             </Flex>
 
@@ -278,18 +264,20 @@ export default function UpdateProductPage() {
                                 <Input placeholder="Product name" />
                             </Form.Item>
 
-                            <Flex align="center" gap="small" style={{ marginBottom: 16 }}>
-                                <span>Is Multi Size?</span>
-                                <Form.Item name="is_multi_size" valuePropName="checked" noStyle>
-                                    <Switch
-                                        checkedChildren="Yes"
-                                        unCheckedChildren="No"
-                                        onChange={(v) => setIsMultiSize(v)}
-                                    />
-                                </Form.Item>
-                            </Flex>
+                            {!isTopping && (
+                                <Flex align="center" gap="small" style={{ marginBottom: 16 }}>
+                                    <span>Is Multi Size?</span>
+                                    <Form.Item name="is_multi_size" valuePropName="checked" noStyle>
+                                        <Switch
+                                            checkedChildren="Yes"
+                                            unCheckedChildren="No"
+                                            onChange={(v) => setIsMultiSize(v)}
+                                        />
+                                    </Form.Item>
+                                </Flex>
+                            )}
 
-                            {!isMultiSize && (
+                            {(isTopping || !isMultiSize) && (
                                 <Form.Item
                                     name="price"
                                     label="Price"
@@ -307,203 +295,205 @@ export default function UpdateProductPage() {
                                 </Form.Item>
                             )}
 
-                            {isMultiSize && (() => {
+                            {!isTopping && isMultiSize && (
+                                <Form.List name="sizeIds">
+                                    {(fields, { add, remove }) => (
+                                        <>
+                                            {fields.map((field) => {
+                                                const currentSizeId = form.getFieldValue([
+                                                    "sizeIds",
+                                                    field.name,
+                                                    "size_id",
+                                                ]);
 
+                                                const options = sizes
+                                                    .filter(
+                                                        (s) =>
+                                                            !selectedSizeIds.includes(s.id) ||
+                                                            s.id === currentSizeId
+                                                    )
+                                                    .map((s) => ({
+                                                        label: s.name,
+                                                        value: s.id,
+                                                    }));
 
-                                return (
-                                    <Form.List name="sizeIds">
-                                        {(fields, { add, remove }) => (
-                                            <>
-                                                {fields.map((field) => {
-                                                    const currentSizeId = form.getFieldValue([
-                                                        "sizeIds",
-                                                        field.name,
-                                                        "size_id",
-                                                    ]);
-
-                                                    const options = sizes
-                                                        .filter(
-                                                            (s) =>
-                                                                !selectedSizeIds.includes(s.id) ||
-                                                                s.id === currentSizeId
-                                                        )
-                                                        .map((s) => ({
-                                                            label: s.name,
-                                                            value: s.id,
-                                                        }));
-
-                                                    return (
-                                                        <Flex
-                                                            key={field.key}
-                                                            align="flex-start"
-                                                            gap="small"
-                                                            style={{ marginBottom: token.marginSM }}
-                                                            wrap
-                                                        >
-                                                            <Form.Item
-                                                                {...field}
-                                                                name={[field.name, "size_id"]}
-                                                                rules={[{ required: true, message: "Please select size" }]}
-                                                                style={{ marginBottom: 0 }}
-                                                            >
-                                                                <Select
-                                                                    placeholder="Select size"
-                                                                    style={{ minWidth: 100 }}
-                                                                    options={options}
-                                                                />
-                                                            </Form.Item>
-
-                                                            <Form.Item
-                                                                {...field}
-                                                                name={[field.name, "price"]}
-                                                                rules={[{ required: true, message: "Please enter price" }]}
-                                                                style={{ marginBottom: 0, flex: 1 }}
-                                                            >
-                                                                <InputNumber<number>
-                                                                    min={0}
-                                                                    style={{ width: "100%" }}
-                                                                    placeholder="Enter price"
-                                                                    formatter={(value) =>
-                                                                        formatPrice(value, { includeSymbol: false })
-                                                                    }
-                                                                    parser={(value) => parsePrice(value)}
-                                                                    onKeyDown={(e) => restrictInputToNumbers(e)}
-                                                                />
-                                                            </Form.Item>
-
-                                                            <Button
-                                                                type="text"
-                                                                icon={<DeleteOutlined />}
-                                                                danger
-                                                                onClick={() => remove(field.name)}
-                                                            />
-                                                        </Flex>
-                                                    );
-                                                })}
-
-                                                <Form.Item>
-                                                    <Button
-                                                        type="dashed"
-                                                        onClick={() => add()}
-                                                        block
-                                                        icon={<PlusOutlined />}
-                                                        disabled={
-                                                            sizes.filter((s) => !selectedSizeIds.includes(s.id)).length === 0
-                                                        }
+                                                return (
+                                                    <Flex
+                                                        key={field.key}
+                                                        align="flex-start"
+                                                        gap="small"
+                                                        style={{ marginBottom: token.marginSM }}
+                                                        wrap
                                                     >
-                                                        Add size
-                                                    </Button>
-                                                </Form.Item>
-                                            </>
-                                        )}
-                                    </Form.List>
-                                );
-                            })()}
+                                                        <Form.Item
+                                                            {...field}
+                                                            name={[field.name, "size_id"]}
+                                                            rules={[{ required: true, message: "Please select size" }]}
+                                                            style={{ marginBottom: 0 }}
+                                                        >
+                                                            <Select
+                                                                placeholder="Select size"
+                                                                style={{ minWidth: 100 }}
+                                                                options={options}
+                                                            />
+                                                        </Form.Item>
 
+                                                        <Form.Item
+                                                            {...field}
+                                                            name={[field.name, "price"]}
+                                                            rules={[{ required: true, message: "Please enter price" }]}
+                                                            style={{ marginBottom: 0, flex: 1 }}
+                                                        >
+                                                            <InputNumber<number>
+                                                                min={0}
+                                                                style={{ width: "100%" }}
+                                                                placeholder="Enter price"
+                                                                formatter={(value) =>
+                                                                    formatPrice(value, { includeSymbol: false })
+                                                                }
+                                                                parser={(value) => parsePrice(value)}
+                                                                onKeyDown={(e) => restrictInputToNumbers(e)}
+                                                            />
+                                                        </Form.Item>
 
+                                                        <Button
+                                                            type="text"
+                                                            icon={<DeleteOutlined />}
+                                                            danger
+                                                            onClick={() => remove(field.name)}
+                                                        />
+                                                    </Flex>
+                                                );
+                                            })}
 
-                            <Form.Item name="categoryId" label="Category">
-                                <CategorySelector placeholder="Select category" />
-                            </Form.Item>
+                                            <Form.Item>
+                                                <Button
+                                                    type="dashed"
+                                                    onClick={() => add()}
+                                                    block
+                                                    icon={<PlusOutlined />}
+                                                    disabled={
+                                                        sizes.filter((s) => !selectedSizeIds.includes(s.id)).length === 0
+                                                    }
+                                                >
+                                                    Add size
+                                                </Button>
+                                            </Form.Item>
+                                        </>
+                                    )}
+                                </Form.List>
+                            )}
 
-                            <Form.Item name="product_detail" label="Description">
-                                <Input.TextArea rows={4} />
-                            </Form.Item>
+                            {!isTopping && (
+                                <Form.Item name="categoryId" label="Category">
+                                    <CategorySelector placeholder="Select category" />
+                                </Form.Item>
+                            )}
+
+                            {!isTopping && (
+                                <Form.Item name="product_detail" label="Description">
+                                    <Input.TextArea rows={4} />
+                                </Form.Item>
+                            )}
                         </Col>
 
                         <Col xs={24} md={12}>
                             {/* Toppings */}
-                            <Form.Item label="Toppings">
-                                <Flex vertical gap="small">
-                                    <Button
-                                        icon={<PlusOutlined />}
-                                        onClick={() => setToppingModalOpen(true)}
-                                        style={{ alignSelf: 'flex-start', height: 'auto' }}
-                                    >
-                                        Select
-                                    </Button>
+                            {!isTopping && (
+                                <Form.Item label="Toppings">
+                                    <Flex vertical gap="small">
+                                        <Button
+                                            icon={<PlusOutlined />}
+                                            onClick={() => setToppingModalOpen(true)}
+                                            style={{ alignSelf: 'flex-start', height: 'auto' }}
+                                        >
+                                            Select
+                                        </Button>
 
-                                    {selectedToppings.length > 0 && (
-                                        <Space wrap>
-                                            {selectedToppings.map((t) => (
-                                                <Flex
-                                                    key={t.id}
-                                                    align="center"
-                                                    gap="small"
-                                                    style={{
-                                                        border: `1px solid ${token.colorBorderSecondary}`,
-                                                        padding: '4px 8px',
-                                                        borderRadius: token.borderRadiusSM,
-                                                    }}
-                                                >
-                                                    <span>
-                                                        {t.name} (
-                                                        {formatPrice(t.price, { includeSymbol: true })})
-                                                    </span>
-                                                    <Button
-                                                        size="small"
-                                                        type="text"
-                                                        danger
-                                                        icon={<DeleteOutlined />}
-                                                        onClick={() => handleRemoveTopping(t.id)}
-                                                    />
-                                                </Flex>
-                                            ))}
-                                        </Space>
-                                    )}
-                                </Flex>
-                            </Form.Item>
+                                        {selectedToppings.length > 0 && (
+                                            <Space wrap>
+                                                {selectedToppings.map((t) => (
+                                                    <Flex
+                                                        key={t.id}
+                                                        align="center"
+                                                        gap="small"
+                                                        style={{
+                                                            border: `1px solid ${token.colorBorderSecondary}`,
+                                                            padding: '4px 8px',
+                                                            borderRadius: token.borderRadiusSM,
+                                                        }}
+                                                    >
+                                                        <span>
+                                                            {t.name} (
+                                                            {formatPrice(t.price, { includeSymbol: true })})
+                                                        </span>
+                                                        <Button
+                                                            size="small"
+                                                            type="text"
+                                                            danger
+                                                            icon={<DeleteOutlined />}
+                                                            onClick={() => handleRemoveTopping(t.id)}
+                                                        />
+                                                    </Flex>
+                                                ))}
+                                            </Space>
+                                        )}
+                                    </Flex>
+                                </Form.Item>
+                            )}
 
                             {/* Option groups */}
-                            <Form.Item label="Option Groups">
-                                <Flex vertical gap="small">
-                                    <Button
-                                        icon={<PlusOutlined />}
-                                        onClick={() => setOptionGroupModalOpen(true)}
-                                        style={{ alignSelf: 'flex-start', height: 'auto' }}
-                                    >
-                                        Select
-                                    </Button>
+                            {!isTopping && (
+                                <Form.Item label="Option Groups">
+                                    <Flex vertical gap="small">
+                                        <Button
+                                            icon={<PlusOutlined />}
+                                            onClick={() => setOptionGroupModalOpen(true)}
+                                            style={{ alignSelf: 'flex-start', height: 'auto' }}
+                                        >
+                                            Select
+                                        </Button>
 
-                                    {selectedOptionGroups.length > 0 && (
-                                        <Space wrap>
-                                            {selectedOptionGroups.map((g) => (
-                                                <Flex
-                                                    key={g.id}
-                                                    align="center"
-                                                    gap="small"
-                                                    style={{
-                                                        border: `1px solid ${token.colorBorderSecondary}`,
-                                                        padding: '4px 8px',
-                                                        borderRadius: token.borderRadiusSM,
-                                                    }}
-                                                >
-                                                    <span>
-                                                        {g.name} (
-                                                        {g.values?.map((v) => v.name).join(', ')})
-                                                    </span>
-                                                    <Button
-                                                        size="small"
-                                                        type="text"
-                                                        danger
-                                                        icon={<DeleteOutlined />}
-                                                        onClick={() =>
-                                                            handleRemoveOptionGroup(g.id)
-                                                        }
-                                                    />
-                                                </Flex>
-                                            ))}
-                                        </Space>
-                                    )}
-                                </Flex>
-                            </Form.Item>
+                                        {selectedOptionGroups.length > 0 && (
+                                            <Space wrap>
+                                                {selectedOptionGroups.map((g) => (
+                                                    <Flex
+                                                        key={g.id}
+                                                        align="center"
+                                                        gap="small"
+                                                        style={{
+                                                            border: `1px solid ${token.colorBorderSecondary}`,
+                                                            padding: '4px 8px',
+                                                            borderRadius: token.borderRadiusSM,
+                                                        }}
+                                                    >
+                                                        <span>
+                                                            {g.name} (
+                                                            {g.values?.map((v) => v.name).join(', ')})
+                                                        </span>
+                                                        <Button
+                                                            size="small"
+                                                            type="text"
+                                                            danger
+                                                            icon={<DeleteOutlined />}
+                                                            onClick={() =>
+                                                                handleRemoveOptionGroup(g.id)
+                                                            }
+                                                        />
+                                                    </Flex>
+                                                ))}
+                                            </Space>
+                                        )}
+                                    </Flex>
+                                </Form.Item>
+                            )}
 
                             {/* ✅ Upload Images */}
                             <Form.Item label="Images" required>
                                 <ProductImageUploader
                                     value={productImages}
                                     onChange={(imgs: ProductImageState[]) => setProductImages(imgs)}
-                                    maxCount={10}
+                                    maxCount={isTopping ? 1 : 10}
                                 />
                             </Form.Item>
                         </Col>

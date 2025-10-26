@@ -10,13 +10,14 @@ import { ProductDetailResponse } from './dto/response.dto';
 
 @Injectable()
 export class ProductsService {
+  constructor(private prisma: PrismaService) {}
+
   async toggleActiveStatus(id: number, isActive: boolean) {
     return await this.prisma.product.update({
       where: { id },
       data: { isActive },
     });
   }
-  constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateProductDto) {
     const {
@@ -51,37 +52,34 @@ export class ProductsService {
         product_detail,
         price,
         isTopping: dto.isTopping,
-        category: categoryId
-          ? { connect: { id: categoryId } }
-          : undefined,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         sizes: sizeIds
           ? {
-            create: sizeIds.map((s) => ({
-              size_id: s.id,
-              price: s.price,
-            })),
-          }
+              create: sizeIds.map((s) => ({
+                size_id: s.id,
+                price: s.price,
+              })),
+            }
           : undefined,
         optionValues: optionValueIds
           ? {
-            create: optionValueIds.map((id) => ({ option_value_id: id })),
-          }
+              create: optionValueIds.map((id) => ({ option_value_id: id })),
+            }
           : undefined,
         toppings: toppingIds
           ? {
-            create: toppingIds.map((id) => ({ topping_id: id })),
-          }
+              create: toppingIds.map((id) => ({ topping_id: id })),
+            }
           : undefined,
         images: dto.images
           ? {
-            create: dto.images.map((img) => ({
-              image_name: img.image_name,
-              sort_index: img.sort_index,
-            })),
-          }
+              create: dto.images.map((img) => ({
+                image_name: img.image_name,
+                sort_index: img.sort_index,
+              })),
+            }
           : undefined,
       },
-
     });
 
     const new_product_detail = await this.findOne(product.id);
@@ -98,6 +96,7 @@ export class ProductsService {
       orderBy = 'id',
       orderDirection = 'asc',
       categoryId,
+      isTopping,
     } = query;
 
     let categoryIds: number[] | undefined;
@@ -125,6 +124,7 @@ export class ProductsService {
           : categoryIds
             ? { category_id: { in: categoryIds } }
             : {},
+        isTopping !== undefined ? { isTopping } : {},
       ],
     };
 
@@ -140,9 +140,9 @@ export class ProductsService {
               topping: {
                 include: {
                   images: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           optionValues: {
             include: {
@@ -151,7 +151,6 @@ export class ProductsService {
               },
             },
           },
-
         },
         orderBy: { [orderBy]: orderDirection },
         skip: (page - 1) * size,
@@ -188,6 +187,7 @@ export class ProductsService {
         name: product.name,
         is_multi_size: product.is_multi_size,
         product_detail: product.product_detail,
+        isTopping: product.isTopping,
         price: product.price,
         category_id: product.category_id,
         category: product.category,
@@ -199,10 +199,11 @@ export class ProductsService {
         toppings: product.toppings.map((t) => {
           return {
             id: t.topping.id,
+            name: t.topping.name,
             price: t.topping.price ?? 0,
             image_name: t.topping.images[0]?.image_name || null,
             sort_index: t.topping.images[0]?.sort_index || 0,
-          }
+          };
         }),
         optionGroups: Array.from(optionGroupsMap.values()),
       };
@@ -275,6 +276,7 @@ export class ProductsService {
       id: product.id,
       name: product.name,
       is_multi_size: product.is_multi_size,
+      isTopping: product.isTopping,
       product_detail: product.product_detail,
       price: product.price,
       category_id: product.category_id,
@@ -287,10 +289,11 @@ export class ProductsService {
       toppings: product.toppings.map((t) => {
         return {
           id: t.topping.id,
+          name: t.topping.name,
           price: t.topping.price ?? 0,
           image_name: t.topping.images[0]?.image_name || null,
           sort_index: t.topping.images[0]?.sort_index || 0,
-        }
+        };
       }),
       optionGroups: Array.from(optionGroupsMap.values()),
     };
@@ -341,39 +344,37 @@ export class ProductsService {
         product_detail,
         price,
         isTopping: dto.isTopping,
-        category: categoryId
-          ? { connect: { id: categoryId } }
-          : undefined,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         // Cập nhật quan hệ (topping, option, size)
         sizes: sizeIds
           ? {
-            deleteMany: {}, // xoá toàn bộ cũ
-            create: sizeIds.map((s) => ({
-              size_id: s.id,
-              price: s.price,
-            })),
-          }
+              deleteMany: {}, // xoá toàn bộ cũ
+              create: sizeIds.map((s) => ({
+                size_id: s.id,
+                price: s.price,
+              })),
+            }
           : undefined,
         optionValues: optionValueIds
           ? {
-            deleteMany: {},
-            create: optionValueIds.map((id) => ({ option_value_id: id })),
-          }
+              deleteMany: {},
+              create: optionValueIds.map((id) => ({ option_value_id: id })),
+            }
           : undefined,
         toppings: toppingIds
           ? {
-            deleteMany: {},
-            create: toppingIds.map((id) => ({ topping_id: id })),
-          }
+              deleteMany: {},
+              create: toppingIds.map((id) => ({ topping_id: id })),
+            }
           : undefined,
         images: dto.images
           ? {
-            deleteMany: {},
-            create: dto.images.map((img) => ({
-              image_name: img.image_name,
-              sort_index: img.sort_index,
-            })),
-          }
+              deleteMany: {},
+              create: dto.images.map((img) => ({
+                image_name: img.image_name,
+                sort_index: img.sort_index,
+              })),
+            }
           : undefined,
       },
       include: { sizes: true, optionValues: true, toppings: true },

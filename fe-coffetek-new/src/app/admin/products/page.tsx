@@ -9,10 +9,17 @@ import {
     ProductDetailModal,
     DeleteProductModal,
     DeleteManyProductsModal,
+    ProductTableActions,
 } from "@/components/features/products";
-import { formatPrice } from "@/utils";
+import { formatCompactPriceProduct, formatPrice, formatPriceProduct, formatPriceRange } from "@/utils";
 import { CategorySelector } from "@/components/features/categories";
 import { useRouter } from 'next/navigation';
+import { ProductTypeSelector } from "@/components/features/products/ProductTypeSelector";
+import { Typography } from "antd";
+import { PageHeader } from "@/components/layouts";
+import { ShoppingOutlined } from "@ant-design/icons";
+const { Title } = Typography;
+
 
 export default function ProductPage() {
     const router = useRouter();
@@ -24,6 +31,18 @@ export default function ProductPage() {
     const [detailRecord, setDetailRecord] = useState<Product | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Product | null>(null);
     const [openDeleteManyModal, setOpenDeleteManyModal] = useState(false);
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const isToppingParam = searchParams.get("isTopping");
+
+        setTableState(prev => ({
+            ...prev,
+            isTopping: isToppingParam === "true" ? true : false,
+        }));
+    }, []);
+
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -34,6 +53,7 @@ export default function ProductPage() {
                 orderBy: tableState.orderBy || "id",
                 orderDirection: tableState.orderDirection || "asc",
                 categoryId: tableState.categoryId ? Number(tableState.categoryId) : undefined,
+                isTopping: tableState.isTopping,
             });
             setData(res.data);
             setTotal(res.meta.total);
@@ -59,16 +79,45 @@ export default function ProductPage() {
 
     return (
         <>
-            <h1>Product Management</h1>
+
+            <PageHeader icon={<ShoppingOutlined />} title="Product Management" />
 
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) => setTableState({ ...tableState, search: value })}
                 filters={
-                    <CategorySelector
-                        value={tableState.categoryId ? Number(tableState.categoryId) : null}
-                        onChange={(value) => setTableState({ ...tableState, categoryId: value, currentPage: 1 })}
-                    />
+                    <>
+                        <ProductTypeSelector
+                            value={tableState.isTopping === true}
+                            onChange={(val) =>
+                                setTableState({
+                                    ...tableState,
+                                    isTopping: val,
+                                    currentPage: 1,
+                                    categoryId: undefined,
+                                })
+                            }
+                        />
+
+
+                        {/* ✅ Nếu là product thì mới hiện category */}
+                        {!tableState.isTopping && (
+                            <CategorySelector
+                                value={
+                                    tableState.categoryId
+                                        ? Number(tableState.categoryId)
+                                        : null
+                                }
+                                onChange={(value) =>
+                                    setTableState({
+                                        ...tableState,
+                                        categoryId: value,
+                                        currentPage: 1,
+                                    })
+                                }
+                            />
+                        )}
+                    </>
                 }
                 onAdd={() => router.push('/admin/products/create')}
                 addLabel="Add"
@@ -95,16 +144,21 @@ export default function ProductPage() {
                         dataIndex: "price",
                         sorter: true,
                         render: (value: number | undefined, record: Product) =>
-                            record.is_multi_size
-                                ? "Multi-size"
-                                : formatPrice(value ?? 0, { includeSymbol: true }),
+                            formatPriceProduct(record, { includeSymbol: true }),
                     },
                 ]}
-                onDetail={(record) => setDetailRecord(record)}
-                onEdit={(record) => router.push(`/admin/products/${record.id}/edit`)}
-                onDelete={(record) => setDeleteRecord(record)}
+
                 onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
                 enableRowSelection={true}
+                renderActions={(record) => (
+                    <ProductTableActions
+                        record={record}
+                        onDetail={(record) => setDetailRecord(record)}
+                        onEdit={(record) => router.push(`/admin/products/${record.id}/edit`)}
+                        onDelete={(record) => setDeleteRecord(record)}
+                        onRecipeClick={(record) => router.push(`/admin/products/${record.id}/recipe`)}
+                    />
+                )}
             />
 
 

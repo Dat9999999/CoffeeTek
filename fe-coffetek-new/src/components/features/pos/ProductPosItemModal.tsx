@@ -399,13 +399,30 @@ export const ProductPosItemModal = ({
                                                     padding: token.paddingXS,
                                                     background: token.colorFillAlter,
                                                 }}
+                                                gap={token.marginXS}
                                             >
-                                                <div>
-                                                    <div style={{ fontWeight: 500 }}>{topping.name}</div>
-                                                    <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-                                                        {formatPrice(topping.price, { includeSymbol: true })}
-                                                    </Typography.Text>
-                                                </div>
+                                                {/* Bên trái: Ảnh + thông tin */}
+                                                <Flex align="center" gap={token.marginXS}>
+                                                    <AppImage
+                                                        src={topping.image_name}
+                                                        alt={topping.name}
+                                                        style={{
+                                                            width: 50,
+                                                            height: 50,
+                                                            objectFit: "cover",
+                                                            borderRadius: token.borderRadiusSM,
+                                                            border: `1px solid ${token.colorBorderSecondary}`,
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <div style={{ fontWeight: 500 }}>{topping.name}</div>
+                                                        <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                                                            {formatPrice(topping.price, { includeSymbol: true })}
+                                                        </Typography.Text>
+                                                    </div>
+                                                </Flex>
+
+                                                {/* Bên phải: Nút + số lượng */}
                                                 <Flex align="center" gap={8}>
                                                     <Button
                                                         size="small"
@@ -425,6 +442,7 @@ export const ProductPosItemModal = ({
                                                 </Flex>
                                             </Flex>
                                         </Col>
+
                                     );
                                 })}
                             </Row>

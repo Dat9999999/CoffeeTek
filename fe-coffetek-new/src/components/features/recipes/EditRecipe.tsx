@@ -1,3 +1,4 @@
+// EditRecipe.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,19 +21,13 @@ import {
     DeleteOutlined,
     AppstoreAddOutlined,
     CheckOutlined,
-    FastForwardOutlined,
+    ArrowLeftOutlined,
 } from "@ant-design/icons";
 import type { Material } from "@/interfaces";
 import { MaterialListSelector, MaterialSearchSelector } from "../materials";
-import { mapRecipeItemsToDto, recipeService } from "@/services";
+import { mapRecipeItemsToDto, recipeService, type RecipeByProductId } from "@/services";
 import { ProductInfo } from "@/app/admin/products/create/page";
 import { ColumnsType } from "antd/es/table";
-
-interface CreateRecipeProps {
-    productInfo: ProductInfo;
-    onRecipeCreated: () => void;
-    onCancel: () => void;
-}
 
 interface RecipeItem {
     material: Material;
@@ -42,13 +37,17 @@ interface RecipeItem {
     }[];
 }
 
+interface EditRecipeProps {
+    productInfo: ProductInfo;
+    onRecipeUpdated: () => void;
+}
+
 const { Title, Text } = Typography;
 
-export function CreateRecipe({
+export function EditRecipe({
     productInfo,
-    onRecipeCreated,
-    onCancel,
-}: CreateRecipeProps) {
+    onRecipeUpdated,
+}: EditRecipeProps) {
     const { token } = theme.useToken();
     const [consumeForm] = Form.useForm();
     const [openMaterialListSelector, setOpenMaterialListSelector] = useState(false);
@@ -60,20 +59,43 @@ export function CreateRecipe({
     }>({ open: false, index: null });
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [recipe, setRecipe] = useState<RecipeItem[]>([]);
+    const [recipeData, setRecipeData] = useState<RecipeByProductId | null>(null);
 
     const isMultiSize = productInfo.type === "multi_size";
     const sizes = isMultiSize ? productInfo.sizes || [] : [{ id: null, name: "Default" }];
 
-    // const handleSelectFromSearch = (material: Material | null) => {
-    //     if (!material) return;
-    //     if (recipe.some((r) => r.material.id === material.id)) {
-    //         message.warning("This material is already added");
-    //         return;
-    //     }
-    //     const initialConsume = sizes.map((size) => ({ sizeId: size.id, amount: 0 }));
-    //     setRecipe((prev) => [...prev, { material, consume: initialConsume }]);
-    //     setErrorMessage(null);
-    // };
+    useEffect(() => {
+        const fetchRecipe = async () => {
+            try {
+                const res = await recipeService.getByProductId(productInfo.productId);
+                setRecipeData(res);
+                const materialMap = new Map<number, RecipeItem>();
+                res.MaterialRecipe.forEach((mr) => {
+                    const mid = mr.materialId;
+                    if (!materialMap.has(mid)) {
+                        materialMap.set(mid, {
+                            material: {
+                                id: mr.Material.id,
+                                name: mr.Material.name,
+                                remain: mr.Material.remain,
+                                code: mr.Material.code,
+                                unit: mr.Material.Unit,
+                            },
+                            consume: [],
+                        });
+                    }
+                    const item = materialMap.get(mid)!;
+                    item.consume.push({ sizeId: mr.sizeId, amount: mr.consume });
+                });
+                setRecipe(Array.from(materialMap.values()));
+            } catch {
+                setRecipeData(null);
+                setRecipe([]);
+            }
+        };
+        fetchRecipe();
+    }, [productInfo.productId]);
+
     const handleSelectFromSearch = (material: Material | null) => {
         if (!material) return;
 
@@ -92,15 +114,9 @@ export function CreateRecipe({
             }));
 
             const updated = [...prev, { material, consume: initialConsume }];
-            console.log("✅ Recipe updated:", updated);
             return updated;
         });
     };
-
-
-    useEffect(() => {
-        console.log("Recipe changed:", recipe);
-    }, [recipe]);
 
     const handleDelete = (id: number) => {
         setInvalidIndexes((prev) => prev.filter((idx) => recipe.findIndex((r) => r.material.id === id) !== idx));
@@ -129,55 +145,85 @@ export function CreateRecipe({
 
         setInvalidIndexes([]);
         setErrorMessage(null);
-
-        const payload = {
-            productId: productInfo.productId,
-            materials: recipe.flatMap((r) =>
-                r.consume.map((c) => ({
-                    materialId: r.material.id,
-                    sizeId: c.sizeId,
-                    amount: c.amount,
-                }))
-            ),
-        };
-
         setLoading(true);
+
         try {
             if (isMultiSize) {
                 const sizes = productInfo.sizes!;
-
                 if (sizes.length === 0) {
                     message.error("No sizes found for multi-size product.");
                     return;
                 }
 
-                // 👉 Tạo recipe cho size đầu tiên
-                const firstSize = sizes[0];
-                const dto = mapRecipeItemsToDto(productInfo.productId.toString(), firstSize.id, recipe);
-                const created = await recipeService.create(dto);
-
-                // 👉 Update cho các size còn lại (nếu có)
-                if (sizes.length > 1) {
+                if (recipeData) {
+                    // ✅ Đã có recipe → Update cho từng size
                     await Promise.all(
-                        sizes.slice(1).map(size => {
-                            const dtoUpdate = mapRecipeItemsToDto(productInfo.productId.toString(), size.id, recipe);
+                        sizes.map((size) => {
+                            const dto = mapRecipeItemsToDto(
+                                productInfo.productId.toString(),
+                                size.id,
+                                recipe
+                            );
+                            return recipeService.update(recipeData.id, dto);
+                        })
+                    );
+                    message.success("Recipe updated successfully for all sizes.");
+                } else {
+                    // ✅ Chưa có recipe → Tạo mới cho từng size
+                    const firstSize = sizes[0];
+                    const dto = mapRecipeItemsToDto(
+                        productInfo.productId.toString(),
+                        firstSize.id,
+                        recipe
+                    );
+                    const created = await recipeService.create(dto);
+
+
+                    await Promise.all(
+                        sizes.map((size) => {
+                            const dtoUpdate = mapRecipeItemsToDto(
+                                productInfo.productId.toString(),
+                                size.id,
+                                recipe
+                            );
                             return recipeService.update(created.id, dtoUpdate);
                         })
                     );
+
+                    message.success("Recipe created successfully for all sizes.");
                 }
             } else {
-                const dto = mapRecipeItemsToDto(productInfo.productId.toString(), null, recipe);
-                await recipeService.create(dto);
+                // ✅ Single size
+                if (recipeData) {
+                    // Đã có → update
+                    const dto = mapRecipeItemsToDto(
+                        productInfo.productId.toString(),
+                        null,
+                        recipe
+                    );
+                    await recipeService.update(recipeData.id, dto);
+                    message.success("Recipe updated successfully.");
+                } else {
+                    // Chưa có → tạo mới
+                    const dto = mapRecipeItemsToDto(
+                        productInfo.productId.toString(),
+                        null,
+                        recipe
+                    );
+                    await recipeService.create(dto);
+                    message.success("Recipe created successfully.");
+                }
             }
 
-
-            onRecipeCreated();
+            onRecipeUpdated();
         } catch (err) {
-            message.error("Something went wrong while saving the formula.");
+            console.error("Error while saving recipe:", err);
+            message.error("Something went wrong while saving the recipe.");
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleEditConsume = (index: number) => {
         const item = recipe[index];
@@ -282,6 +328,8 @@ export function CreateRecipe({
 
     return (
         <>
+
+
             <Flex wrap gap={token.marginSM} align="center" style={{ marginBottom: token.marginMD }}>
                 <Tooltip title="Browse materials">
                     <Button
@@ -347,11 +395,8 @@ export function CreateRecipe({
                     )}
                 </div>
                 <Space>
-                    <Button icon={<FastForwardOutlined />} onClick={onCancel}>
-                        Skip this step
-                    </Button>
                     <Button icon={<CheckOutlined />} type="primary" onClick={handleSubmit} loading={loading}>
-                        Create and Finish
+                        Update
                     </Button>
                 </Space>
             </Flex>

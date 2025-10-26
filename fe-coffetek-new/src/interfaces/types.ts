@@ -2,6 +2,7 @@
 import type { UploadFile } from "antd";
 import { OptionValue } from "./OptionValue";
 import { GenderEnum } from "@/enum";
+import { is } from "date-fns/locale";
 export interface Unit {
     id: number;
     name: string;
@@ -96,7 +97,7 @@ export interface Product {
     product_detail?: string | null;
     price?: number | null;
     category_id?: number | null;
-
+    isTopping?: boolean;
     sizes?: ProductSize[];
     optionGroups: ProductOptionValueGroup[];
     toppings?: Topping[];

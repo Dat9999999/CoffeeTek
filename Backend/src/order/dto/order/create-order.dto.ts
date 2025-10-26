@@ -10,7 +10,6 @@ export class CreateOrderDto {
     @IsOptional()
     @IsPhoneNumber('VN')
     customerPhone?: string
-    // voucherId?: number
     @Type(() => Number)
     @IsNotEmpty()
     staffId: string

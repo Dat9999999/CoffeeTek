@@ -33,6 +33,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/serve-static": "^5.0.4",
     "@prisma/client": "^6.15.0",
+    "@sendgrid/mail": "^8.1.6",
     "@types/ioredis": "^5.0.0",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",

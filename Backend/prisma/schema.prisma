@@ -193,7 +193,7 @@ model Order {
   final_price    Float
   created_at     DateTime      @default(now())
   order_details  OrderDetail[]
-  status         String        @default("pending") // pending, confirmed, preparing, delivered, cancelled
+  status         String        @default("pending") // pending, paid,completed, cancelled
 
   customerPhone String?
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])

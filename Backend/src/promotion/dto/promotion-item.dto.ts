@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional } from "class-validator";
 
 export class PromotionItemDto {
     @IsNotEmpty()
@@ -8,4 +8,6 @@ export class PromotionItemDto {
     @IsNotEmpty()
     @IsNumber()
     newPrice: number;
+    @IsOptional()
+    productSizedId: number
 }

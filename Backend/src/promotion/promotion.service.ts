@@ -17,6 +17,7 @@ export class PromotionService {
         ProductPromotion: {
           create: createPromotionDto.items.map(item => ({
             Product: { connect: { id: item.productId } },
+            productSize: { connect: { id: item.productSizedId } },
             new_price: item.newPrice,
           })),
         },

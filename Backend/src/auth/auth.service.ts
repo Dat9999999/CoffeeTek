@@ -123,7 +123,18 @@ export class AuthService {
     async forgetPassword(dto: authForgetPasswordDto) {
         //send email to user
         const otp = await this.redisService.createOTP(dto.email); // Create and store OTP in Redis
-        await this.mailService.sendMail(dto.email, 'Password Reset', `Your OTP is: ${otp} . It will expire in 5 minutes.`);
+        await this.mailService.sendMail(dto.email, 'CoffeeTek: Password Reset', `<div style="text-align: center; border: 1px solid #ccc; padding: 20px; max-width: 400px; margin: 20px auto; border-radius: 8px;">
+    <h2 style="color: #4CAF50;">XÁC MINH OTP</h2>
+    <p>Mã xác minh một lần (OTP) của bạn là:</p>
+
+    <h1 style="color: #333; font-size: 32px; letter-spacing: 5px; margin: 20px 0; background-color: #f4f4f4; padding: 10px; border-radius: 4px;">
+        ${otp}
+    </h1>
+
+    <p style="color: #777; font-size: 14px;">Mã này sẽ hết hạn trong 5 phút. Vui lòng nhập ngay để tiếp tục.</p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">
+    <p style="font-size: 12px; color: #aaa;">Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.</p>
+</div>`);
 
         return { message: 'If the email is registered, a password reset link has been sent.' };
     }

@@ -32,7 +32,7 @@ async function main() {
   // =======================
   // 2. Seed Owner User
   // =======================
-  const ownerEmail = process.env.OWNER_EMAIL || 'huynhtandat184@gmail.com';
+  const ownerEmail = process.env.OWNER_EMAIL || 'datrootx@gmail.com';
   const existingOwner = await prisma.user.findUnique({
     where: { email: ownerEmail },
   });
@@ -460,7 +460,7 @@ async function main() {
     Logger.log('🪄 Seeding MaterialImportation...');
 
     const owner = await prisma.user.findFirst({
-      where: { email: 'huynhtandat184@gmail.com' },
+      where: { email: '@gmail.com' },
     });
     if (!owner) throw new Error('❌ Owner not found');
 
@@ -676,7 +676,7 @@ async function main() {
       where: { email: 'customer@example.com' },
     });
     const staff = await prisma.user.findFirst({
-      where: { email: 'huynhtandat184@gmail.com' },
+      where: { email: 'datrootx@gmail.com' },
     });
     const latte = await prisma.product.findFirst({ where: { name: 'Latte' } });
     const latteMedium = await prisma.productSize.findFirst({

@@ -140,8 +140,9 @@ model ProductSize {
   product_id Int
   size_id    Int
 
-  product Product @relation(fields: [product_id], references: [id])
-  size    Size    @relation(fields: [size_id], references: [id])
+  product          Product            @relation(fields: [product_id], references: [id])
+  size             Size               @relation(fields: [size_id], references: [id])
+  ProductPromotion ProductPromotion[]
 
   @@map("product_sizes")
 }
@@ -192,7 +193,7 @@ model Order {
   final_price    Float
   created_at     DateTime      @default(now())
   order_details  OrderDetail[]
-  status         String        @default("pending") // pending, confirmed, preparing, delivered, cancelled
+  status         String        @default("pending") // pending, paid,completed, cancelled
 
   customerPhone String?
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
@@ -387,12 +388,14 @@ model Promotion {
 }
 
 model ProductPromotion {
-  id          Int       @id @default(autoincrement())
-  productId   Int
-  promotionId Int
-  Product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  Promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  new_price   Float     @default(0)
+  id            Int          @id @default(autoincrement())
+  productId     Int
+  promotionId   Int
+  Product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Promotion     Promotion    @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  new_price     Float        @default(0)
+  productSize   ProductSize? @relation(fields: [productSizeId], references: [id])
+  productSizeId Int?
 
   @@unique([productId, promotionId])
   @@map("product_promotions")

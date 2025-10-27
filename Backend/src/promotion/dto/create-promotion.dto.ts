@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty } from "class-validator";
+import { IsDate, IsNotEmpty, IsOptional } from "class-validator";
 import { PromotionItemDto } from "./promotion-item.dto";
 import { Type } from "class-transformer";
 
@@ -19,4 +19,6 @@ export class CreatePromotionDto {
 
     @IsNotEmpty({ each: true })
     items: PromotionItemDto[];
+
+  
 }

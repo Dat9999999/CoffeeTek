@@ -248,7 +248,7 @@ export default function UpdateProductPage() {
                         type="text"
                         onClick={() => router.push('/admin/products')}
                     />
-                    <Title level={3}>Update {isTopping ? 'Topping' : 'Product'}</Title>
+                    <Title level={3}>Edit {isTopping ? 'Topping' : 'Product'} info</Title>
                 </Space>
             </Flex>
 
@@ -403,6 +403,7 @@ export default function UpdateProductPage() {
                                 <Form.Item label="Toppings">
                                     <Flex vertical gap="small">
                                         <Button
+                                            type='dashed'
                                             icon={<PlusOutlined />}
                                             onClick={() => setToppingModalOpen(true)}
                                             style={{ alignSelf: 'flex-start', height: 'auto' }}
@@ -447,6 +448,7 @@ export default function UpdateProductPage() {
                                 <Form.Item label="Option Groups">
                                     <Flex vertical gap="small">
                                         <Button
+                                            type='dashed'
                                             icon={<PlusOutlined />}
                                             onClick={() => setOptionGroupModalOpen(true)}
                                             style={{ alignSelf: 'flex-start', height: 'auto' }}

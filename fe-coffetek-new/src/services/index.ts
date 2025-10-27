@@ -9,3 +9,5 @@ export * from "./userService";
 export * from "./authService";
 export * from "./materialService";
 export * from "./recipeService";
+export * from "./loyalLevelService";
+

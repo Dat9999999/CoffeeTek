@@ -1,20 +1,20 @@
 'use client';
 
 import React from 'react';
-import { Avatar, Badge, Dropdown, Menu, Space, Typography } from 'antd';
-import { UserOutlined, HomeOutlined, LogoutOutlined, SettingOutlined, DownOutlined, CaretDownOutlined, ShopOutlined, ProfileOutlined } from '@ant-design/icons';
+import { Avatar, Badge, Dropdown, Menu, Space, theme, Typography } from 'antd';
+import { UserOutlined, HomeOutlined, LogoutOutlined, SettingOutlined, DownOutlined, CaretDownOutlined, ShopOutlined, ProfileOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { AdminDarkModeToggleMini } from './AdminDarkModeSwitch';
 
 const { Text } = Typography;
 
-export const AvatarMenu: React.FC = () => {
+export const AvatarMenuPos: React.FC = () => {
     const router = useRouter();
-
+    const { token } = theme.useToken();
     const handleMenuClick = ({ key }: { key: string }) => {
         switch (key) {
-            case 'pos':
-                router.push('/pos');
+            case 'admin':
+                router.push('/admin/dashboard');
                 break;
             case 'profile':
                 router.push('/profile');
@@ -34,9 +34,9 @@ export const AvatarMenu: React.FC = () => {
             onClick={handleMenuClick}
             items={[
                 {
-                    key: 'pos',
-                    label: 'POS page',
-                    icon: <ShopOutlined />,
+                    key: 'admin',
+                    label: 'Shop control',
+                    icon: <DashboardOutlined />,
                 },
                 {
                     key: 'profile',

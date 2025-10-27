@@ -10,6 +10,7 @@ interface TableToolbarProps {
     buttonRights?: React.ReactNode;
     onAdd?: () => void;
     addLabel?: string;
+    searchLabel?: string;
     onDeleteMany?: () => void;
     deleteManyLabel?: string;
 }
@@ -23,6 +24,7 @@ export function TableToolbar({
     onDeleteMany,
     buttonRights,
     deleteManyLabel = "Delete Selected",
+    searchLabel = "Search...",
 }: TableToolbarProps) {
 
     const { token } = theme.useToken();
@@ -35,7 +37,7 @@ export function TableToolbar({
                     {onSearchChange && (
                         <Input
                             prefix={<SearchOutlined />}
-                            placeholder="Search..."
+                            placeholder={searchLabel}
                             value={search}
 
                             onChange={(e) => onSearchChange?.(e.target.value)}

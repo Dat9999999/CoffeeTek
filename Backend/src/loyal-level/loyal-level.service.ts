@@ -5,13 +5,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class LoyalLevelService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
+
   async create(createLoyalLevelDto: CreateLoyalLevelDto) {
     return await this.prisma.loyalLevel.create({
       data: {
         name: createLoyalLevelDto.name,
-        required_points: createLoyalLevelDto.requirePoint
-      }
+        required_points: createLoyalLevelDto.requirePoint,
+      },
     });
   }
 
@@ -28,12 +29,27 @@ export class LoyalLevelService {
       where: { id },
       data: {
         name: updateLoyalLevelDto.name,
-        required_points: updateLoyalLevelDto.requirePoint
-      }
+        required_points: updateLoyalLevelDto.requirePoint,
+      },
     });
   }
 
   async remove(id: number) {
     return await this.prisma.loyalLevel.delete({ where: { id } });
+  }
+
+  async removeMany(ids: number[]) {
+    const deleted = await this.prisma.loyalLevel.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      message: `Successfully deleted ${deleted.count} loyal levels`,
+      count: deleted.count,
+    };
   }
 }

@@ -5,3 +5,4 @@ export * from "./ProductImageUploader";
 export * from "./OnlyNewImageUploader";
 export * from "./CreateProductInfo";
 export * from "./ProductTableActions";
+export * from "./ProductSelectorModal";

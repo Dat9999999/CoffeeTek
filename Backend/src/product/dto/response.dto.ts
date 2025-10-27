@@ -30,7 +30,7 @@ export interface ProductDetailResponse {
   category_id: number | null;
   category: Category | null;
   images: ProductImage[];
-  sizes: (Pick<ProductSize, 'price'> & { size: Size })[];
+  sizes: (Pick<ProductSize, 'id' | 'price'> & { size: Size })[];
   toppings: Topping[];
   optionGroups: ProductOptionValueGroup[];
 }

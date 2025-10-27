@@ -189,6 +189,7 @@ export default function PosPageTest() {
                                 }}
                             >
                                 <ProductCardList
+                                    pageSize={18}
                                     categoryId={selectedCategoryId}
                                     onSelect={handleAddPosItem}
                                 />

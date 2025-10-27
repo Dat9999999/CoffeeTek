@@ -16,6 +16,11 @@ import {
     MenuOutlined,
     MenuUnfoldOutlined,
     MenuFoldOutlined,
+    CrownOutlined,
+    GiftOutlined,
+    CreditCardOutlined,
+    IdcardOutlined,
+    SolutionOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -36,6 +41,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const items = [
         { key: "/admin/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
         { key: "/admin/users", icon: <UserOutlined />, label: "Users" },
+        {
+            key: "customers",
+            icon: <SolutionOutlined />,
+            label: "Customers",
+            children: [
+                { key: "/admin/loyal-levels", icon: <CrownOutlined />, label: "Loyal Levels" },
+                { key: "/admin/promotions", icon: <GiftOutlined />, label: "Promotions" },
+                { key: "/admin/vouchers", icon: <IdcardOutlined />, label: "Vouchers" },
+            ],
+        },
         {
             key: "products",
             icon: <ShoppingOutlined />,
@@ -81,16 +96,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         position: window.innerWidth < 992 ? "fixed" : "relative",
                         zIndex: 1000,
                         height: "100%",
+                        transition: "all 0.1s",
                     }}
                 >
                     <Flex
                         align="center"
-                        justify="center"
-                        style={{
-                            position: "relative",
-                            height: 55,
-                        }}
+                        style={{ position: "relative", height: 55, padding: "0 16px" }}
                     >
+                        {/* Title ở giữa */}
                         <Title
                             className="cursor-pointer"
                             onClick={() => router.push("/admin/dashboard")}
@@ -100,15 +113,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                                 fontWeight: 700,
                                 margin: 0,
                                 textAlign: "center",
+                                width: "100%",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                transition: "opacity 0.2s",
+                                opacity: collapsed ? 0 : 1, // ẩn text khi collapsed
                             }}
                         >
                             ShopControl
                         </Title>
 
+                        {/* Button toggle ở bên phải */}
                         <Button
                             type="text"
-                            icon={<MenuFoldOutlined />}
-                            onClick={() => setCollapsed(true)}
+                            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                            onClick={() => setCollapsed(!collapsed)}
                             style={{
                                 position: "absolute",
                                 right: 8,
@@ -117,6 +137,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                             }}
                         />
                     </Flex>
+
+
 
                     <Menu
                         theme={mode}
@@ -143,6 +165,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         alignItems: "center",
                         justifyContent: "space-between",
                         height: 55,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                     }}
                 >
                     <div>
@@ -166,8 +189,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
                 <Content
                     style={{
-                        margin: "24px 16px",
-                        padding: 24,
+                        margin: 12,
+                        padding: 12,
                         minHeight: "calc(100vh - 100px)",
                         background: colorBgContainer,
                         borderRadius: borderRadiusLG,

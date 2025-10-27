@@ -76,10 +76,7 @@ export function ProductCardList({
                         {products.map((product) => (
                             <Col
                                 key={product.id}
-                                xs={12}
-                                sm={8}
-                                md={6}
-                                lg={4}
+                                xs={12} sm={8} md={6} lg={4} xl={{ flex: "0 0 20%" }}
                                 onClick={() => onSelect?.(product)}
                                 style={{ overflow: "hidden" }}
                             >

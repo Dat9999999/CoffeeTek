@@ -193,6 +193,7 @@ export class ProductsService {
         category: product.category,
         images: product.images,
         sizes: product.sizes.map((s) => ({
+          id: s.id,
           price: s.price,
           size: s.size,
         })),
@@ -283,6 +284,7 @@ export class ProductsService {
       category: product.category,
       images: product.images,
       sizes: product.sizes.map((s) => ({
+        id: s.id,
         price: s.price,
         size: s.size,
       })),

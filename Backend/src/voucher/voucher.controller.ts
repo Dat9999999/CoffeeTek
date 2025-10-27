@@ -1,12 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { VoucherService } from './voucher.service';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
-import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { ExchangeVoucherDTO } from './dto/exchange-voucher.dto';
+import { GetAllDto } from '../common/dto/pagination.dto';
 
 @Controller('voucher')
 export class VoucherController {
-  constructor(private readonly voucherService: VoucherService) { }
+  constructor(private readonly voucherService: VoucherService) {}
 
   @Post()
   create(@Body() createVoucherDto: CreateVoucherDto) {
@@ -14,8 +23,8 @@ export class VoucherController {
   }
 
   @Get()
-  findAll() {
-    return this.voucherService.findAll();
+  findAll(@Query() paginationDto: GetAllDto) {
+    return this.voucherService.findAll(paginationDto);
   }
 
   @Get(':code')

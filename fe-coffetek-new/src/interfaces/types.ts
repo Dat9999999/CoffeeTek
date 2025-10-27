@@ -2,7 +2,40 @@
 import type { UploadFile } from "antd";
 import { OptionValue } from "./OptionValue";
 import { GenderEnum } from "@/enum";
-import { is } from "date-fns/locale";
+
+export interface Promotion {
+    id: number;
+    name: string;
+    description: string;
+    start_date: string;
+    end_date: string;
+    items?: PromotionItem[];
+}
+
+// Define PromotionItem interface based on PromotionItemDto
+export interface PromotionItem {
+    productId: number;
+    newPrice: number;
+    productSizedId: number | null; // Nullable to accommodate is_multi_size=false hoặc isTopping=true products
+}
+
+export interface Voucher {
+    id: number; // ID của voucher, optional vì có thể không có khi tạo mới
+    code: string; // Mã voucher, ví dụ: PROMO-ABCD-1234
+    valid_from: string; // Ngày bắt đầu hiệu lực (ISO string)
+    valid_to: string; // Ngày hết hiệu lực (ISO string)
+    requirePoint: number; // Số điểm cần thiết để đổi voucher
+    minAmountOrder: number; // Số tiền tối thiểu của đơn hàng để áp dụng voucher
+    discount_percentage: number; // Tỷ lệ giảm giá (%)
+    customerPhone?: string | null; // Số điện thoại của khách hàng đã đổi voucher, optional và có thể là null
+    is_active: boolean; // Trạng thái hoạt động của voucher
+}
+
+export interface LoyalLevel {
+    id: number;
+    name: string;
+    required_points: number;
+}
 export interface Unit {
     id: number;
     name: string;
@@ -68,6 +101,7 @@ export interface Category {
 }
 
 export interface ProductSize {
+    id: number;
     price: number;
     size: Size;
 }

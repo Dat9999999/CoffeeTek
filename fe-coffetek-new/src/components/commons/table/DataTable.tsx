@@ -23,6 +23,7 @@ interface DataTableProps<T> {
     renderActions?: (record: T) => React.ReactNode;
     isNoActions?: boolean;
     onRowClick?: (record: T) => void;
+    showPaging?: boolean;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -39,7 +40,8 @@ export function DataTable<T extends { id: number | string }>({
     enableRowSelection = false, // Mặc định tắt rowSelection
     renderActions,
     isNoActions = false,
-    onRowClick
+    onRowClick,
+    showPaging = true,
 }: DataTableProps<T>) {
     const handleChange = (
         newPagination: TablePaginationConfig,
@@ -106,11 +108,12 @@ export function DataTable<T extends { id: number | string }>({
             dataSource={data}
             loading={loading}
             pagination={{
-                current: tableState.currentPage,
-                pageSize: tableState.pageSize,
+                current: tableState?.currentPage,
+                pageSize: tableState?.pageSize,
                 total: total,
                 showTotal: (t, r) => `${r[0]}-${r[1]} of ${t}`,
-                showSizeChanger: true,
+                showSizeChanger: showPaging, // Ẩn page size changer
+                hideOnSinglePage: !showPaging,
                 pageSizeOptions: ["10", "15", "20"],
             }}
             onRow={(record) => ({

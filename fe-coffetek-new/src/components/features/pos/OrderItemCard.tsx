@@ -70,26 +70,16 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
     return (
         <Flex align="center" gap={12} style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: 8 }}>
             {/* Ảnh sản phẩm */}
-            <Flex
-                justify="center"
-                align="center"
-                style={{
-                    overflow: "hidden",
-                    borderRadius: 4,
-                    height: "100%",
-                }}
-            >
+            <Flex align="center" justify="center" style={{ height: 75, width: 75 }}>
                 <AppImage
                     alt={item.product.name}
                     src={item.product.images?.[0]?.image_name || ""}
-                    style={{
-                        width: 75,
-                        height: 75,
-                    }}
+                    style={{ width: 75, height: 75 }}
                 />
             </Flex>
+
             {/* Nội dung */}
-            <Flex vertical flex={1}>
+            <Flex justify="space-between" vertical={true} style={{ padding: "5px 0px", minHeight: 75 }} flex={1} >
                 <Flex justify="space-between" align="center">
                     <span style={{ color: token.colorPrimary, fontWeight: 500 }}>{item.product.name}</span>
                     <Flex gap={8}>
@@ -98,12 +88,13 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
                             onClick={onEdit}
                         />
                         <DeleteOutlined
+
                             style={{ cursor: "pointer", color: token.colorError }}
                             onClick={onDelete}
                         />
                     </Flex>
                 </Flex>
-                <Typography.Text type="secondary" style={{ marginTop: 4 }}>{getDescription()}</Typography.Text>
+                <div><Typography.Text type="secondary" style={{ marginTop: 4 }}>{getDescription()}</Typography.Text></div>
                 <Flex justify="space-between" align="center" style={{ marginTop: 4 }}>
                     <div style={{ color: token.colorPrimary, fontWeight: 600 }}>
                         {formatPrice(unitPrice, { includeSymbol: true })}{" "}
@@ -112,7 +103,7 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
                         </span>
                     </div>
                     {/* Nút tăng giảm */}
-                    <Flex align="center" justify="space-between" gap={8} >
+                    <Flex align="center" justify="space-between" gap={4} >
                         <Button
                             size="small"
                             shape="circle"

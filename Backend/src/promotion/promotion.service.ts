@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { GetAllDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class PromotionService {
-  constructor(private readonly prisma: PrismaService) { }
-  async create(createPromotionDto: CreatePromotionDto) {
+  constructor(private readonly prisma: PrismaService) {}
 
+  async create(createPromotionDto: CreatePromotionDto) {
     return await this.prisma.promotion.create({
       data: {
         start_date: createPromotionDto.startDate,
@@ -15,25 +16,54 @@ export class PromotionService {
         name: createPromotionDto.name,
         description: createPromotionDto.description,
         ProductPromotion: {
-          create: createPromotionDto.items.map(item => ({
+          create: createPromotionDto.items.map((item) => ({
             Product: { connect: { id: item.productId } },
             new_price: item.newPrice,
           })),
         },
-      }
+      },
     });
   }
 
-  async findAll() {
-    return await this.prisma.promotion.findMany({
-      include: {
-        ProductPromotion: {
-          include: {
-            Product: true,
-          },
-        },
+  async findAll(paginationDto: GetAllDto) {
+    const {
+      page,
+      size,
+      orderBy = 'id',
+      orderDirection = 'asc',
+      searchName,
+    } = paginationDto;
+
+    const skip = (page - 1) * size;
+
+    const where: any = {};
+
+    if (searchName) {
+      where.name = {
+        contains: searchName,
+        mode: 'insensitive',
+      };
+    }
+
+    const [promotions, total] = await Promise.all([
+      this.prisma.promotion.findMany({
+        skip,
+        take: size,
+        orderBy: { [orderBy]: orderDirection },
+        where,
+      }),
+      this.prisma.promotion.count({ where }),
+    ]);
+
+    return {
+      data: promotions,
+      meta: {
+        total,
+        page,
+        size,
+        totalPages: Math.ceil(total / size),
       },
-    });
+    };
   }
 
   async findOne(id: number) {
@@ -42,7 +72,11 @@ export class PromotionService {
       include: {
         ProductPromotion: {
           include: {
-            Product: true,
+            Product: {
+              include: {
+                images: true,
+              },
+            },
           },
         },
       },
@@ -60,7 +94,7 @@ export class PromotionService {
         });
 
         // Prepare the data for the new items as an array
-        const newItemsData = updatePromotionDto.items.map(item => ({
+        const newItemsData = updatePromotionDto.items.map((item) => ({
           productId: item.productId,
           promotionId: id,
           new_price: item.newPrice,

@@ -80,6 +80,12 @@ export class OrderService {
         const itemToppings = item.toppingItems?.length
           ? allToppings.filter(t => item.toppingItems!.some(ti => parseInt(ti.toppingId) === t.id))
           : [];
+        const productPromotion = await this.prisma.productPromotion.findFirst({
+          where: {
+            productId: product?.id
+          }
+        });
+
 
         return {
           ...item,
@@ -87,6 +93,7 @@ export class OrderService {
           toppings: itemToppings, // Toppings for this item
           size, // Full size object
           productSize, // The specific ProductSize record (contains the correct price)
+          productPromotion
         };
       })
     );
@@ -98,12 +105,16 @@ export class OrderService {
       }, 0) || 0;
     };
 
-    const original_price = order_details.reduce((sum, item) => {
+    let original_price = 0;
+    for (const item of order_details) {
+      // check if this product in promtion or not 
+      const productPromotion = item.productPromotion
+
       // 1. Get Base/Unit Price
       const defaultProductPrice = item.product?.price || 0;
 
       // Use the price from the CORRECT ProductSize object, or fall back to the default product price
-      const unitPrice = item.productSize?.price || defaultProductPrice;
+      const unitPrice = productPromotion?.new_price || item.productSize?.price || defaultProductPrice;
 
       // 2. Get Quantity
       const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
@@ -112,8 +123,8 @@ export class OrderService {
       const toppingTotal = toppingPrice(item) * quantity;
 
       // Sum: (Unit Price * Quantity) + Topping Price
-      return sum + (unitPrice * quantity) + toppingTotal;
-    }, 0);
+      original_price += (unitPrice * quantity) + toppingTotal;
+    }
 
 
 
@@ -121,7 +132,7 @@ export class OrderService {
     const final_price = original_price;
     //create order
 
-    await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
 
       for (const item of order_details) {
         // 1. KIỂM TRA TỒN TẠI (Lỗi bạn đang gặp)
@@ -150,7 +161,7 @@ export class OrderService {
         }
       }
 
-      const order = await tx.order.create({
+      return await tx.order.create({
         data: {
           customerPhone: createOrderDto.customerPhone,
           original_price: original_price,
@@ -161,7 +172,7 @@ export class OrderService {
             create: order_details.map(item => ({
               product_name: item.product?.name,
               quantity: parseInt(item.quantity),
-              unit_price: item.productSize?.price || item.product?.price || 0,
+              unit_price: item.productPromotion?.new_price || item.productSize?.price || item.product?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -206,8 +217,6 @@ export class OrderService {
         },
 
       });
-
-      return order;
     });
   }
 

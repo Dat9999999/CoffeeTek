@@ -38,6 +38,11 @@ export class OrderService {
 
   }
   async create(createOrderDto: CreateOrderDto) {
+    const allToppingIds = createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []);
+    const allToppings = await this.prisma.product.findMany({
+      where: { id: { in: allToppingIds } }
+    });
+
     const toppings = await this.prisma.product.findMany({
       where: {
         id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
@@ -50,98 +55,98 @@ export class OrderService {
     })
     const order_details = await Promise.all(
       createOrderDto.order_details.map(async (item) => {
+        const productIdNum = parseInt(item.productId);
+
         const product = await this.prisma.product.findUnique({
-          where: { id: parseInt(item.productId) },
+          where: { id: productIdNum },
           include: {
-            Recipe: {
-              include: {
-                MaterialRecipe: true
-              }
-            },
+            Recipe: { include: { MaterialRecipe: true } },
+            // Include `sizes` to get the ProductSize JOIN TABLE data
+            sizes: true,
+            toppings: true
           }
         });
 
-        const toppings = item.toppingItems?.length
-          ? await this.prisma.product.findMany({
-            where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
-          })
+        // 1. Find the specific Size object (to get its name/etc)
+        const size = item.sizeId
+          ? await this.prisma.size.findUnique({ where: { id: parseInt(item.sizeId) } })
+          : null;
+
+        // 2. Find the specific ProductSize record to get the price
+        // product.sizes is the ProductSize[] array. We find the entry that links to the size.id
+        const productSize = product?.sizes.find(ps => ps.size_id === size?.id);
+
+        // Filter the globally fetched toppings for this specific order item (optional, but cleaner)
+        const itemToppings = item.toppingItems?.length
+          ? allToppings.filter(t => item.toppingItems!.some(ti => parseInt(ti.toppingId) === t.id))
           : [];
 
-        const size = item.sizeId
-          ? await this.prisma.size.findUnique({
-            where: { id: parseInt(item.sizeId) },
-          })
-          : null;
-        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
-        const productSizes = await this.prisma.productSize.findUnique({
-          where: {
-            id:
-              createOrderDto.order_details
-                .map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
-                .find(id => id !== undefined && id === sizeIdNum)
-          },
-          select: {
-            id: true,       // This is the ProductSize.id (from dto.sizeId)
-            price: true,    // This is the correct unit price
-            size_id: true   // This is the Size.id (for the OrderDetail relation)
-          }
-        });
-
         return {
-          ...item, // giữ lại quantity, productId, toppingItems, sizeId...
-          product,
-          toppings,
-          size,
-          productSizes
+          ...item,
+          product, // Full product object
+          toppings: itemToppings, // Toppings for this item
+          size, // Full size object
+          productSize, // The specific ProductSize record (contains the correct price)
         };
       })
     );
 
-    const toppingPrice = (item) => {
-      return item.toppingItems?.reduce((sum, t) => {
-        const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
+    const toppingPrice = (itemDetail) => {
+      return itemDetail.toppingItems?.reduce((sum, t) => {
+        const topping = allToppings.find(tp => tp.id === parseInt(t.toppingId));
         return sum + ((topping?.price ?? 0) * parseInt(t.quantity));
       }, 0) || 0;
     };
 
     const original_price = order_details.reduce((sum, item) => {
+      // 1. Get Base/Unit Price
       const defaultProductPrice = item.product?.price || 0;
 
-      // đảm bảo sizeId luôn có giá trị hợp lệ
-      const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
-      const sizePrice = sizeId
-        ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
-        : 0;
+      // Use the price from the CORRECT ProductSize object, or fall back to the default product price
+      const unitPrice = item.productSize?.price || defaultProductPrice;
 
-      // đảm bảo quantity là số
+      // 2. Get Quantity
       const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
 
-      // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
+      // 3. Get Topping Total
       const toppingTotal = toppingPrice(item) * quantity;
 
-      return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
+      // Sum: (Unit Price * Quantity) + Topping Price
+      return sum + (unitPrice * quantity) + toppingTotal;
     }, 0);
 
 
 
-    // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
+    // Tính toán giá gốc và giá cuối cùng trước khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
     const final_price = original_price;
     //create order
 
     await this.prisma.$transaction(async (tx) => {
-      for (const item of order_details) {
 
-        //throw error if product is inactive
+      for (const item of order_details) {
+        // 1. KIỂM TRA TỒN TẠI (Lỗi bạn đang gặp)
+        if (!item.product) {
+          const productId = item.productId;
+          throw new BadRequestException(`Product ${productId} not found in database.`);
+        }
+
+        // 2. KIỂM TRA CÁC ĐIỀU KIỆN NGHIỆP VỤ KHÁC
+        // Gộp tất cả các điều kiện logic vào một khối IF lớn
         if (
-          !item.product ||
+          // A. Sản phẩm không hoạt động
           !item.product.isActive ||
+
+          // B. Sản phẩm không có Recipe (null/undefined)
           !item.product.Recipe ||
+
+          // C. Sản phẩm có Recipe nhưng mảng rỗng (không có công thức nào)
           item.product.Recipe.length === 0 ||
-          // if Recipe is an array, ensure at least one recipe has MaterialRecipe entries
+
+          // D. TẤT CẢ các Recipe đều không có MaterialRecipe (công thức không đầy đủ)
           item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
         ) {
-          const productNameOrId = item.product?.name ?? item.productId;
-          throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
+          const productNameOrId = item.product.name ?? item.productId;
+          throw new BadRequestException(`Product ${productNameOrId} is inactive, not found, or has an incomplete recipe.`);
         }
       }
 
@@ -156,7 +161,7 @@ export class OrderService {
             create: order_details.map(item => ({
               product_name: item.product?.name,
               quantity: parseInt(item.quantity),
-              unit_price: item.productSizes?.price || 0,
+              unit_price: item.productSize?.price || item.product?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -376,13 +381,13 @@ export class OrderService {
       }
 
       // accumalate point 
-      if(order.customerPhone){
-        let additional_point = order.final_price/ 1000;
+      if (order.customerPhone) {
+        let additional_point = order.final_price / 1000;
         await this.prisma.customerPoint.update({
-          where:{
-            customerPhone:order.customerPhone
+          where: {
+            customerPhone: order.customerPhone
           },
-          data:{
+          data: {
             points: {
               increment: additional_point
             }

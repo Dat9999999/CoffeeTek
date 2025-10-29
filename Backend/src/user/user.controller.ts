@@ -15,11 +15,12 @@ import { B2Service } from 'src/storage-file/b2.service';
 @Controller('user')
 
 // comment when testing 
-// @UseGuards(AuthGuard('jwt'))
+
 
 export class UserController {
     constructor(private readonly userService: UserService, private readonly b2Service: B2Service) { }
     @Get('me')
+    @UseGuards(AuthGuard('jwt'))
     getUsers(@GetUser() user: client.User) {
         return user;
     }

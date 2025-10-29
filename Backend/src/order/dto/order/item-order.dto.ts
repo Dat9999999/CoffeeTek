@@ -10,6 +10,8 @@ export class orderItemDTO {
     @IsNotEmpty()
     quantity: string;
     toppingItems?: createToppingItemDTO[];
+
+    @IsOptional()
     sizeId?: string;
     @IsOptional()
     optionId: string[];

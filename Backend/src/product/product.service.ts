@@ -81,7 +81,7 @@ export class ProductsService {
           : undefined,
       },
     });
-
+    
     const new_product_detail = await this.findOne(product.id);
     return new_product_detail;
   }

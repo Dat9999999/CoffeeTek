@@ -83,7 +83,7 @@ export const AppImageSize: React.FC<AppImageSizeProps> = ({
                     width={width}
                     preview={preview}
                     style={{
-                        objectFit: "contain",
+                        objectFit: "cover",
                         borderRadius: token.borderRadiusLG,
                         opacity: loaded ? 1 : 0,
                         transition: "opacity 0.4s ease",

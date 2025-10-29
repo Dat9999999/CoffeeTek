@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Layout, Splitter, Grid, theme, Spin } from "antd";
+import { Layout, Splitter, Grid, theme, Spin, message } from "antd";
 import {
     ProductSearchSelector,
     CategoryMenuSelector,
@@ -8,8 +8,10 @@ import {
     OrderSummary,
     ProductPosItemModal,
 } from "@/components/features/pos";
-import { OptionGroup, OptionValue, Product, ProductPosItem, Size, Topping } from "@/interfaces";
+import { OptionGroup, OptionValue, Product, ProductPosItem, Size, Topping, User, Voucher } from "@/interfaces";
 import { v4 as uuidv4 } from "uuid";
+import { orderService } from "@/services/orderService"; // Assuming the path to orderService
+import { FullscreenLoader } from "@/components/commons";
 
 const { useBreakpoint } = Grid;
 let isMobile = false;
@@ -17,12 +19,12 @@ let isMobile = false;
 function isSamePosItem(a: ProductPosItem, b: ProductPosItem): boolean {
     if (a.product.id !== b.product.id) return false;
 
-    //  Nếu sản phẩm có nhiều size thì phải trùng size
+    // Nếu sản phẩm có nhiều size thì phải check size
     if (a.product.is_multi_size && b.product.is_multi_size) {
         if (a.size?.id !== b.size?.id) return false;
     }
 
-    //  So toppings
+    // So toppings
     const aToppings = a.toppings ?? [];
     const bToppings = b.toppings ?? [];
     if (aToppings.length !== bToppings.length) return false;
@@ -51,12 +53,24 @@ function isSamePosItem(a: ProductPosItem, b: ProductPosItem): boolean {
     return true;
 }
 
+
+
 export default function PosPageTest() {
     const { token } = theme.useToken();
     const screens = useBreakpoint();
     const [mounted, setMounted] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
     const [posItems, setPosItems] = useState<ProductPosItem[]>([]);
+    const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);
+    const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+    const [note, setNote] = useState<string>("");
+    // 💵 Payment state
+    const [paymentMethod, setPaymentMethod] = useState<"cash" | "vnpay">("cash");
+    const [payment, setPayment] = useState({
+        cashReceived: 0,
+        change: 0,
+    });
+
     const [modalState, setModalState] = useState<{
         open: boolean;
         mode: "add" | "update";
@@ -66,6 +80,7 @@ export default function PosPageTest() {
         mode: "add",
         item: null,
     });
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -108,7 +123,67 @@ export default function PosPageTest() {
         setModalState((prev) => ({ ...prev, open: false }));
     };
 
+    const handlePay = async () => {
+        if (posItems.length === 0) {
+            message.warning("No items in order");
+            return;
+        }
+        setLoading(true);
+        try {
+            const orderDetails = posItems.map(item => ({
+                productId: item.product.id.toString(),
+                quantity: item.quantity.toString(),
+                sizeId: item.size?.id.toString() || null,
+                toppingItems: item.toppings?.map(t => ({
+                    toppingId: t.topping.id.toString(),
+                    quantity: t.toppingQuantity.toString()
+                })),
+                optionId: item.optionsSelected?.map(o => o.optionValue.id.toString()),
+            }));
 
+            const createData = {
+                order_details: orderDetails,
+                customerPhone: selectedCustomer?.phone_number, // Assuming User has phone property
+                staffId: "1", // Hardcoded, replace with actual staffId from auth
+                note: note
+            };
+
+            const createdOrder = await orderService.create(createData);
+            const orderId = createdOrder.id; // Assuming response has id
+
+            const voucherCode = selectedVoucher?.code;
+
+            if (paymentMethod === "cash") {
+                const payData = {
+                    orderId,
+                    amount: payment.cashReceived,
+                    change: payment.change,
+                    voucherCode
+                };
+                await orderService.payByCash(payData);
+                message.success("Order created and paid successfully");
+            } else {
+                const payData = {
+                    orderId,
+                    voucherCode
+                };
+                const paymentUrl = await orderService.payOnline(payData);
+                window.open(paymentUrl, '_blank'); // Open in new tab
+            }
+
+            // Clear states after success
+            setPosItems([]);
+            setSelectedCustomer(null);
+            setSelectedVoucher(null);
+            setNote("");
+            setPayment({ cashReceived: 0, change: 0 });
+        } catch (error) {
+            message.error("Failed to create or pay order");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     isMobile = !screens.md; // nhỏ hơn 'md' breakpoint
     if (!mounted) {
@@ -128,11 +203,28 @@ export default function PosPageTest() {
                 {isMobile ? (
                     // ===== MOBILE: Stack layout =====
                     <div className="flex flex-col gap-4">
+
                         <OrderSummary
                             posItems={posItems}
                             onEdit={handleEditPosItem}
                             onDelete={handleDeletePosItem}
                             onQuantityChange={handleQuantityChange}
+                            selectedCustomer={selectedCustomer}
+                            setSelectedCustomer={setSelectedCustomer}
+                            selectedVoucher={selectedVoucher}
+                            setSelectedVoucher={setSelectedVoucher}
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                            payment={payment}
+                            setPayment={setPayment}
+                            note={note}
+                            setNote={setNote}
+                            onPay={handlePay}
+                            style={{
+                                width: "100%",
+                                height: "auto",
+                                overflow: "visible",
+                            }}
                         />
                         <ProductSearchSelector style={{ height: 40 }} />
                         <CategoryMenuSelector
@@ -200,7 +292,7 @@ export default function PosPageTest() {
                             defaultSize="40%"
                             min="30%"
                             style={{
-                                padding: token.paddingXS,
+                                // padding: token.paddingXS,
                                 overflow: "visible", // ✅ cho phép nội dung nở tự nhiên
                                 height: "auto"
                             }}
@@ -210,10 +302,21 @@ export default function PosPageTest() {
                                 onEdit={handleEditPosItem}
                                 onDelete={handleDeletePosItem}
                                 onQuantityChange={handleQuantityChange}
+                                selectedCustomer={selectedCustomer}
+                                setSelectedCustomer={setSelectedCustomer}
+                                selectedVoucher={selectedVoucher}
+                                setSelectedVoucher={setSelectedVoucher}
+                                paymentMethod={paymentMethod}
+                                setPaymentMethod={setPaymentMethod}
+                                payment={payment}
+                                setPayment={setPayment}
+                                note={note}
+                                setNote={setNote}
+                                onPay={handlePay}
                                 style={{
                                     width: "100%",
-                                    height: "auto", // ✅ không ép chiều cao cố định
-                                    overflow: "visible", // ✅ tắt cuộn bên trong
+                                    height: "auto",
+                                    overflow: "visible",
                                 }}
                             />
                         </Splitter.Panel>
@@ -254,6 +357,8 @@ export default function PosPageTest() {
 
                 />
             )}
+            {/* Integrate the reusable fullscreen loader */}
+            <FullscreenLoader spinning={loading} />
         </>
     );
 }

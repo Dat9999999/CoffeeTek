@@ -142,7 +142,7 @@ export class VoucherService {
 
   async findOne(code: string) {
     return await this.prisma.voucher.findUnique({
-      where: { code },
+      where: { code: code, is_active: true },
     });
   }
 

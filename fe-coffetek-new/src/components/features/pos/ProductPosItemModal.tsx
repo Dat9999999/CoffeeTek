@@ -191,16 +191,16 @@ export const ProductPosItemModal = ({
                                 padding: token.padding,
                             }}
                         >
-                            <AppImage
+                            <AppImageSize
+                                height={220}
+                                width={220}
                                 src={productPosItem.product.images?.[0]?.image_name}
                                 alt={productPosItem.product.name}
                                 style={{
-                                    height: 220,
-                                    width: 220,
+                                    objectFit: "cover",
                                     borderRadius: token.borderRadiusSM,
 
                                 }}
-                                isContain={false}
                             />
                         </div>
 
@@ -403,12 +403,12 @@ export const ProductPosItemModal = ({
                                             >
                                                 {/* Bên trái: Ảnh + thông tin */}
                                                 <Flex align="center" gap={token.marginXS}>
-                                                    <AppImage
+                                                    <AppImageSize
+                                                        height={50}
+                                                        width={50}
                                                         src={topping.image_name}
                                                         alt={topping.name}
                                                         style={{
-                                                            width: 50,
-                                                            height: 50,
                                                             objectFit: "cover",
                                                             borderRadius: token.borderRadiusSM,
                                                             border: `1px solid ${token.colorBorderSecondary}`,

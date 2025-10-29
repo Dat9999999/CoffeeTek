@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Flex, theme, Typography } from "antd";
+import { Button, Divider, Flex, theme, Typography } from "antd";
 import { DeleteOutlined, EditOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { AppImage } from "@/components/commons";
 import { formatPrice } from "@/utils";
@@ -68,66 +68,71 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
     };
 
     return (
-        <Flex align="center" gap={12} style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: 8 }}>
-            {/* Ảnh sản phẩm */}
-            <Flex align="center" justify="center" style={{ height: 75, width: 75 }}>
-                <AppImage
-                    alt={item.product.name}
-                    src={item.product.images?.[0]?.image_name || ""}
-                    style={{ width: 75, height: 75 }}
-                />
-            </Flex>
+        <>
+            <Divider plain style={{ margin: 4 }}>
+            </Divider>
+            <Flex align="center" gap={12} style={{}}>
+                {/* Ảnh sản phẩm */}
+                <Flex align="center" justify="center" style={{ height: 75, width: 75 }}>
+                    <AppImage
+                        alt={item.product.name}
+                        src={item.product.images?.[0]?.image_name || ""}
+                        style={{ width: 75, height: 75 }}
+                    />
+                </Flex>
 
-            {/* Nội dung */}
-            <Flex justify="space-between" vertical={true} style={{ padding: "5px 0px", minHeight: 75 }} flex={1} >
-                <Flex justify="space-between" align="center">
-                    <span style={{ color: token.colorPrimary, fontWeight: 500 }}>{item.product.name}</span>
-                    <Flex gap={8}>
-                        <EditOutlined
-                            style={{ cursor: "pointer", color: token.colorPrimary }}
-                            onClick={onEdit}
-                        />
-                        <DeleteOutlined
+                {/* Nội dung */}
+                <Flex justify="space-between" vertical={true} style={{ padding: "5px 0px", minHeight: 75 }} flex={1} >
+                    <Flex justify="space-between" align="center">
+                        <span style={{ color: token.colorPrimary, fontWeight: 500 }}>{item.product.name}</span>
+                        <Flex gap={8}>
+                            <EditOutlined
+                                style={{ cursor: "pointer", color: token.colorPrimary }}
+                                onClick={onEdit}
+                            />
+                            <DeleteOutlined
 
-                            style={{ cursor: "pointer", color: token.colorError }}
-                            onClick={onDelete}
-                        />
+                                style={{ cursor: "pointer", color: token.colorError }}
+                                onClick={onDelete}
+                            />
+                        </Flex>
+                    </Flex>
+                    <div><Typography.Text type="secondary" style={{ marginTop: 4 }}>{getDescription()}</Typography.Text></div>
+                    <Flex justify="space-between" align="center" style={{ marginTop: 4 }}>
+                        <div style={{ color: token.colorPrimary, fontWeight: 600 }}>
+                            {formatPrice(unitPrice, { includeSymbol: true })}{" "}
+                            <span style={{ fontSize: "0.9em", fontWeight: 400 }}>
+                                / 1
+                            </span>
+                        </div>
+                        {/* Nút tăng giảm */}
+                        <Flex align="center" justify="space-between" gap={4} >
+                            <Button
+                                size="small"
+                                shape="circle"
+                                onClick={handleDecrease}
+                                type="primary"
+                                icon={<MinusOutlined />}
+                            >
+                            </Button>
+                            <span
+                                style={{ width: 20, textAlign: "center", color: token.colorPrimary, fontWeight: 400 }}
+                            >
+                                {item.quantity}
+                            </span>
+                            <Button
+                                size="small"
+                                shape="circle"
+                                onClick={handleIncrease}
+                                type="primary"
+                                icon={<PlusOutlined />}
+                            >
+                            </Button>
+                        </Flex>
                     </Flex>
                 </Flex>
-                <div><Typography.Text type="secondary" style={{ marginTop: 4 }}>{getDescription()}</Typography.Text></div>
-                <Flex justify="space-between" align="center" style={{ marginTop: 4 }}>
-                    <div style={{ color: token.colorPrimary, fontWeight: 600 }}>
-                        {formatPrice(unitPrice, { includeSymbol: true })}{" "}
-                        <span style={{ fontSize: "0.9em", fontWeight: 400 }}>
-                            / 1
-                        </span>
-                    </div>
-                    {/* Nút tăng giảm */}
-                    <Flex align="center" justify="space-between" gap={4} >
-                        <Button
-                            size="small"
-                            shape="circle"
-                            onClick={handleDecrease}
-                            type="primary"
-                            icon={<MinusOutlined />}
-                        >
-                        </Button>
-                        <span
-                            style={{ width: 20, textAlign: "center", color: token.colorPrimary, fontWeight: 400 }}
-                        >
-                            {item.quantity}
-                        </span>
-                        <Button
-                            size="small"
-                            shape="circle"
-                            onClick={handleIncrease}
-                            type="primary"
-                            icon={<PlusOutlined />}
-                        >
-                        </Button>
-                    </Flex>
-                </Flex>
             </Flex>
-        </Flex>
+
+        </>
     );
 };

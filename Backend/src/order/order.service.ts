@@ -37,205 +37,420 @@ export class OrderService {
     return this.b2Service.getSignedUrl(key)
 
   }
-  async create(createOrderDto: CreateOrderDto) {
-    const toppings = await this.prisma.product.findMany({
-      where: {
-        id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
-      }
-    })
-    const productSizePrice = await this.prisma.productSize.findMany({
-      where: {
-        id: { in: createOrderDto.order_details.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
-      }
-    })
-    const order_details = await Promise.all(
-      createOrderDto.order_details.map(async (item) => {
+  // async create(createOrderDto: CreateOrderDto) {
+  //   const toppings = await this.prisma.product.findMany({
+  //     where: {
+  //       id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
+  //     }
+  //   })
+  //   const productSizePrice = await this.prisma.productSize.findMany({
+  //     where: {
+  //       id: { in: createOrderDto.order_details.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
+  //     }
+  //   })
+  //   const order_details = await Promise.all(
+  //     createOrderDto.order_details.map(async (item) => {
+  //       const product = await this.prisma.product.findUnique({
+  //         where: { id: parseInt(item.productId) },
+  //         include: {
+  //           Recipe: {
+  //             include: {
+  //               MaterialRecipe: true
+  //             }
+  //           },
+  //         }
+  //       });
+
+  //       const toppings = item.toppingItems?.length
+  //         ? await this.prisma.product.findMany({
+  //           where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
+  //         })
+  //         : [];
+
+  //       const size = item.sizeId
+  //         ? await this.prisma.size.findUnique({
+  //           where: { id: parseInt(item.sizeId) },
+  //         })
+  //         : null;
+  //       const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
+  //       const productSizes = await this.prisma.productSize.findUnique({
+  //         where: {
+  //           id:
+  //             createOrderDto.order_details
+  //               .map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
+  //               .find(id => id !== undefined && id === sizeIdNum)
+  //         },
+  //         select: {
+  //           id: true,       // This is the ProductSize.id (from dto.sizeId)
+  //           price: true,    // This is the correct unit price
+  //           size_id: true   // This is the Size.id (for the OrderDetail relation)
+  //         }
+  //       });
+
+  //       return {
+  //         ...item, // giữ lại quantity, productId, toppingItems, sizeId...
+  //         product,
+  //         toppings,
+  //         size,
+  //         productSizes
+  //       };
+  //     })
+  //   );
+
+  //   const toppingPrice = (item) => {
+  //     return item.toppingItems?.reduce((sum, t) => {
+  //       const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
+  //       return sum + ((topping?.price ?? 0) * parseInt(t.quantity));
+  //     }, 0) || 0;
+  //   };
+
+  //   const original_price = order_details.reduce((sum, item) => {
+  //     const defaultProductPrice = item.product?.price || 0;
+
+  //     // đảm bảo sizeId luôn có giá trị hợp lệ
+  //     const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
+  //     const sizePrice = sizeId
+  //       ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
+  //       : 0;
+
+  //     // đảm bảo quantity là số
+  //     const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
+
+  //     // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
+  //     const toppingTotal = toppingPrice(item) * quantity;
+
+  //     return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
+  //   }, 0);
+
+
+
+  //   // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
+  //   const final_price = original_price;
+  //   //create order
+  //   let order: any = null;
+  //   await this.prisma.$transaction(async (tx) => {
+  //     for (const item of order_details) {
+
+  //       //throw error if product is inactive
+  //       if (
+  //         !item.product ||
+  //         !item.product.isActive ||
+  //         !item.product.Recipe ||
+  //         item.product.Recipe.length === 0 ||
+  //         // if Recipe is an array, ensure at least one recipe has MaterialRecipe entries
+  //         item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
+  //       ) {
+  //         const productNameOrId = item.product?.name ?? item.productId;
+  //         throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
+  //       }
+  //     }
+
+  //     order = await tx.order.create({
+  //       data: {
+  //         customerPhone: createOrderDto.customerPhone,
+  //         original_price: original_price,
+  //         final_price: final_price,
+  //         note: createOrderDto.note,
+  //         staffId: parseInt(createOrderDto.staffId),
+  //         order_details: {
+  //           create: order_details.map(item => ({
+  //             product_name: item.product?.name,
+  //             quantity: parseInt(item.quantity),
+  //             unit_price: item.productSizes?.price || 0,
+
+  //             product: {
+  //               connect: { id: parseInt(item.productId) }
+  //             },
+
+  //             size: item.sizeId
+  //               ? { connect: { id: parseInt(item.sizeId) } }
+  //               : undefined,
+
+  //             ToppingOrderDetail: item.toppingItems?.length
+  //               ? {
+  //                 create: item.toppingItems.map(t => ({
+  //                   quantity: parseInt(t.quantity),
+  //                   unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0,
+  //                   topping: { connect: { id: parseInt(t.toppingId) } }
+  //                 }))
+  //               }
+  //               : undefined,
+  //             optionValue: createOrderDto.order_details.map(i => i.optionId)?.length
+  //               ? {
+  //                 connect: createOrderDto.order_details
+  //                   .flatMap(i => i.optionId)
+  //                   .map(id => ({ id: parseInt(id) }))
+  //               }
+  //               : undefined,
+  //           }))
+  //         },
+
+  //       },
+  //       include: {
+  //         order_details: {
+  //           include: {
+  //             product: true,
+  //             size: true,
+  //             ToppingOrderDetail: {
+  //               include: {
+  //                 topping: true
+  //               }
+  //             },
+  //             optionValue: {
+  //               include: {
+  //                 option_group: true
+  //               }
+  //             }
+  //           }
+  //         },
+  //       },
+
+  //     });
+
+
+  //   });
+  //   return order;
+  // }
+
+  async create(dto: CreateOrderDto) {
+    const { order_details, customerPhone, staffId, note } = dto;
+
+    if (!order_details || order_details.length === 0) {
+      throw new Error('Order must have at least one order detail');
+    }
+
+    let original_price = 0;
+
+    const detailsData = await Promise.all(
+      order_details.map(async (item) => {
+        // Parse IDs to numbers if necessary (assuming DTO transforms them)
+        const productId = Number(item.productId);
+        const quantity = Number(item.quantity);
+        const sizeId = item.sizeId ? Number(item.sizeId) : undefined;
+
         const product = await this.prisma.product.findUnique({
-          where: { id: parseInt(item.productId) },
+          where: { id: productId },
           include: {
-            Recipe: {
-              include: {
-                MaterialRecipe: true
-              }
-            },
-          }
+            sizes: true,
+          },
         });
 
-        const toppings = item.toppingItems?.length
-          ? await this.prisma.product.findMany({
-            where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
-          })
+        if (!product) {
+          throw new Error(`Product with ID ${productId} not found`);
+        }
+
+        let unit_price: number;
+
+        if (product.is_multi_size) {
+          if (!sizeId) {
+            throw new Error(`Size is required for multi-size product ${product.name}`);
+          }
+
+          const productSize = product.sizes.find((ps) => ps.size_id === sizeId);
+
+          if (!productSize) {
+            throw new Error(`Size ID ${sizeId} not available for product ${product.name}`);
+          }
+
+          unit_price = productSize.price;
+        } else {
+          if (sizeId) {
+            throw new Error(`Size should not be provided for single-size product ${product.name}`);
+          }
+
+          if (product.price === null || product.price === undefined) {
+            throw new Error(`Product ${product.name} has no price defined`);
+          }
+
+          unit_price = product.price;
+        }
+
+        // Validate and prepare options
+        const optionConnect = item.optionId
+          ? await Promise.all(
+            item.optionId.map(async (optIdStr) => {
+              const optId = Number(optIdStr);
+              const pov = await this.prisma.productOptionValue.findFirst({
+                where: {
+                  product_id: productId,
+                  option_value_id: optId,
+                },
+              });
+
+              if (!pov) {
+                throw new Error(`Option ID ${optId} not available for product ${product.name}`);
+              }
+
+              return { id: optId };
+            }),
+          )
           : [];
 
-        const size = item.sizeId
-          ? await this.prisma.size.findUnique({
-            where: { id: parseInt(item.sizeId) },
-          })
-          : null;
-        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
-        const productSizes = await this.prisma.productSize.findUnique({
-          where: {
-            id:
-              createOrderDto.order_details
-                .map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
-                .find(id => id !== undefined && id === sizeIdNum)
-          },
-          select: {
-            id: true,       // This is the ProductSize.id (from dto.sizeId)
-            price: true,    // This is the correct unit price
-            size_id: true   // This is the Size.id (for the OrderDetail relation)
-          }
-        });
+        // Validate and prepare toppings
+        let toppingData: any = [];
+        if (item.toppingItems && item.toppingItems.length > 0) {
+          toppingData = await Promise.all(
+            item.toppingItems.map(async (topItem) => {
+              const toppingId = Number(topItem.toppingId);
+              const topQuantity = Number(topItem.quantity);
+
+              const topping = await this.prisma.product.findUnique({
+                where: { id: toppingId },
+              });
+
+              if (!topping || !topping.isTopping) {
+                throw new Error(`Invalid topping ID ${toppingId}`);
+              }
+
+              if (topping.is_multi_size) {
+                throw new Error(`Multi-size toppings are not supported`);
+              }
+
+              if (topping.price === null || topping.price === undefined) {
+                throw new Error(`Topping ${topping.name} has no price defined`);
+              }
+
+              // Check if topping is available for this product
+              const productTopping = await this.prisma.productTopping.findFirst({
+                where: {
+                  product_id: productId,
+                  topping_id: toppingId,
+                },
+              });
+
+              if (!productTopping) {
+                throw new Error(`Topping ${topping.name} not available for product ${product.name}`);
+              }
+
+              const topUnitPrice = topping.price;
+              original_price += topUnitPrice * topQuantity;
+
+              return {
+                quantity: topQuantity,
+                unit_price: topUnitPrice,
+                topping_id: toppingId,
+              };
+            }),
+          );
+        }
+
+        original_price += unit_price * quantity;
 
         return {
-          ...item, // giữ lại quantity, productId, toppingItems, sizeId...
-          product,
-          toppings,
-          size,
-          productSizes
+          quantity,
+          unit_price,
+          product_name: product.name,
+          product_id: productId,
+          size_id: sizeId,
+          optionValue: {
+            connect: optionConnect,
+          },
+          ToppingOrderDetail: {
+            create: toppingData,
+          },
         };
-      })
+      }),
     );
 
-    const toppingPrice = (item) => {
-      return item.toppingItems?.reduce((sum, t) => {
-        const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
-        return sum + ((topping?.price ?? 0) * parseInt(t.quantity));
-      }, 0) || 0;
-    };
-
-    const original_price = order_details.reduce((sum, item) => {
-      const defaultProductPrice = item.product?.price || 0;
-
-      // đảm bảo sizeId luôn có giá trị hợp lệ
-      const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
-      const sizePrice = sizeId
-        ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
-        : 0;
-
-      // đảm bảo quantity là số
-      const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
-
-      // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
-      const toppingTotal = toppingPrice(item) * quantity;
-
-      return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
-    }, 0);
-
-
-
-    // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
-    const final_price = original_price;
-    //create order
-
-    await this.prisma.$transaction(async (tx) => {
-      for (const item of order_details) {
-
-        //throw error if product is inactive
-        if (
-          !item.product ||
-          !item.product.isActive ||
-          !item.product.Recipe ||
-          item.product.Recipe.length === 0 ||
-          // if Recipe is an array, ensure at least one recipe has MaterialRecipe entries
-          item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
-        ) {
-          const productNameOrId = item.product?.name ?? item.productId;
-          throw new BadRequestException(`Product ${productNameOrId} is inactive or not found`);
-        }
-      }
-
-      const order = await tx.order.create({
-        data: {
-          customerPhone: createOrderDto.customerPhone,
-          original_price: original_price,
-          final_price: final_price,
-          note: createOrderDto.note,
-          staffId: parseInt(createOrderDto.staffId),
-          order_details: {
-            create: order_details.map(item => ({
-              product_name: item.product?.name,
-              quantity: parseInt(item.quantity),
-              unit_price: item.productSizes?.price || 0,
-
-              product: {
-                connect: { id: parseInt(item.productId) }
-              },
-
-              size: item.sizeId
-                ? { connect: { id: parseInt(item.sizeId) } }
-                : undefined,
-
-              ToppingOrderDetail: item.toppingItems?.length
-                ? {
-                  create: item.toppingItems.map(t => ({
-                    quantity: parseInt(t.quantity),
-                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0,
-                    topping: { connect: { id: parseInt(t.toppingId) } }
-                  }))
-                }
-                : undefined,
-              optionValue: createOrderDto.order_details.map(i => i.optionId)?.length
-                ? {
-                  connect: createOrderDto.order_details
-                    .flatMap(i => i.optionId)
-                    .map(id => ({ id: parseInt(id) }))
-                }
-                : undefined,
-            }))
-          },
-
+    const order = await this.prisma.order.create({
+      data: {
+        note,
+        original_price,
+        final_price: original_price, // Assuming no discounts for now; adjust if needed
+        Customer: customerPhone ? { connect: { phone_number: customerPhone } } : undefined,
+        Staff: { connect: { id: Number(staffId) } },
+        order_details: {
+          create: detailsData,
         },
-        include: {
-          order_details: {
-            include: {
-              product: true,
-              size: true,
-              ToppingOrderDetail: {
-                include: {
-                  topping: true
-                }
-              }
-            }
-          },
-        },
-
-      });
-
-
+      },
     });
-    return createOrderDto;
+
+    // Assuming you have a findOne method to retrieve the full order with relations
+    const new_order_detail = await this.findOne(order.id);
+    return new_order_detail;
   }
 
   async findAll(query: GetAllOrderDto) {
-    const { page, size, searchName, searchStatus, orderBy = 'id', orderDirection = 'asc' } = query;
+    const {
+      page,
+      size,
+      searchName,
+      searchStatus,
+      orderBy = 'id',
+      orderDirection = 'asc'
+    } = query;
+
     if (!page || !size) {
       throw new Error("page and size are required");
     }
+
     const skip = (page - 1) * size;
 
+    // Xây dựng điều kiện where động
+    const where: any = {};
 
-    const [data, total] = await Promise.all([this.prisma.order.findMany({
-      skip,
-      take: size,
-      where: {
-        status: searchStatus ?? {},
-        //for search by name, this name is customer's phone
-        customerPhone: searchName ?? {}
-      },
-      orderBy: { [orderBy]: orderDirection },
-    }), this.prisma.order.count()]);
-    const res: ResponseGetAllDto<any> = {
-      data: data,
-      meta: {
-        page: page,
-        size: size,
-        total: total,
-        totalPages: Math.ceil(total / size)
-      }
+    if (searchStatus && searchStatus.trim() !== '') {
+      where.status = searchStatus;
     }
+
+    if (searchName && searchName.trim() !== '') {
+      where.customerPhone = {
+        contains: searchName,
+        mode: 'insensitive', // không phân biệt hoa thường
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.order.findMany({
+        skip,
+        take: size,
+        where,
+        include: {
+          order_details: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                }
+              },
+              size: true,
+              ToppingOrderDetail: {
+                include: {
+                  topping: {
+                    include: {
+                      images: true,
+                    }
+                  },
+                },
+              },
+              optionValue: {
+                include: {
+                  option_group: true,
+                },
+              },
+            },
+          },
+          Customer: true,
+          Staff: true,
+        },
+        orderBy: { [orderBy]: orderDirection },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    const res: ResponseGetAllDto<any> = {
+      data,
+      meta: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+
     return res;
   }
+
 
   async findOne(id: number) {
     const order = await this.prisma.order.findUnique({
@@ -243,10 +458,30 @@ export class OrderService {
       include: {
         order_details: {
           include: {
-            product: true,
-            size: true
+            product: {
+              include: {
+                images: true,
+              }
+            },
+            size: true,
+            ToppingOrderDetail: {
+              include: {
+                topping: {
+                  include: {
+                    images: true,
+                  }
+                }
+              }
+            },
+            optionValue: {
+              include: {
+                option_group: true
+              }
+            }
           }
         },
+        Customer: true,
+        Staff: true,
       },
     });
     if (order === null) throw new NotFoundException(`not found order id = ${id}`);
@@ -289,9 +524,9 @@ export class OrderService {
     if (!order) throw new NotFoundException("this order is not exist!");
     if (order.status != OrderStatus.PENDING) throw new BadRequestException("Can only make a payment with order status = pending");
     if (paymentDTO.amount < order.final_price) throw new BadRequestException("Invalid amount, amount must greater or equal final price");
-    if (paymentDTO.amount - (paymentDTO.change ?? 0) != order.final_price ||
-      paymentDTO.amount < (paymentDTO.change ?? 0)
-    ) throw new BadRequestException("Change is invalid");
+    // if (paymentDTO.amount - (paymentDTO.change ?? 0) <= order.final_price ||
+    //   paymentDTO.amount < (paymentDTO.change ?? 0)
+    // ) throw new BadRequestException("Change is invalid");
 
 
     // validate voucher and apply discount 
@@ -376,13 +611,13 @@ export class OrderService {
       }
 
       // accumalate point 
-      if(order.customerPhone){
-        let additional_point = order.final_price/ 1000;
+      if (order.customerPhone) {
+        let additional_point = order.final_price / 1000;
         await this.prisma.customerPoint.update({
-          where:{
-            customerPhone:order.customerPhone
+          where: {
+            customerPhone: order.customerPhone
           },
-          data:{
+          data: {
             points: {
               increment: additional_point
             }

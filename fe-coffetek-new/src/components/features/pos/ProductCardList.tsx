@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Pagination, Row, Col, Spin, Empty, theme } from "antd";
 import { Product } from "@/interfaces";
 import { productService } from "@/services";
-import { AppImage } from "@/components/commons";
+import { AppImage, AppImageSize } from "@/components/commons";
 import { formatCompactPriceProduct } from "@/utils";
 
 interface ProductCardListProps {
@@ -87,12 +87,12 @@ export function ProductCardList({
                                         padding: 0,
                                     }}
                                 >
-                                    <AppImage
+                                    <AppImageSize
+                                        height={"100%"}
+                                        width={"100%"}
                                         alt={product.name}
                                         src={product.images?.[0]?.image_name}
                                         style={{
-                                            height: "100%",
-                                            width: "100%",
                                             objectFit: "cover",
                                         }}
                                         preview={false}

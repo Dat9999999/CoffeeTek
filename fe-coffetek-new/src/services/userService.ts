@@ -95,4 +95,9 @@ export const userService = {
         const res = await api.get("/auth/roles");
         return res.data;
     },
+
+    async searchPos(params: any) {
+        const res = await api.get("/user/search-pos", { params });
+        return res.data;
+    },
 };

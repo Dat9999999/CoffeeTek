@@ -94,7 +94,7 @@ export function PosShell({ children }: { children: React.ReactNode }) {
             <Layout>
                 <Content
                     style={{
-                        padding: 12,
+                        padding: 0,
                         margin: 0,
                         minHeight: 280,
                         background: colorBgContainer,

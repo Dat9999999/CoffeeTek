@@ -1,17 +1,26 @@
+// app/admin/orders/page.tsx
 "use client";
-import React, { useEffect, useState } from "react";
-import { theme } from "antd";
 
+import React, { useState } from "react";
+import { Layout } from "antd";
+import LeftSider from "./LeftSider";
+import OrderDetailComponent from "./OrderDetailComponent";
 
-export default function PosPageTest() {
-    const { token } = theme.useToken();
+const { Sider, Content } = Layout;
 
+export default function OrdersPage() {
+    const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
     return (
-        <>
-            <div>
-                Processing Orders Page
-            </div>
-        </>
+        <Layout style={{ minHeight: "100vh" }}>
+            <Sider width={300} style={{ background: "#fff" }}>
+                <LeftSider onSelect={setSelectedOrderId} defaultSelected={selectedOrderId} />
+            </Sider>
+            <Layout>
+                <Content style={{ padding: "24px", background: "#fff" }}>
+                    <OrderDetailComponent orderId={selectedOrderId} />
+                </Content>
+            </Layout>
+        </Layout>
     );
 }

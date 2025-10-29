@@ -1,6 +1,5 @@
 
-import { OptionValue } from "./OptionValue";
-import { OptionGroup, Product, Size, Topping } from "./types";
+import { OptionGroup, OptionValue, Product, Size, Topping } from "./types";
 
 export interface ProductPosItem {
     posItemId: string;

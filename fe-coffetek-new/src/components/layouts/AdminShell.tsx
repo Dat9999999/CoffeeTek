@@ -21,6 +21,9 @@ import {
     CreditCardOutlined,
     IdcardOutlined,
     SolutionOutlined,
+    ContainerOutlined,
+    ReconciliationOutlined,
+    FileSyncOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -41,6 +44,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const items = [
         { key: "/admin/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
         { key: "/admin/users", icon: <UserOutlined />, label: "Users" },
+        { key: "/admin/orders", icon: <ReconciliationOutlined />, label: "Orders" },
         {
             key: "customers",
             icon: <SolutionOutlined />,
@@ -69,7 +73,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             label: "Inventory",
             children: [
                 { key: "/admin/materials", icon: <ExperimentOutlined />, label: "Material" },
+                { key: "/admin/materials/confirm-changes", icon: <FileSyncOutlined />, label: "Confirm changes" },
+
             ],
+
         },
 
 

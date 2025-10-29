@@ -1,7 +1,71 @@
 // types.ts
 import type { UploadFile } from "antd";
-import { OptionValue } from "./OptionValue";
 import { GenderEnum } from "@/enum";
+
+// Add these to types.ts
+
+export enum OrderStatus {
+    PENDING = 'pending',
+    COMPLETED = 'completed',
+    CANCELED = 'canceled',
+    REFUND = 'refund',
+    PAID = 'paid'
+}
+
+export interface ToppingOrderDetail {
+    id: number;
+    quantity: number;
+    unit_price: number;
+    order_detail_id: number;
+    topping_id: number;
+    topping: Product; // Toppings are represented as Product objects with isTopping: true
+}
+
+export interface OrderDetail {
+    id: number;
+    quantity: number;
+    unit_price: number;
+    product_name: string;
+    order_id: number;
+    product_id: number;
+    size_id: number | null;
+    product: Product;
+    size: Size | null;
+    ToppingOrderDetail: ToppingOrderDetail[];
+    optionValue: OptionValue[]; // OptionValue may include option_group as per JSON response
+}
+
+export interface Order {
+    id: number;
+    note: string;
+    original_price: number;
+    final_price: number;
+    created_at: string;
+    status: OrderStatus;
+    customerPhone: string;
+    staffId: number;
+    paymentDetailId: number | null;
+    invoiceUrl: string | null;
+    order_details: OrderDetail[];
+}
+
+// Optional: Update existing OptionValue to support option_group from JSON
+// If needed, extend OptionValue like this:
+export interface OptionValue {
+    id: number;
+    name: string;
+    sort_index: number;
+    option_group_id: number;
+    option_group?: OptionGroup; // Add this to match JSON structure
+}
+
+// export interface OptionValue {
+//     id: number;
+//     name: string;
+//     sort_index: number;
+//     option_group_id: number;
+// }
+
 
 export interface Promotion {
     id: number;
@@ -29,6 +93,13 @@ export interface Voucher {
     discount_percentage: number; // Tỷ lệ giảm giá (%)
     customerPhone?: string | null; // Số điện thoại của khách hàng đã đổi voucher, optional và có thể là null
     is_active: boolean; // Trạng thái hoạt động của voucher
+}
+
+export interface CustomerPoint {
+    id: number;
+    points: number;
+    customerPhone: string;
+    loyalLevelId: number;
 }
 
 export interface LoyalLevel {
@@ -63,11 +134,13 @@ export interface User {
     id: number;
     email: string;
     phone_number: string;
-    first_name: string,
-    last_name: string,
-    is_locked: boolean,
+    first_name: string;
+    last_name: string;
+    is_locked: boolean;
     detail?: UserDetail;
     roles?: Role[];
+    Voucher?: Voucher[]; // ✅ Thêm
+    CustomerPoint?: CustomerPoint | null; // ✅ Thêm
 }
 
 export interface UserDetail {

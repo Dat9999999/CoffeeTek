@@ -397,7 +397,6 @@ model ProductPromotion {
   productSize   ProductSize? @relation(fields: [productSizeId], references: [id])
   productSizeId Int?
 
-  @@unique([productId, promotionId])
   @@map("product_promotions")
 }
 

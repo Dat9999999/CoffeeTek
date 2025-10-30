@@ -49,7 +49,9 @@ export class OrderService {
       }
     })
     const order_details = await Promise.all(
+
       createOrderDto.order_details.map(async (item) => {
+        const now = new Date();
         const productIdNum = parseInt(item.productId);
 
         const product = await this.prisma.product.findUnique({
@@ -75,11 +77,45 @@ export class OrderService {
         const itemToppings = item.toppingItems?.length
           ? allToppings.filter(t => item.toppingItems!.some(ti => parseInt(ti.toppingId) === t.id))
           : [];
-        const productPromotion = await this.prisma.productPromotion.findFirst({
+        // const productPromotion = await this.prisma.productPromotion.findFirst({
+        //   where: {
+        //     AND:[
+        //       {
+        //         productId: product?.id},
+        //       {
+
+        //       }
+        //       ]
+
+        //   }
+        // });
+        const promotionActive = await this.prisma.promotion.findFirst({
           where: {
-            productId: product?.id
+            AND: [
+              {
+                is_active: true
+              },
+              {
+                start_date: {
+                  lt: now
+                },
+                end_date: {
+                  gte: now
+                }
+
+              }
+            ]
+          },
+          include: {
+            ProductPromotion: {
+              where: {
+                productId: productIdNum
+              }
+            }
           }
-        });
+
+        })
+        const productPromotion = promotionActive?.ProductPromotion
         const optionValue = item.optionId ?? []
 
         return {
@@ -110,7 +146,7 @@ export class OrderService {
       const defaultProductPrice = item.product?.price || 0;
 
       // Use the price from the CORRECT ProductSize object, or fall back to the default product price
-      const unitPrice = productPromotion?.new_price || item.productSize?.price || defaultProductPrice;
+      const unitPrice = productPromotion?.find(i => i.productId == parseInt(item.productId))?.new_price || item.productSize?.price || defaultProductPrice;
 
       // 2. Get Quantity
       const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
@@ -168,7 +204,7 @@ export class OrderService {
             create: order_details.map(item => ({
               product_name: item.product?.name,
               quantity: parseInt(item.quantity),
-              unit_price: item.productPromotion?.new_price || item.productSize?.price || item.product?.price || 0,
+              unit_price: item.productPromotion?.find(e => e.productId == parseInt(item.productId))?.new_price || item.productSize?.price || item.product?.price || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -402,100 +438,147 @@ export class OrderService {
     return order;
   }
   async updateItems(id: number, updateItemsDto: UpdateOrderDto) {
-    const toppings = await this.prisma.product.findMany({
-      where: {
-        id: { in: updateItemsDto.order_details?.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
-      }
-    })
-    const productSizePrice = await this.prisma.productSize.findMany({
-      where: {
-        id: { in: updateItemsDto.order_details?.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
-      }
-    })
+    // 1. TÌM NẠP DỮ LIỆU
+    const allToppingIds = updateItemsDto.order_details?.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []);
+    const allToppings = await this.prisma.product.findMany({
+      where: { id: { in: allToppingIds } }
+    });
+
+    // 2. XỬ LÝ CHI TIẾT
     const order_details = await Promise.all(
-      (updateItemsDto.order_details ?? []).map(async (item) => {
+      (updateItemsDto.order_details || []).map(async (item) => {
+        // <<< THAY ĐỔI: Thêm 'now' để kiểm tra khuyến mãi
+        const now = new Date();
+        const productIdNum = parseInt(item.productId);
+
         const product = await this.prisma.product.findUnique({
-          where: { id: parseInt(item.productId) },
-        });
-
-        const toppings = item.toppingItems?.length
-          ? await this.prisma.product.findMany({
-            where: { id: { in: item.toppingItems.map(t => parseInt(t.toppingId)) } },
-          })
-          : [];
-
-        const size = item.sizeId
-          ? await this.prisma.size.findUnique({
-            where: { id: parseInt(item.sizeId) },
-          })
-          : null;
-        const sizeIdNum = item.sizeId ? parseInt(item.sizeId) : undefined;
-        const productSizes = await this.prisma.productSize.findUnique({
-          where: {
-            id:
-              updateItemsDto?.order_details?.map(i => i.sizeId ? parseInt(i.sizeId) : undefined)
-                .find(id => id !== undefined && id === sizeIdNum)
-          },
-          select: {
-            id: true,       // This is the ProductSize.id (from dto.sizeId)
-            price: true,    // This is the correct unit price
-            size_id: true   // This is the Size.id (for the OrderDetail relation)
+          where: { id: productIdNum },
+          include: {
+            Recipe: { include: { MaterialRecipe: true } },
+            sizes: true,
           }
         });
-        const optionValue = item.optionId
+
+        const size = item.sizeId
+          ? await this.prisma.size.findUnique({ where: { id: parseInt(item.sizeId) } })
+          : null;
+
+        const productSize = product?.sizes.find(ps => ps.size_id === size?.id);
+
+        const itemToppings = item.toppingItems?.length
+          ? allToppings.filter(t => item.toppingItems!.some(ti => parseInt(ti.toppingId) === t.id))
+          : [];
+
+        // <<< THAY ĐỔI: Logic tìm khuyến mãi mới, giống hệt 'create'
+        const promotionActive = await this.prisma.promotion.findFirst({
+          where: {
+            AND: [
+              { is_active: true },
+              { start_date: { lte: now } }, // Sử dụng lte để bao gồm cả thời điểm bắt đầu
+              { end_date: { gte: now } }
+            ]
+          },
+          include: {
+            ProductPromotion: {
+              where: {
+                productId: productIdNum
+                // TODO: Bạn có thể cần lọc thêm theo productSizeId tại đây
+                // productSizeId: productSize ? productSize.id : null
+              }
+            }
+          }
+        });
+        // productPromotion bây giờ là một MẢNG hoặc undefined
+        const productPromotion = promotionActive?.ProductPromotion;
+
+        const optionValue = item.optionId ?? []
+        const productQuantity = item.quantity
 
         return {
-          ...item, // giữ lại quantity, productId, toppingItems, sizeId...
+          ...item,
           product,
-          toppings,
+          toppings: itemToppings,
           size,
-          productSizes
+          productSize,
+          productPromotion, // <<< THAY ĐỔI: Truyền mảng này đi
+          optionValue,
+          productQuantity
         };
       })
     );
-    const toppingPrice = (item) => {
-      return item.toppingItems?.reduce((sum, t) => {
-        const topping = toppings.find(tp => tp.id === parseInt(t.toppingId));
-        return sum + (topping != null && topping.price ? topping.price * parseInt(t.quantity) : 0);
+
+    // 3. TÍNH GIÁ
+    const toppingPrice = (itemDetail) => {
+      return itemDetail.toppingItems?.reduce((sum, t) => {
+        const topping = allToppings.find(tp => tp.id === parseInt(t.toppingId));
+        return sum + ((topping?.price ?? 0) * parseInt(t.quantity));
       }, 0) || 0;
     };
 
-    const original_price = order_details.reduce((sum, item) => {
+    let original_price = 0;
+    for (const item of order_details) {
+      // <<< THAY ĐỔI: item.productPromotion là một mảng
+      const productPromotion = item.productPromotion;
       const defaultProductPrice = item.product?.price || 0;
 
-      // đảm bảo sizeId luôn có giá trị hợp lệ
-      const sizeId = item.sizeId ? parseInt(item.sizeId) : null;
-      const sizePrice = sizeId
-        ? productSizePrice.find(s => s.id === sizeId)?.price ?? 0
-        : 0;
+      // <<< THAY ĐỔI: Logic giá mới, dùng .find()
+      const unitPrice = productPromotion?.find(i => i.productId == parseInt(item.productId))?.new_price
+        || item.productSize?.price
+        || defaultProductPrice;
 
-      // đảm bảo quantity là số
       const quantity = item.quantity ? parseInt(item.quantity.toString()) : 0;
-
-      // toppingPrice trả về tổng giá topping (nhân với quantity nếu muốn)
       const toppingTotal = toppingPrice(item) * quantity;
+      original_price += (unitPrice * quantity) + toppingTotal;
+    }
 
-      return sum + (sizePrice ? sizePrice : defaultProductPrice) * quantity + toppingTotal;
-    }, 0);
-
-
-
-    // Tính toán giá gốc và giá cuối cùng sau khi áp dụng voucher/ khuyến mãi khách hàng thân thiết 
     const final_price = original_price;
 
-    await this.prisma.$transaction(async (tx) => {
-      await this.prisma.orderDetail.deleteMany({
-        where: { id }
+    // 4. TRANSACTION: Cập nhật Order
+    return await this.prisma.$transaction(async (tx) => {
+
+      // <<< SỬA LỖI: Xóa theo 'orderId', không phải 'id'
+      await tx.orderDetail.deleteMany({
+        where: { order_id: id } // 'id' là Order.id được truyền vào hàm
       });
-      const order = await this.prisma.order.update({
-        where: { id },
+
+      // b. KIỂM TRA NGHIỆP VỤ (Giữ nguyên logic 'create')
+      for (const item of order_details) {
+        if (!item.product) {
+          throw new BadRequestException(`Product ${item.productId} not found in database.`);
+        }
+
+        if (
+          !item.product.isActive ||
+          !item.product.Recipe ||
+          item.product.Recipe.length === 0 ||
+          item.product.Recipe.every((r: any) => !r.MaterialRecipe || r.MaterialRecipe.length === 0)
+        ) {
+          const productNameOrId = item.product.name ?? item.productId;
+          throw new BadRequestException(`Product ${productNameOrId} is inactive, not found, or has an incomplete recipe.`);
+        }
+      }
+
+      // c. Cập nhật Order và tạo các order_details MỚI
+      const updatedOrder = await tx.order.update({
+        where: { id: id },
         data: {
           original_price: original_price,
           final_price: final_price,
+          customerPhone: updateItemsDto.customerPhone,
+          note: updateItemsDto.note,
+          staffId: updateItemsDto.staffId ? parseInt(updateItemsDto.staffId) : undefined,
+
+          // Tạo các order_details MỚI
           order_details: {
             create: order_details.map(item => ({
-              quantity: parseInt(item.quantity),
-              unit_price: item.productSizes?.price || 0,
+              product_name: item.product?.name,
+              quantity: parseInt(item.productQuantity),
+
+              // <<< THAY ĐỔI: Logic giá mới, dùng .find()
+              unit_price: item.productPromotion?.find(e => e.productId == parseInt(item.productId))?.new_price
+                || item.productSize?.price
+                || item.product?.price
+                || 0,
 
               product: {
                 connect: { id: parseInt(item.productId) }
@@ -509,15 +592,15 @@ export class OrderService {
                 ? {
                   create: item.toppingItems.map(t => ({
                     quantity: parseInt(t.quantity),
-                    unit_price: toppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0, // TODO: lấy từ topping.price
+                    unit_price: allToppings.find((p) => p.id == parseInt(t.toppingId))?.price ?? 0,
                     topping: { connect: { id: parseInt(t.toppingId) } }
                   }))
                 }
                 : undefined,
-              optionValue: updateItemsDto?.order_details?.map(i => i.optionId)?.length
+
+              optionValue: item.optionValue.length > 0
                 ? {
-                  connect: updateItemsDto?.order_details
-                    .flatMap(i => i.optionId)
+                  connect: item.optionValue
                     .map(id => ({ id: parseInt(id) }))
                 }
                 : undefined,
@@ -535,11 +618,12 @@ export class OrderService {
                 }
               }
             }
-          }
-        }
+          },
+        },
       });
-    })
-    return order_details;
+
+      return updatedOrder;
+    });
   }
   async payOnline(paymentDTO: PaymentDTO) {
     const tomorrow = new Date();

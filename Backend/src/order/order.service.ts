@@ -48,11 +48,6 @@ export class OrderService {
         id: { in: createOrderDto.order_details.flatMap(i => i.toppingItems?.map(t => parseInt(t.toppingId)) || []) }
       }
     })
-    const productSizePrice = await this.prisma.productSize.findMany({
-      where: {
-        id: { in: createOrderDto.order_details.flatMap(i => i.sizeId ? [parseInt(i.sizeId)] : []) }
-      }
-    })
     const order_details = await Promise.all(
       createOrderDto.order_details.map(async (item) => {
         const productIdNum = parseInt(item.productId);
@@ -85,7 +80,7 @@ export class OrderService {
             productId: product?.id
           }
         });
-
+        const optionValue = item.optionId ?? []
 
         return {
           ...item,
@@ -93,7 +88,8 @@ export class OrderService {
           toppings: itemToppings, // Toppings for this item
           size, // Full size object
           productSize, // The specific ProductSize record (contains the correct price)
-          productPromotion
+          productPromotion,
+          optionValue
         };
       })
     );
@@ -191,10 +187,9 @@ export class OrderService {
                   }))
                 }
                 : undefined,
-              optionValue: createOrderDto.order_details.map(i => i.optionId)?.length
+              optionValue: item.optionValue.length > 0
                 ? {
-                  connect: createOrderDto.order_details
-                    .flatMap(i => i.optionId)
+                  connect: item.optionValue
                     .map(id => ({ id: parseInt(id) }))
                 }
                 : undefined,
@@ -257,7 +252,8 @@ export class OrderService {
         order_details: {
           include: {
             product: true,
-            size: true
+            size: true,
+            optionValue: true
           }
         },
       },
@@ -446,6 +442,7 @@ export class OrderService {
             size_id: true   // This is the Size.id (for the OrderDetail relation)
           }
         });
+        const optionValue = item.optionId
 
         return {
           ...item, // giữ lại quantity, productId, toppingItems, sizeId...

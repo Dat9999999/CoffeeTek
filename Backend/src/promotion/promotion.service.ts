@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -6,24 +6,62 @@ import { GetAllDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class PromotionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createPromotionDto: CreatePromotionDto) {
-    return await this.prisma.promotion.create({
-      data: {
-        start_date: createPromotionDto.startDate,
-        end_date: createPromotionDto.endDate,
-        name: createPromotionDto.name,
-        description: createPromotionDto.description,
-        ProductPromotion: {
-          create: createPromotionDto.items.map((item) => ({
-            Product: { connect: { id: item.productId } },
-            productSize: { connect: { id: item.productSizedId } },
-            new_price: item.newPrice,
-          })),
+    return await this.prisma.$transaction(async (tx) => {
+      // check if any overlap promotion 
+      const promotion = await tx.promotion.findMany({
+        where: {
+          OR: [
+            {
+              start_date: {
+                lte: createPromotionDto.endDate,
+              },
+              end_date: {
+                gte: createPromotionDto.endDate,
+              }
+            },
+            {
+              start_date: {
+                lte: createPromotionDto.startDate,
+              },
+              end_date: {
+                gte: createPromotionDto.endDate,
+              }
+            },
+            {
+              start_date: {
+                lte: createPromotionDto.startDate,
+              },
+              end_date: {
+                gte: createPromotionDto.startDate,
+              }
+            }
+          ]
+        }
+      })
+
+      if (promotion && promotion.length > 0) throw new BadRequestException(`Promotion start ${createPromotionDto.startDate} & end ${createPromotionDto.endDate} is overlaped`)
+
+      return await tx.promotion.create({
+        data: {
+          start_date: createPromotionDto.startDate,
+          end_date: createPromotionDto.endDate,
+          name: createPromotionDto.name,
+          description: createPromotionDto.description,
+          ProductPromotion: {
+            create: createPromotionDto.items.map((item) => ({
+              Product: { connect: { id: item.productId } },
+              ...(item.productSizedId ? { productSize: { connect: { id: item.productSizedId } } }
+                : {}),
+              new_price: item.newPrice,
+            })),
+          },
         },
-      },
-    });
+      });
+
+    })
   }
 
   async findAll(paginationDto: GetAllDto) {

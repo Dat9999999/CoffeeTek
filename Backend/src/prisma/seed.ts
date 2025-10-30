@@ -14,7 +14,7 @@ async function main() {
       { role_name: 'owner' },
       { role_name: 'manager' },
       { role_name: 'staff' },
-      { role_name: 'barista' },
+      { role_name: 'barista' }, 
       { role_name: 'baker' },
       { role_name: 'customer' },
       { role_name: 'stocktaker' },

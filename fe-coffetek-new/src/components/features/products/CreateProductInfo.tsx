@@ -106,16 +106,16 @@ export function CreateProductInfo({ onProductCreated, onCancel }: CreateProductI
             setLoading(true);
 
             // upload ảnh
-            let uploadedUrls: string[] = ["1.png", "2.png"];
-            // if (fileList.length > 0) {
-            //     const files = fileList
-            //         .filter((f) => f.originFileObj)
-            //         .map((f) => f.originFileObj as File);
+            let uploadedUrls: string[] = [];
+            if (fileList.length > 0) {
+                const files = fileList
+                    .filter((f) => f.originFileObj)
+                    .map((f) => f.originFileObj as File);
 
-            //     if (files.length > 0) {
-            //         uploadedUrls = await uploadImages(files);
-            //     }
-            // }
+                if (files.length > 0) {
+                    uploadedUrls = await uploadImages(files);
+                }
+            }
 
             // Nếu là topping => gọi toppingService
             if (productType === "topping") {

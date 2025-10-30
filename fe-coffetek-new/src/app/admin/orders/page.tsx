@@ -16,7 +16,7 @@ import {
 } from "@/components/features/orders";
 import { Tag, Typography } from "antd";
 import dayjs from "dayjs";
-import { formatPrice } from "@/utils"; // Assuming you have a formatPrice utility
+import { formatPrice, getStatusColor } from "@/utils"; // Assuming you have a formatPrice utility
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layouts";
 import { ShoppingCartOutlined } from "@ant-design/icons";
@@ -69,22 +69,7 @@ export default function OrderPage() {
         setStatusRecord(null);
     };
 
-    const getStatusColor = (status: OrderStatus) => {
-        switch (status) {
-            case OrderStatus.PENDING:
-                return "blue";
-            case OrderStatus.PAID:
-                return "green";
-            case OrderStatus.COMPLETED:
-                return "geekblue";
-            case OrderStatus.CANCELED:
-                return "red";
-            case OrderStatus.REFUND:
-                return "orange";
-            default:
-                return "default";
-        }
-    };
+
 
     return (
         <>

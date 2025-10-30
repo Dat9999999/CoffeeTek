@@ -17,7 +17,6 @@ const STATUS_OPTIONS = [
     { label: "Paid", value: OrderStatus.PAID },
     { label: "Completed", value: OrderStatus.COMPLETED },
     { label: "Canceled", value: OrderStatus.CANCELED },
-    { label: "Refund", value: OrderStatus.REFUND },
 ];
 
 export const OrderStatusFilter: React.FC<OrderStatusFilterProps> = ({

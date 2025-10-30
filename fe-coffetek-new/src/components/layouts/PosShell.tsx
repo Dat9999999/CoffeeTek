@@ -29,12 +29,10 @@ export function PosShell({ children }: { children: React.ReactNode }) {
         {
             key: "/pos/orders-processing",
             label: "Processing Orders",
-            icon: <SyncOutlined />,
         },
         {
             key: "/pos/all-orders",
             label: "All Orders",
-            icon: <OrderedListOutlined />,
         },
     ];
 

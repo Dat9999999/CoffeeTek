@@ -1,4 +1,3 @@
-// components/OrderDetailComponent.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -10,12 +9,23 @@ import {
     Divider,
     Spin,
     message,
+    Tag,
+    Button,
 } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import {
+    CheckOutlined,
+    DownOutlined,
+    CloseCircleOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import { AppImageSize } from "@/components/commons";
-import { formatPrice } from "@/utils";
-import type { Order, OrderDetail, ToppingOrderDetail } from "@/interfaces";
+import { formatPrice, getStatusColor } from "@/utils";
+import {
+    Order,
+    OrderDetail,
+    ToppingOrderDetail,
+    OrderStatus,
+} from "@/interfaces";
 import { orderService } from "@/services/orderService";
 
 const { Title, Text } = Typography;
@@ -23,9 +33,10 @@ const { Panel } = Collapse;
 
 interface OrderDetailComponentProps {
     orderId: number | null;
+    onStatusUpdate?: () => void;
 }
 
-export default function OrderDetailComponent({ orderId }: OrderDetailComponentProps) {
+export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderDetailComponentProps) {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -35,21 +46,56 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
             return;
         }
 
-        const fetchOrder = async () => {
-            try {
-                setLoading(true);
-                const res = await orderService.getById(orderId);
-                setOrder(res);
-            } catch (err) {
-                message.error("Error getting order detail.");
-                setOrder(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchOrder();
     }, [orderId]);
+
+    const fetchOrder = async () => {
+        try {
+            setLoading(true);
+            const res = await orderService.getById(orderId!);
+            setOrder(res);
+        } catch (err) {
+            message.error("Error getting order detail.");
+            setOrder(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirm = async () => {
+        if (!order) return;
+        const newStatus =
+            order.status === OrderStatus.PENDING
+                ? OrderStatus.PAID
+                : OrderStatus.COMPLETED;
+
+        try {
+            await orderService.updateStatus({
+                orderId: order.id,
+                status: newStatus,
+            });
+            message.success(`Order updated to ${newStatus.toUpperCase()} successfully`);
+            fetchOrder();
+            onStatusUpdate?.();
+        } catch (err) {
+            message.error("Error updating order status");
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!order) return;
+        try {
+            await orderService.updateStatus({
+                orderId: order.id,
+                status: OrderStatus.CANCELED,
+            });
+            message.success("Order canceled successfully");
+            fetchOrder();
+            onStatusUpdate?.();
+        } catch (err) {
+            message.error("Error canceling order");
+        }
+    };
 
     if (loading) {
         return (
@@ -63,35 +109,71 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
         return (
             <Flex vertical align="center" justify="center" style={{ height: "80vh" }}>
                 <Text type="secondary">
-                    {orderId ? `Order #${orderId} not found` : "Please select an order to view details"}
+                    {orderId
+                        ? `Order #${orderId} not found`
+                        : "Please select an order to view details"}
                 </Text>
             </Flex>
         );
     }
 
+    const canConfirm =
+        order.status === OrderStatus.PENDING ||
+        order.status === OrderStatus.PAID;
+    const canCancel =
+        order.status === OrderStatus.PENDING ||
+        order.status === OrderStatus.PAID;
+
+    const confirmText =
+        order.status === OrderStatus.PENDING
+            ? "Confirm Paid"
+            : "Confirm Complete";
+
     return (
-        <div style={{ padding: 24 }}>
-            <Title level={3} style={{ marginBottom: 16 }}>
-                {`Order #${order.id} Details`}
-            </Title>
+        <div>
+            <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+                <Title level={3} style={{ marginBottom: 0 }}>
+                    {`Order #${order.id} Details`}
+                </Title>
+                {canConfirm && (
+                    <Button
+                        icon={<CheckOutlined />}
+                        type="primary"
+                        onClick={handleConfirm}
+                    >
+                        {confirmText}
+                    </Button>
+                )}
+            </Flex>
 
             {/* ===== ORDER INFO ===== */}
             <Descriptions bordered size="small" column={2}>
                 <Descriptions.Item label="Created At">
-                    {dayjs(order.created_at).format("YYYY-MM-DD HH:mm")}
+                    {dayjs(order.created_at).format("DD-MM-YYYY HH:mm")}
                 </Descriptions.Item>
                 <Descriptions.Item label="Status">
-                    <Text strong>{order.status.toUpperCase()}</Text>
+                    <Tag color={getStatusColor(order.status)}>
+                        {order.status.toUpperCase()}
+                    </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Customer Phone">
-                    {order.customerPhone || "Guest"}
+                <Descriptions.Item label="Customer">
+                    {order.Customer
+                        ? `${order.Customer.first_name ?? ""} ${order.Customer.last_name ?? ""} (${order.customerPhone ?? "N/A"})`
+                        : "Guest"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Note">{order.note || "N/A"}</Descriptions.Item>
+                <Descriptions.Item label="Order Processor">
+                    {order.Staff
+                        ? `${order.Staff.first_name ?? ""} ${order.Staff.last_name ?? ""} (${order.Staff.phone_number ?? "N/A"})`
+                        : "N/A"}
+                </Descriptions.Item>
                 <Descriptions.Item label="Original Price">
                     {formatPrice(order.original_price, { includeSymbol: true })}
                 </Descriptions.Item>
                 <Descriptions.Item label="Final Price">
                     {formatPrice(order.final_price, { includeSymbol: true })}
+                </Descriptions.Item>
+                <Descriptions.Item label="Note">
+                    {order.note || "N/A"}
                 </Descriptions.Item>
             </Descriptions>
 
@@ -105,7 +187,10 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                 expandIconPosition="start"
                 expandIcon={({ isActive }) => (
                     <Flex vertical justify="center" align="center" style={{ height: "100%" }}>
-                        <DownOutlined rotate={isActive ? 180 : 0} style={{ transition: "0.3s" }} />
+                        <DownOutlined
+                            rotate={isActive ? 180 : 0}
+                            style={{ transition: "0.3s" }}
+                        />
                     </Flex>
                 )}
             >
@@ -126,11 +211,16 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
 
                     const descriptionParts: string[] = [];
                     if (toppings.length > 0)
-                        descriptionParts.push(`${toppings.length} topping${toppings.length > 1 ? "s" : ""}`);
+                        descriptionParts.push(
+                            `x${toppings.length} topping${toppings.length > 1 ? "s" : ""}`
+                        );
                     if (options.length > 0)
                         descriptionParts.push(
                             options
-                                .map((opt) => `${opt.option_group?.name || "Option"}: ${opt.name}`)
+                                .map(
+                                    (opt) =>
+                                        `${opt.option_group?.name || "Option"}: ${opt.name}`
+                                )
                                 .join(", ")
                         );
 
@@ -138,9 +228,25 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                         <Panel
                             key={detail.id}
                             header={
-                                <Flex justify="space-between" align="center" style={{ width: "100%" }}>
-                                    {/* === LEFT: Image + Name === */}
-                                    <Flex gap={8} align="center">
+                                <Flex
+                                    align="center"
+                                    justify="space-between"
+                                    wrap="wrap"
+                                    style={{
+                                        width: "100%",
+                                        rowGap: 8,
+                                        textAlign: "center",
+                                    }}
+                                >
+                                    {/* === LEFT: Ảnh + Tên sản phẩm === */}
+                                    <Flex
+                                        gap={8}
+                                        align="center"
+                                        style={{
+                                            flex: "1 1 30%",
+                                            minWidth: 180,
+                                        }}
+                                    >
                                         <AppImageSize
                                             width={45}
                                             height={45}
@@ -153,16 +259,39 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                         </Text>
                                     </Flex>
 
-                                    {/* === CENTER: Description === */}
-                                    <Text type="secondary" style={{ flex: 1, textAlign: "center" }}>
-                                        {descriptionParts.length > 0 ? descriptionParts.join(" | ") : ""}
-                                    </Text>
+                                    {/* === CENTER: Mô tả === */}
+                                    <Flex
+                                        justify="center"
+                                        align="center"
+                                        style={{
+                                            flex: "1 1 40%",
+                                            minWidth: 200,
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
+                                        }}
+                                    >
+                                        <Text type="secondary">
+                                            {descriptionParts.length > 0
+                                                ? descriptionParts.join(" | ")
+                                                : ""}
+                                        </Text>
+                                    </Flex>
 
                                     {/* === RIGHT: Size + Quantity + Subtotal === */}
-                                    <Flex gap={12} align="center">
+                                    <Flex
+                                        gap={12}
+                                        align="center"
+                                        style={{
+                                            flex: "1 1 30%",
+                                            minWidth: 180,
+                                            justifyContent: "flex-end",
+                                        }}
+                                    >
                                         <Text type="secondary">Size: {sizeText}</Text>
                                         <Text>x{detail.quantity}</Text>
-                                        <Text strong>{formatPrice(subtotal, { includeSymbol: true })}</Text>
+                                        <Text strong>
+                                            {formatPrice(subtotal, { includeSymbol: true })}
+                                        </Text>
                                     </Flex>
                                 </Flex>
                             }
@@ -177,7 +306,10 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                     align="center"
                                     style={{
                                         padding: "4px 8px",
-                                        borderBottom: toppings.length > 0 ? "1px solid #f0f0f0" : "none",
+                                        borderBottom:
+                                            toppings.length > 0
+                                                ? "1px solid #f0f0f0"
+                                                : "none",
                                     }}
                                 >
                                     <Flex gap={8} align="center">
@@ -193,9 +325,18 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                     <Flex gap={12}>
                                         <Text type="secondary">x{detail.quantity}</Text>
                                         <Divider type="vertical" />
-                                        <Text>{formatPrice(detail.unit_price, { includeSymbol: true })}/1</Text>
+                                        <Text>
+                                            {formatPrice(detail.unit_price, {
+                                                includeSymbol: true,
+                                            })}
+                                            /1
+                                        </Text>
                                         <Divider type="vertical" />
-                                        <Text strong>{formatPrice(productTotal, { includeSymbol: true })}</Text>
+                                        <Text strong>
+                                            {formatPrice(productTotal, {
+                                                includeSymbol: true,
+                                            })}
+                                        </Text>
                                     </Flex>
                                 </Flex>
                             </div>
@@ -208,7 +349,8 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                     </Title>
                                     {toppings.map((top: ToppingOrderDetail, idx: number) => {
                                         const toppingImage =
-                                            top.topping?.images?.[0]?.image_name || "/no-image.png";
+                                            top.topping?.images?.[0]?.image_name ||
+                                            "/no-image.png";
                                         return (
                                             <Flex
                                                 key={top.id}
@@ -217,7 +359,9 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                                 style={{
                                                     padding: "4px 8px",
                                                     borderBottom:
-                                                        idx < toppings.length - 1 ? "1px solid #f0f0f0" : "none",
+                                                        idx < toppings.length - 1
+                                                            ? "1px solid #f0f0f0"
+                                                            : "none",
                                                 }}
                                             >
                                                 <Flex gap={8} align="center">
@@ -233,14 +377,22 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                                     </Text>
                                                 </Flex>
                                                 <Flex gap={12}>
-                                                    <Text type="secondary">x{top.quantity}</Text>
+                                                    <Text type="secondary">
+                                                        x{top.quantity}
+                                                    </Text>
                                                     <Divider type="vertical" />
                                                     <Text>
-                                                        {formatPrice(top.unit_price, { includeSymbol: true })}/1
+                                                        {formatPrice(top.unit_price, {
+                                                            includeSymbol: true,
+                                                        })}
+                                                        /1
                                                     </Text>
                                                     <Divider type="vertical" />
                                                     <Text strong>
-                                                        {formatPrice(top.quantity * top.unit_price, { includeSymbol: true })}
+                                                        {formatPrice(
+                                                            top.quantity * top.unit_price,
+                                                            { includeSymbol: true }
+                                                        )}
                                                     </Text>
                                                 </Flex>
                                             </Flex>
@@ -263,7 +415,8 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                                             style={{ padding: "4px 8px" }}
                                         >
                                             <Text>
-                                                {idx + 1}. {opt.option_group?.name}: {opt.name}
+                                                {idx + 1}. {opt.option_group?.name}:{" "}
+                                                {opt.name}
                                             </Text>
                                         </Flex>
                                     ))}
@@ -274,13 +427,27 @@ export default function OrderDetailComponent({ orderId }: OrderDetailComponentPr
                             <Divider style={{ margin: "8px 0" }} />
                             <Flex justify="flex-end" style={{ paddingRight: 8 }}>
                                 <Text strong>
-                                    Subtotal:&nbsp;{formatPrice(subtotal, { includeSymbol: true })}
+                                    Subtotal:&nbsp;
+                                    {formatPrice(subtotal, { includeSymbol: true })}
                                 </Text>
                             </Flex>
                         </Panel>
                     );
                 })}
             </Collapse>
+
+            <Divider />
+            <Flex justify="flex-end">
+                {canCancel && (
+                    <Button
+                        icon={<CloseCircleOutlined />}
+                        danger
+                        onClick={handleCancel}
+                    >
+                        Cancel Order
+                    </Button>
+                )}
+            </Flex>
         </div>
     );
 }

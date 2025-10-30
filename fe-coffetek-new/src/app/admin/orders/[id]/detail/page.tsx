@@ -70,7 +70,7 @@ export default function OrderDetailPage() {
         );
 
     return (
-        <div style={{ padding: 24 }}>
+        <div>
             <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
                 <Flex align="center" gap={8}>
                     <Button
@@ -89,21 +89,28 @@ export default function OrderDetailPage() {
             {/* ===== ORDER INFO ===== */}
             <Descriptions bordered size="small" column={2}>
                 <Descriptions.Item label="Created At">
-                    {dayjs(order.created_at).format("YYYY-MM-DD HH:mm")}
+                    {dayjs(order.created_at).format("DD-MM-YYYY HH:mm")}
                 </Descriptions.Item>
                 <Descriptions.Item label="Status">
                     <Text strong>{order.status.toUpperCase()}</Text>
                 </Descriptions.Item>
-                <Descriptions.Item label="Customer Phone">
-                    {order.customerPhone || "Guest"}
+                <Descriptions.Item label="Customer">
+                    {order.Customer
+                        ? `${order.Customer.first_name ?? ""} ${order.Customer.last_name ?? ""} (${order.customerPhone ?? "N/A"})`
+                        : "Guest"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Note">{order.note || "N/A"}</Descriptions.Item>
+                <Descriptions.Item label="Processing staff">
+                    {order.Staff
+                        ? `${order.Staff.first_name ?? ""} ${order.Staff.last_name ?? ""} (${order.Staff.phone_number ?? "N/A"})`
+                        : "Guest"}
+                </Descriptions.Item>
                 <Descriptions.Item label="Original Price">
                     {formatPrice(order.original_price, { includeSymbol: true })}
                 </Descriptions.Item>
                 <Descriptions.Item label="Final Price">
                     {formatPrice(order.final_price, { includeSymbol: true })}
                 </Descriptions.Item>
+                <Descriptions.Item label="Note">{order.note || "N/A"}</Descriptions.Item>
             </Descriptions>
 
             {/* ===== ORDER ITEMS ===== */}

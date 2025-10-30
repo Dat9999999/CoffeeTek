@@ -81,7 +81,7 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
     }, [subtotal]);
 
     const handleApplyVoucher = async () => {
-        const code = discountInput.trim().toUpperCase();
+        const code = discountInput.trim();
         if (!code) return;
         try {
             const voucher = await voucherService.getByCode(code);
@@ -91,10 +91,21 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
                 return;
             }
             if (subtotal < voucher.minAmountOrder) {
-                message.warning(`Yêu cầu đơn tối thiểu ${voucher.minAmountOrder.toLocaleString()}đ`);
+                message.warning(`Require order min ${voucher.minAmountOrder.toLocaleString()}đ`);
                 onSelectVoucher(null);
                 return;
             }
+
+            // ✅ Thêm voucher vào danh sách nếu chưa có
+            let updatedVouchers = selectedCustomer?.Voucher ? [...selectedCustomer.Voucher] : [];
+            if (!updatedVouchers.some(v => v.id === voucher.id)) {
+                updatedVouchers.push(voucher);
+            }
+
+            if (selectedCustomer) {
+                onSelectCustomer({ ...selectedCustomer, Voucher: updatedVouchers });
+            }
+
             onSelectVoucher(voucher);
             message.success(`Applied ${voucher.code} (${voucher.discount_percentage}% off)`);
         } catch {
@@ -103,6 +114,7 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
             setDiscountInput("");
         }
     };
+
 
     const handleDeleteCustomer = () => {
         onSelectCustomer(null);

@@ -27,18 +27,37 @@ import { B2Service } from 'src/storage-file/b2.service';
 
 @Controller('user')
 
-// comment when testing
-// @UseGuards(AuthGuard('jwt'))
-export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly b2Service: B2Service,
-  ) {}
+// comment when testing 
 
+
+export class UserController {
+  constructor(private readonly userService: UserService, private readonly b2Service: B2Service) { }
   @Get('me')
+  @UseGuards(AuthGuard('jwt'))
   getUsers(@GetUser() user: client.User) {
     return user;
   }
+  @Patch('update/:id')
+  @UseInterceptors(FileInterceptor('avatar', {
+    storage: memoryStorage(),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.startsWith('image/')) cb(new Error("only img"), false)
+      else cb(null, true);
+    },
+    limits: { fileSize: 1024 * 1024 * 2 }
+  }))
+  async updateInfo(@Param('id', ParseIntPipe) id: number,
+    @UploadedFile() avatar: Express.Multer.File,
+    @Body() updateDto: UserUpdateDTO): Promise<string> {
+    const key = `${uuid()}_${avatar.originalname}`
+    const url_avt = await this.b2Service.uploadFile(key, avatar.buffer, avatar.mimetype);
+    return await this.userService.updateInfo(id, updateDto, url_avt);
+  }
+
+  // @Get('me')
+  // getUsers(@GetUser() user: client.User) {
+  //   return user;
+  // }
 
   @Patch('update/:id')
   @UseInterceptors(
@@ -52,19 +71,19 @@ export class UserController {
       limits: { fileSize: 1024 * 1024 * 2 },
     }),
   )
-  async updateInfo(
-    @Param('id', ParseIntPipe) id: number,
-    @UploadedFile() avatar: Express.Multer.File,
-    @Body() updateDto: UserUpdateDTO,
-  ): Promise<string> {
-    const key = `${uuid()}_${avatar.originalname}`;
-    const url_avt = await this.b2Service.uploadFile(
-      key,
-      avatar.buffer,
-      avatar.mimetype,
-    );
-    return await this.userService.updateInfo(id, updateDto, url_avt);
-  }
+  // async updateInfo(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @UploadedFile() avatar: Express.Multer.File,
+  //   @Body() updateDto: UserUpdateDTO,
+  // ): Promise<string> {
+  //   const key = `${uuid()}_${avatar.originalname}`;
+  //   const url_avt = await this.b2Service.uploadFile(
+  //     key,
+  //     avatar.buffer,
+  //     avatar.mimetype,
+  //   );
+  //   return await this.userService.updateInfo(id, updateDto, url_avt);
+  // }
 
   //owner or manager only
   @Get('get-all')

@@ -12,6 +12,7 @@ import {
     theme,
     Tabs,
     Table,
+    Flex,
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import type { CarouselRef } from "antd/es/carousel";
@@ -186,21 +187,37 @@ export function ProductDetailModal({
                             borderRadius: token.borderRadiusLG,
                             overflow: "hidden",
                             boxShadow: token.boxShadowSecondary,
+                            textAlign: "center"
                         }}
                     >
                         <Carousel ref={carouselRef} autoplay={false}>
                             {product.images.map((img) => (
-                                <div key={img.image_name}>
+                                <Flex
+                                    align="center"
+                                    justify="center"
+                                    className="abc"
+                                    key={img.image_name}
+                                    style={{
+                                        height: "100%",
+                                        width: "100%",
+                                        background: token.colorBgContainer,
+                                    }}
+                                >
                                     <AppImageSize
+                                        className="mx-auto"
                                         src={img.image_name}
                                         alt={img.image_name}
-                                        width="100%"
-                                        height={300}
-                                        style={{ objectFit: "contain" }}
+                                        width={200}
+                                        height={200}
+                                        style={{
+                                            objectFit: "cover",
+                                            borderRadius: token.borderRadius,
+                                        }}
                                     />
-                                </div>
+                                </Flex>
                             ))}
                         </Carousel>
+
                         {/* Nút điều hướng */}
                         <LeftOutlined
                             onClick={() => carouselRef.current?.prev()}

@@ -8,7 +8,6 @@ export enum OrderStatus {
     PENDING = 'pending',
     COMPLETED = 'completed',
     CANCELED = 'canceled',
-    REFUND = 'refund',
     PAID = 'paid'
 }
 
@@ -47,6 +46,8 @@ export interface Order {
     paymentDetailId: number | null;
     invoiceUrl: string | null;
     order_details: OrderDetail[];
+    Customer: User | null;
+    Staff: User | null;
 }
 
 // Optional: Update existing OptionValue to support option_group from JSON

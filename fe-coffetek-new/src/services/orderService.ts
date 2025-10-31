@@ -24,10 +24,13 @@ interface CreateOrder {
 }
 
 // Define UpdateOrder interface based on UpdateOrderDto (partial fields)
-interface UpdateOrder {
+interface UpdateOrderItems {
     order_details?: OrderItem[];
-    customerPhone?: string;
     staffId?: string;
+}
+
+interface UpdateOrderInfo {
+    customerPhone?: string | null;
     note?: string;
 }
 
@@ -45,15 +48,19 @@ interface UpdateStatus {
     status: string;
 }
 
+interface GetAllParams {
+    page?: number;
+    size?: number;
+    searchCustomerPhone?: string;
+    searchStatuses?: string;
+    searchFromDate?: string;
+    searchToDate?: string;
+    orderBy?: string;
+    orderDirection?: "asc" | "desc";
+}
+
 export const orderService = {
-    async getAll(params?: {
-        page?: number;
-        size?: number;
-        searchName?: string;
-        searchStatus?: string;
-        orderBy?: string;
-        orderDirection?: "asc" | "desc";
-    }) {
+    async getAll(params?: GetAllParams) {
         const res = await api.get("/order", { params });
         return res.data;
     },
@@ -68,7 +75,7 @@ export const orderService = {
         return res.data;
     },
 
-    async update(id: number, data: UpdateOrder) {
+    async update(id: number, data: UpdateOrderInfo) {
         const res = await api.patch(`/order/${id}`, data);
         return res.data;
     },
@@ -93,7 +100,7 @@ export const orderService = {
         return res.data;
     },
 
-    async updateItems(id: number, data: UpdateOrder) {
+    async updateItems(id: number, data: UpdateOrderItems) {
         const res = await api.put(`/order/${id}`, data);
         return res.data;
     },

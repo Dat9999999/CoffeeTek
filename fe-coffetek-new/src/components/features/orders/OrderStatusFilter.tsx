@@ -12,7 +12,6 @@ interface OrderStatusFilterProps {
 }
 
 const STATUS_OPTIONS = [
-    { label: "All orders", value: "" },
     { label: "Pending", value: OrderStatus.PENDING },
     { label: "Paid", value: OrderStatus.PAID },
     { label: "Completed", value: OrderStatus.COMPLETED },
@@ -25,9 +24,10 @@ export const OrderStatusFilter: React.FC<OrderStatusFilterProps> = ({
 }) => {
     return (
         <Select
-            value={value ?? ""}
-            onChange={onChange}
-            style={{ width: 180 }}
+            mode="multiple"
+            value={value ? value.split(',').filter(v => v.trim() !== '') : []}
+            onChange={(values: string[]) => onChange(values.join(','))}
+            style={{ minWidth: 150 }}
             placeholder="Filter by Status"
             allowClear
         >

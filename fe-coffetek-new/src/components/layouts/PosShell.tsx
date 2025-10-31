@@ -1,38 +1,37 @@
 "use client";
+
 import { Layout, Menu, Space, theme, Typography } from "antd";
 import React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AvatarMenuPos } from "../commons";
 import { useDarkMode } from "@/components/providers";
 import {
     ShopOutlined,
-    SyncOutlined,
-    OrderedListOutlined,
-} from "@ant-design/icons"; // 👈 import icon ở đây
-const { Title, Text } = Typography;
+} from "@ant-design/icons";
+
+const { Title } = Typography;
 const { Header, Content } = Layout;
 
 export function PosShell({ children }: { children: React.ReactNode }) {
-    const router = useRouter();
     const pathname = usePathname();
     const {
-        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG },
+        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG, colorBorderBg, colorPrimaryBorder, colorBgBase },
     } = theme.useToken();
     const { mode } = useDarkMode();
 
+    // ✅ Dùng <Link> thật để hỗ trợ middle click / Ctrl+click
     const items1 = [
-        // {
-        //     key: "/pos",
-        //     label: "POS",
-        //     icon: <ShopOutlined />,
-        // },
         {
             key: "/pos/orders-processing",
-            label: "Processing Orders",
+            label: <Link href="/pos/orders-processing">Processing Orders</Link>,
+            style: { padding: 1 }
         },
         {
             key: "/pos/all-orders",
-            label: "All Orders",
+            label: <Link href="/pos/all-orders">All Orders</Link>,
+            style: { padding: 1 }
+
         },
     ];
 
@@ -40,8 +39,8 @@ export function PosShell({ children }: { children: React.ReactNode }) {
         <Layout>
             <Header
                 style={{
-                    padding: "0 16px",
-                    background: colorBgContainer,
+                    background: colorBgBase,
+                    padding: "3px 16px",
                     borderBottom: `1px solid ${colorBorderSecondary}`,
                     display: "flex",
                     alignItems: "center",
@@ -54,7 +53,6 @@ export function PosShell({ children }: { children: React.ReactNode }) {
                 {/* 👇 Nhóm Title + Menu chung 1 cụm */}
                 <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
                     <Title
-                        onClick={() => router.push("/pos")}
                         level={2}
                         style={{
                             fontWeight: 600,
@@ -65,29 +63,27 @@ export function PosShell({ children }: { children: React.ReactNode }) {
                         }}
                     >
                         <Space>
-                            <ShopOutlined />
-                            <span>POS</span>
+                            <Link href="/pos" style={{ color: colorPrimary, textDecoration: "none" }}>
+                                <ShopOutlined />
+                                <span>POS</span>
+                            </Link>
                         </Space>
                     </Title>
 
                     <Menu
+
                         className="custom-menu"
                         theme={mode}
                         mode="horizontal"
                         selectedKeys={[pathname]}
                         items={items1}
-                        onClick={(info) => router.push(`${info.key}`)}
-                        style={{
-                            borderBottom: "none",
-                        }}
+                        style={{ flex: 1, minWidth: 0 }}
                     />
                 </div>
 
                 {/* 👈 Avatar nằm bên phải */}
                 <AvatarMenuPos />
             </Header>
-
-
 
             <Layout>
                 <Content
@@ -105,23 +101,16 @@ export function PosShell({ children }: { children: React.ReactNode }) {
 
             {/* 👇 custom style cho item được chọn */}
             <style jsx global>{`
-            // .custom-menu.ant-menu-horizontal > .ant-menu-item-selected {
-            //     background-color: ${colorPrimary} !important;
-            //     color: white !important;
-            //     transition: all 0.3s ease;
-            // }
+                .custom-menu.ant-menu-horizontal > .ant-menu-item:hover {
+                    background-color: rgba(0, 0, 0, 0.04);
+                }
 
-            .custom-menu.ant-menu-horizontal > .ant-menu-item:hover {
-                background-color: rgba(0, 0, 0, 0.04);
-            }
-
-            .custom-menu.ant-menu-horizontal > .ant-menu-item {
-                min-width: 100px;
-                text-align: center;
-                justify-content: center;
-            }
+                .custom-menu.ant-menu-horizontal > .ant-menu-item {
+                    min-width: 100px;
+                    text-align: center;
+                    justify-content: center;
+                }
             `}</style>
-
         </Layout>
     );
 }

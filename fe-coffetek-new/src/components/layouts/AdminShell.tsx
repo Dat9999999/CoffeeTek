@@ -1,58 +1,78 @@
 "use client";
+
 import { Button, Flex, Layout, Menu, theme, Typography } from "antd";
 import {
     DashboardOutlined,
     UserOutlined,
-    AppstoreOutlined,
     TagsOutlined,
     DatabaseOutlined,
-    SettingOutlined,
     ShoppingOutlined,
-    InboxOutlined,
-    BarsOutlined,
     ControlOutlined,
     ExperimentOutlined,
     SlidersOutlined,
-    MenuOutlined,
     MenuUnfoldOutlined,
     MenuFoldOutlined,
     CrownOutlined,
     GiftOutlined,
-    CreditCardOutlined,
     IdcardOutlined,
     SolutionOutlined,
-    ContainerOutlined,
     ReconciliationOutlined,
     FileSyncOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useDarkMode } from "@/components/providers";
 import { AvatarMenu } from "../commons/AvatarMenu";
+
 const { Title } = Typography;
 const { Header, Content, Footer, Sider } = Layout;
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
     const [collapsed, setCollapsed] = useState(false);
-    const router = useRouter();
     const pathname = usePathname();
     const {
-        token: { colorBgContainer, borderRadiusLG, colorBorderSecondary, colorPrimary },
+        token: { colorBgContainer, borderRadiusLG, colorBorderSecondary, colorPrimary, colorBgBase },
     } = theme.useToken();
     const { mode } = useDarkMode();
 
+    // ✅ Dùng Link thật để trình duyệt hiểu là liên kết
     const items = [
-        { key: "/admin/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
-        { key: "/admin/users", icon: <UserOutlined />, label: "Users" },
-        { key: "/admin/orders", icon: <ReconciliationOutlined />, label: "Orders" },
+        {
+            key: "/admin/dashboard",
+            icon: <DashboardOutlined />,
+            label: <Link href="/admin/dashboard">Dashboard</Link>,
+        },
+        {
+            key: "/admin/users",
+            icon: <UserOutlined />,
+            label: <Link href="/admin/users">Users</Link>,
+        },
+        {
+            key: "/admin/orders",
+            icon: <ReconciliationOutlined />,
+            label: <Link href="/admin/orders">Orders</Link>,
+        },
         {
             key: "customers",
             icon: <SolutionOutlined />,
             label: "Customers",
             children: [
-                { key: "/admin/loyal-levels", icon: <CrownOutlined />, label: "Loyal Levels" },
-                { key: "/admin/promotions", icon: <GiftOutlined />, label: "Promotions" },
-                { key: "/admin/vouchers", icon: <IdcardOutlined />, label: "Vouchers" },
+                {
+                    key: "/admin/loyal-levels",
+                    icon: <CrownOutlined />,
+                    label: <Link href="/admin/loyal-levels">Loyal Levels</Link>,
+                },
+                {
+                    key: "/admin/promotions",
+                    icon: <GiftOutlined />,
+                    label: <Link href="/admin/promotions">Promotions</Link>,
+                },
+                {
+                    key: "/admin/vouchers",
+                    icon: <IdcardOutlined />,
+                    label: <Link href="/admin/vouchers">Vouchers</Link>,
+                },
             ],
         },
         {
@@ -60,11 +80,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             icon: <ShoppingOutlined />,
             label: "Products",
             children: [
-                { key: "/admin/products", icon: <ShoppingOutlined />, label: "Product" },
-                { key: "/admin/categories", icon: <TagsOutlined />, label: "Category" },
-                { key: "/admin/sizes", icon: <SlidersOutlined />, label: "Size" },
-                { key: "/admin/option-groups", icon: <ControlOutlined />, label: "Option group" },
-
+                {
+                    key: "/admin/products",
+                    icon: <ShoppingOutlined />,
+                    label: <Link href="/admin/products">Product</Link>,
+                },
+                {
+                    key: "/admin/categories",
+                    icon: <TagsOutlined />,
+                    label: <Link href="/admin/categories">Category</Link>,
+                },
+                {
+                    key: "/admin/sizes",
+                    icon: <SlidersOutlined />,
+                    label: <Link href="/admin/sizes">Size</Link>,
+                },
+                {
+                    key: "/admin/option-groups",
+                    icon: <ControlOutlined />,
+                    label: <Link href="/admin/option-groups">Option Group</Link>,
+                },
             ],
         },
         {
@@ -72,101 +107,99 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             icon: <DatabaseOutlined />,
             label: "Inventory",
             children: [
-                { key: "/admin/materials", icon: <ExperimentOutlined />, label: "Material" },
-                { key: "/admin/materials/confirm-changes", icon: <FileSyncOutlined />, label: "Confirm changes" },
-
+                {
+                    key: "/admin/materials",
+                    icon: <ExperimentOutlined />,
+                    label: <Link href="/admin/materials">Material</Link>,
+                },
+                {
+                    key: "/admin/materials/confirm-changes",
+                    icon: <FileSyncOutlined />,
+                    label: <Link href="/admin/materials/confirm-changes">
+                        Confirm Changes
+                    </Link>,
+                },
             ],
-
         },
-
-
     ];
 
-    const allKeys = items.flatMap(item =>
-        item.children ? item.children.map(child => child.key) : [item.key]
+    const allKeys = items.flatMap((item) =>
+        item.children ? item.children.map((child) => child.key) : [item.key]
     );
-
-    const selectedKey = allKeys.find(k => pathname.startsWith(k)) ?? "";
+    const selectedKey = allKeys.find((k) => pathname.startsWith(k)) ?? "";
 
     return (
         <Layout>
-            <div>
-                <Sider
-                    theme={mode}
-                    collapsed={collapsed}
-                    onCollapse={setCollapsed}
-                    breakpoint="lg"
-                    collapsedWidth="0"
-                    // onBreakpoint={(broken) => setCollapsed(broken)}
-                    trigger={null}
-                    style={{
-                        position: window.innerWidth < 992 ? "fixed" : "relative",
-                        zIndex: 1000,
-                        height: "100%",
-                        transition: "all 0.1s",
-                    }}
+            <Sider
+                theme={mode}
+                collapsed={collapsed}
+                onCollapse={setCollapsed}
+                breakpoint="lg"
+                collapsedWidth="0"
+                trigger={null}
+                style={{
+                    position: typeof window !== "undefined" && window.innerWidth < 992 ? "fixed" : "relative",
+                    zIndex: 1000,
+                    height: "100%",
+                    transition: "all 0.1s",
+                }}
+            >
+                {/* Header của sidebar */}
+                <Flex
+                    align="center"
+                    style={{ position: "relative", height: 55, padding: "0 16px" }}
                 >
-                    <Flex
-                        align="center"
-                        style={{ position: "relative", height: 55, padding: "0 16px" }}
+                    <Title
+                        className="cursor-pointer"
+                        level={4}
+                        style={{
+                            color: colorPrimary,
+                            fontWeight: 700,
+                            margin: 0,
+                            textAlign: "center",
+                            width: "100%",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            transition: "opacity 0.2s",
+                            opacity: collapsed ? 0 : 1,
+                        }}
                     >
-                        {/* Title ở giữa */}
-                        <Title
-                            className="cursor-pointer"
-                            onClick={() => router.push("/admin/dashboard")}
-                            level={4}
-                            style={{
-                                color: colorPrimary,
-                                fontWeight: 700,
-                                margin: 0,
-                                textAlign: "center",
-                                width: "100%",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                transition: "opacity 0.2s",
-                                opacity: collapsed ? 0 : 1, // ẩn text khi collapsed
-                            }}
-                        >
-                            ShopControl
-                        </Title>
+                        <Link href="/admin/dashboard">ShopControl</Link>
+                    </Title>
 
-                        {/* Button toggle ở bên phải */}
-                        <Button
-                            type="text"
-                            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                            onClick={() => setCollapsed(!collapsed)}
-                            style={{
-                                position: "absolute",
-                                right: 8,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                            }}
-                        />
-                    </Flex>
-
-
-
-                    <Menu
-                        theme={mode}
-                        mode="inline"
-                        items={items}
-                        selectedKeys={[selectedKey]}
-                        onClick={({ key }) => {
-                            if (key.startsWith("/admin")) router.push(key);
-                            if (window.innerWidth < 992) setCollapsed(true);
+                    <Button
+                        type="text"
+                        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        onClick={() => setCollapsed(!collapsed)}
+                        style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
                         }}
                     />
-                </Sider>
-            </div>
+                </Flex>
 
+                {/* Menu chính */}
+                <Menu
+                    theme={mode}
+                    mode="inline"
+                    items={items}
+                    selectedKeys={[selectedKey]}
+                    onClick={() => {
+                        if (window.innerWidth < 992) setCollapsed(true);
+                    }}
+                />
+            </Sider>
 
-
+            {/* Layout chính */}
             <Layout>
                 <Header
                     style={{
+                        background: colorBgBase,
+
                         padding: "0 8px 0 0",
-                        background: colorBgContainer,
                         borderBottom: `1px solid ${colorBorderSecondary}`,
                         display: "flex",
                         alignItems: "center",
@@ -182,13 +215,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                                     type="text"
                                     icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                                     onClick={() => setCollapsed(!collapsed)}
-
                                 />
                             </div>
                         )}
                     </div>
-
-
                     <Flex justify="end" align="center">
                         <AvatarMenu />
                     </Flex>

@@ -10,6 +10,7 @@ import type { Order } from "@/interfaces";
 import dayjs from "dayjs";
 import { useDarkMode } from "@/components/providers";
 import { getStatusColor } from "@/utils";
+import { isAbsolute } from "path";
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -70,7 +71,7 @@ export default function LeftSider({
             collapsible
             collapsed={collapsed}
             trigger={null}
-            width={200}
+            width={220}
             collapsedWidth={collapsedWidth}
             breakpoint={breakpoint}
             onBreakpoint={(broken) => {
@@ -81,6 +82,7 @@ export default function LeftSider({
                 boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
                 overflowY: "visible",
                 transition: "all 0.3s ease",
+                overflowX: "hidden",
                 ...style,
             }}
         >

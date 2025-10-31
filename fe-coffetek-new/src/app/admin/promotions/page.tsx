@@ -92,7 +92,7 @@ export default function PromotionPage() {
                 onSearchChange={(value: string) =>
                     setTableState({ ...tableState, search: value })
                 }
-                onAdd={() => router.push("/admin/promotions/create")}
+                addHref="/admin/promotions/create"
                 addLabel="Add"
                 onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
                 deleteManyLabel="Delete"

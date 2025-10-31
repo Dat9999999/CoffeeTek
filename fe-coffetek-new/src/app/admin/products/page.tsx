@@ -119,7 +119,7 @@ export default function ProductPage() {
                         )}
                     </>
                 }
-                onAdd={() => router.push('/admin/products/create')}
+                addHref="/admin/products/create"
                 addLabel="Add"
                 onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
                 deleteManyLabel="Delete"

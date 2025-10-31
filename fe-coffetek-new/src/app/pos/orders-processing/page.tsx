@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Layout, theme, Button } from "antd";
 import LeftSider from "./LeftSider";
-import OrderDetailComponent from "./OrderDetailComponent";
 import { useDarkMode } from "@/components/providers";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 import { orderService } from "@/services/orderService";
 import type { Order } from "@/interfaces";
+import { OrderDetailComponent } from "@/components/features/orders";
 
 const { Sider, Content } = Layout;
 
@@ -40,7 +40,7 @@ export default function OrdersPage() {
         try {
             setLoadingOrders(true);
             const res = await orderService.getAll({
-                searchStatus: "paid",
+                searchStatuses: "paid,pending",
                 page: 1,
                 size: 100,
                 orderBy: "created_at",
@@ -77,7 +77,7 @@ export default function OrdersPage() {
                     style={{
                         padding: 24,
                         margin: 0,
-                        minHeight: 280,
+                        minHeight: 300,
                         background: token.colorBgContainer,
                         borderRadius: token.borderRadiusLG,
                     }}
@@ -92,7 +92,7 @@ export default function OrdersPage() {
 
                         </Button>
                     )}
-                    <OrderDetailComponent orderId={selectedOrderId} onStatusUpdate={fetchOrders} />
+                    <OrderDetailComponent header={null} orderId={selectedOrderId} onStatusUpdate={fetchOrders} />
                 </Content>
             </Layout>
         </Layout>

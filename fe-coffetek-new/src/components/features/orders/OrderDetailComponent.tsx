@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import {
     Descriptions,
     Collapse,
@@ -16,6 +16,7 @@ import {
     CheckOutlined,
     DownOutlined,
     CloseCircleOutlined,
+    DownloadOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { AppImageSize } from "@/components/commons";
@@ -27,6 +28,7 @@ import {
     OrderStatus,
 } from "@/interfaces";
 import { orderService } from "@/services/orderService";
+import { Grid } from "antd";
 
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
@@ -34,11 +36,20 @@ const { Panel } = Collapse;
 interface OrderDetailComponentProps {
     orderId: number | null;
     onStatusUpdate?: () => void;
+
+    activeConfirmButton?: boolean;
+    header: ReactElement | null;
 }
 
-export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderDetailComponentProps) {
+export function OrderDetailComponent({
+    orderId,
+    onStatusUpdate,
+    activeConfirmButton = true,
+    header = null
+}: OrderDetailComponentProps) {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(false);
+    const screens = Grid.useBreakpoint();
 
     useEffect(() => {
         if (!orderId) {
@@ -117,6 +128,15 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
         );
     }
 
+    const handleGetInvoice = async () => {
+        try {
+            const invoiceUrl = await orderService.getInvoice(Number(order.id));
+            window.open(invoiceUrl, "_blank");
+        } catch (err) {
+            message.error("Error getting invoice.");
+        }
+    };
+
     const canConfirm =
         order.status === OrderStatus.PENDING ||
         order.status === OrderStatus.PAID;
@@ -132,16 +152,32 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
     return (
         <div>
             <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
-                <Title level={3} style={{ marginBottom: 0 }}>
-                    {`Order #${order.id} Details`}
-                </Title>
-                {canConfirm && (
+
+                {header ? (
+                    header
+                ) : (
+
+                    <Title level={3} style={{ marginBottom: 0 }}>
+                        {`Order #${order.id} Details`}
+                    </Title>
+                )}
+                {canConfirm && activeConfirmButton && (
                     <Button
                         icon={<CheckOutlined />}
                         type="primary"
                         onClick={handleConfirm}
                     >
                         {confirmText}
+                    </Button>
+                )}
+
+                {order.status === OrderStatus.COMPLETED && (
+                    <Button
+                        icon={<DownloadOutlined />}
+                        type="primary"
+                        onClick={handleGetInvoice}
+                    >
+                        Get Invoice
                     </Button>
                 )}
             </Flex>
@@ -204,16 +240,21 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                     // subtotal tổng cho product + toppings
                     const productTotal = detail.unit_price * detail.quantity;
                     const toppingTotal = toppings.reduce(
-                        (sum, top) => sum + top.unit_price * top.quantity,
+                        (sum, top) => sum + top.unit_price * top.quantity * detail.quantity,
                         0
                     );
                     const subtotal = productTotal + toppingTotal;
-
+                    const total_unit_price = detail.unit_price + toppings.reduce(
+                        (sum, top) => sum + top.unit_price * top.quantity,
+                        0
+                    );;
                     const descriptionParts: string[] = [];
-                    if (toppings.length > 0)
-                        descriptionParts.push(
-                            `x${toppings.length} topping${toppings.length > 1 ? "s" : ""}`
-                        );
+                    if (toppings.length > 0) {
+                        const toppingSummary = toppings
+                            .map(top => `${top.topping?.name} (x${top.quantity} per unit)`)
+                            .join(", ");
+                        descriptionParts.push(toppingSummary);
+                    }
                     if (options.length > 0)
                         descriptionParts.push(
                             options
@@ -229,13 +270,13 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                             key={detail.id}
                             header={
                                 <Flex
-                                    align="center"
-                                    justify="space-between"
+                                    justify={screens.sm ? "space-between" : "flex-start"}
+                                    align={screens.sm ? "center" : "stretch"}
                                     wrap="wrap"
+                                    vertical={!screens.sm}
                                     style={{
                                         width: "100%",
                                         rowGap: 8,
-                                        textAlign: "center",
                                     }}
                                 >
                                     {/* === LEFT: Ảnh + Tên sản phẩm === */}
@@ -243,8 +284,8 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                         gap={8}
                                         align="center"
                                         style={{
-                                            flex: "1 1 30%",
-                                            minWidth: 180,
+                                            flex: screens.sm ? "1 1 30%" : "1 1 100%",
+                                            minWidth: screens.sm ? 180 : 0,
                                         }}
                                     >
                                         <AppImageSize
@@ -261,11 +302,11 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
 
                                     {/* === CENTER: Mô tả === */}
                                     <Flex
-                                        justify="center"
+                                        justify={screens.sm ? "center" : "flex-start"}
                                         align="center"
                                         style={{
-                                            flex: "1 1 40%",
-                                            minWidth: 200,
+                                            flex: screens.sm ? "1 1 40%" : "1 1 100%",
+                                            minWidth: screens.sm ? 200 : 0,
                                             whiteSpace: "normal",
                                             wordBreak: "break-word",
                                         }}
@@ -282,13 +323,21 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                         gap={12}
                                         align="center"
                                         style={{
-                                            flex: "1 1 30%",
-                                            minWidth: 180,
-                                            justifyContent: "flex-end",
+                                            flex: screens.sm ? "1 1 30%" : "1 1 100%",
+                                            minWidth: screens.sm ? 180 : 0,
+                                            justifyContent: screens.sm ? "flex-end" : "flex-start",
                                         }}
                                     >
-                                        <Text type="secondary">Size: {sizeText}</Text>
+                                        <Text type="success">Size: {sizeText}</Text>
+                                        <Divider type="vertical" />
                                         <Text>x{detail.quantity}</Text>
+                                        <Divider type="vertical" />
+                                        <Text >
+                                            {formatPrice(total_unit_price, {
+                                                includeSymbol: true,
+                                            })}/1
+                                        </Text>
+                                        <Divider type="vertical" />
                                         <Text strong>
                                             {formatPrice(subtotal, { includeSymbol: true })}
                                         </Text>
@@ -332,6 +381,7 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                             /1
                                         </Text>
                                         <Divider type="vertical" />
+
                                         <Text strong>
                                             {formatPrice(productTotal, {
                                                 includeSymbol: true,
@@ -351,6 +401,8 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                         const toppingImage =
                                             top.topping?.images?.[0]?.image_name ||
                                             "/no-image.png";
+                                        const totalToppingQty = top.quantity * detail.quantity;
+                                        const totalToppingPrice = top.unit_price * totalToppingQty;
                                         return (
                                             <Flex
                                                 key={top.id}
@@ -378,7 +430,7 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                                 </Flex>
                                                 <Flex gap={12}>
                                                     <Text type="secondary">
-                                                        x{top.quantity}
+                                                        x{top.quantity} per unit × {detail.quantity} = x{totalToppingQty}
                                                     </Text>
                                                     <Divider type="vertical" />
                                                     <Text>
@@ -389,10 +441,9 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                                     </Text>
                                                     <Divider type="vertical" />
                                                     <Text strong>
-                                                        {formatPrice(
-                                                            top.quantity * top.unit_price,
-                                                            { includeSymbol: true }
-                                                        )}
+                                                        {formatPrice(totalToppingPrice, {
+                                                            includeSymbol: true,
+                                                        })}
                                                     </Text>
                                                 </Flex>
                                             </Flex>
@@ -415,22 +466,12 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
                                             style={{ padding: "4px 8px" }}
                                         >
                                             <Text>
-                                                {idx + 1}. {opt.option_group?.name}:{" "}
-                                                {opt.name}
+                                                {opt.option_group?.name || "Option"}: {opt.name}
                                             </Text>
                                         </Flex>
                                     ))}
                                 </div>
                             )}
-
-                            {/* ===== SUBTOTAL ===== */}
-                            <Divider style={{ margin: "8px 0" }} />
-                            <Flex justify="flex-end" style={{ paddingRight: 8 }}>
-                                <Text strong>
-                                    Subtotal:&nbsp;
-                                    {formatPrice(subtotal, { includeSymbol: true })}
-                                </Text>
-                            </Flex>
                         </Panel>
                     );
                 })}
@@ -438,7 +479,7 @@ export default function OrderDetailComponent({ orderId, onStatusUpdate }: OrderD
 
             <Divider />
             <Flex justify="flex-end">
-                {canCancel && (
+                {canCancel && activeConfirmButton && (
                     <Button
                         icon={<CloseCircleOutlined />}
                         danger

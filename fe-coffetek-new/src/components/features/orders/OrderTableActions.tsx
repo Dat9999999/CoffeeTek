@@ -1,4 +1,4 @@
-// src/components/features/orders/OrderTableActions.tsx
+// src/components/features/orders/OrderTableActions.tsx (modified)
 "use client";
 
 import { Dropdown, Button, theme } from "antd";
@@ -8,6 +8,7 @@ import {
     EditOutlined,
     DeleteOutlined,
     UserSwitchOutlined,
+    InfoCircleOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import type { Order } from "@/interfaces";
@@ -19,6 +20,7 @@ interface OrderTableActionsProps {
     onEdit?: (record: Order) => void;
     onDelete?: (record: Order) => void;
     onChangeStatus?: (record: Order) => void;
+    onEditInfo?: (record: Order) => void; // ✅ Added
 }
 
 export function OrderTableActions({
@@ -27,6 +29,7 @@ export function OrderTableActions({
     onEdit,
     onDelete,
     onChangeStatus,
+    onEditInfo, // ✅ Added
 }: OrderTableActionsProps) {
     const { token } = theme.useToken();
 
@@ -50,12 +53,22 @@ export function OrderTableActions({
         });
     }
 
-    if ((record.status === OrderStatus.PENDING || record.status === OrderStatus.PAID) && onChangeStatus) {
+    if ((record.status === OrderStatus.PENDING || record.status === OrderStatus.PAID || record.status === OrderStatus.COMPLETED) && onChangeStatus) {
         items.push({
             key: "change-status",
             label: <span style={{ color: token.colorInfo }}>Change Status</span>,
             icon: <UserSwitchOutlined style={{ color: token.colorInfo }} />,
             onClick: () => onChangeStatus(record),
+        });
+    }
+
+    // ✅ Added: Edit Info action, available if not canceled
+    if (record.status !== OrderStatus.CANCELED && onEditInfo) {
+        items.push({
+            key: "edit-info",
+            label: <span style={{ color: token.colorPrimary }}>Edit Info</span>,
+            icon: <InfoCircleOutlined style={{ color: token.colorPrimary }} />,
+            onClick: () => onEditInfo(record),
         });
     }
 

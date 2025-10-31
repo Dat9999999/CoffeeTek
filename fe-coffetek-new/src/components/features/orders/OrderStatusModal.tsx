@@ -1,9 +1,10 @@
 "use client";
 
-import { Modal, Button, message, Segmented } from "antd";
+import { Modal, Button, message, Segmented, Tag } from "antd";
 import { orderService } from "@/services/orderService";
 import { Order, OrderStatus } from "@/interfaces";
 import { useState, useEffect } from "react";
+import { getStatusColor } from "@/utils";
 
 interface OrderStatusModalProps {
     open: boolean;
@@ -17,7 +18,7 @@ export function OrderStatusModal({ open, order, onClose, onSuccess }: OrderStatu
 
     const [newStatus, setNewStatus] = useState<OrderStatus | null>(null);
 
-    // Define available transitions based on current status
+    // Xác định trạng thái có thể chuyển đổi dựa vào trạng thái hiện tại
     const availableStatuses: { label: string; value: OrderStatus }[] = [];
 
     switch (order.status) {
@@ -27,23 +28,27 @@ export function OrderStatusModal({ open, order, onClose, onSuccess }: OrderStatu
                 { label: "Cancel", value: OrderStatus.CANCELED }
             );
             break;
+
         case OrderStatus.PAID:
             availableStatuses.push(
                 { label: "Complete", value: OrderStatus.COMPLETED },
-                { label: "Refund", value: OrderStatus.REFUND },
                 { label: "Cancel", value: OrderStatus.CANCELED }
             );
             break;
+
         case OrderStatus.COMPLETED:
-            availableStatuses.push({ label: "Refund", value: OrderStatus.REFUND });
+            // ✅ Cho phép chuyển từ Completed sang Canceled
+            availableStatuses.push(
+                { label: "Cancel", value: OrderStatus.CANCELED }
+            );
             break;
+
         case OrderStatus.CANCELED:
-        case OrderStatus.REFUND:
-            // no further transitions
+            // ❌ Đơn đã hủy thì không thể thay đổi
             break;
     }
 
-    // ✅ Reset state khi modal mở hoặc order đổi
+    // ✅ Reset state khi modal mở hoặc order thay đổi
     useEffect(() => {
         if (open) {
             if (availableStatuses.length > 0) {
@@ -54,6 +59,7 @@ export function OrderStatusModal({ open, order, onClose, onSuccess }: OrderStatu
         } else {
             setNewStatus(null);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, order?.status]);
 
     const handleUpdateStatus = async () => {
@@ -61,6 +67,7 @@ export function OrderStatusModal({ open, order, onClose, onSuccess }: OrderStatu
             message.error("Please select a new status");
             return;
         }
+
         try {
             await orderService.updateStatus({
                 orderId: order.id,
@@ -93,7 +100,8 @@ export function OrderStatusModal({ open, order, onClose, onSuccess }: OrderStatu
             ]}
         >
             <p>
-                Current Status: <strong>{order.status.toUpperCase()}</strong>
+                Current Status: <Tag color={getStatusColor(order.status)}>{order.status.toUpperCase()}</Tag>
+
             </p>
 
             {availableStatuses.length > 0 ? (

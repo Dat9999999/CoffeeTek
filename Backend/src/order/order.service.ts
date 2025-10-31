@@ -444,8 +444,10 @@ export class OrderService {
     const {
       page,
       size,
-      searchName,
-      searchStatus,
+      searchCustomerPhone,
+      searchStatuses,
+      searchFromDate,
+      searchToDate,
       orderBy = 'id',
       orderDirection = 'asc',
     } = query;
@@ -456,70 +458,142 @@ export class OrderService {
 
     const skip = (page - 1) * size;
 
-    // Xây dựng điều kiện where động
+    // ===== Build dynamic where =====
     const where: any = {};
 
-    if (searchStatus && searchStatus.trim() !== '') {
-      where.status = searchStatus;
+    if (searchStatuses && searchStatuses.trim() !== '') {
+      const statuses = searchStatuses.split(',').map((s) => s.trim());
+      where.status = { in: statuses };
     }
 
-    if (searchName && searchName.trim() !== '') {
+    if (searchCustomerPhone && searchCustomerPhone.trim() !== '') {
       where.customerPhone = {
-        contains: searchName,
-        mode: 'insensitive', // không phân biệt hoa thường
+        contains: searchCustomerPhone,
+        mode: 'insensitive',
       };
     }
 
-    const [data, total] = await Promise.all([
-      this.prisma.order.findMany({
-        skip,
-        take: size,
-        where,
-        include: {
-          order_details: {
-            include: {
-              product: {
-                include: {
-                  images: true,
-                },
-              },
-              size: true,
-              ToppingOrderDetail: {
-                include: {
-                  topping: {
-                    include: {
-                      images: true,
-                    },
+    if (searchFromDate || searchToDate) {
+      where.created_at = {};
+      if (searchFromDate) {
+        where.created_at.gte = new Date(searchFromDate);
+      }
+      if (searchToDate) {
+        const endDate = new Date(searchToDate);
+        endDate.setHours(23, 59, 59, 999);
+        where.created_at.lte = endDate;
+      }
+    }
+
+    // Chỉ tính doanh thu cho completed
+    // const whereCompleted = { ...where, status: 'completed' };
+    const whereCompleted =
+      where.status && !where.status.in.includes('completed')
+        ? { ...where, status: { in: [] } } // không có đơn nào
+        : { ...where, status: { in: ['completed'] } };
+
+    // ===== Truy vấn song song =====
+    const [data, total, aggregates, customerStats, peakHourStats] =
+      await Promise.all([
+        this.prisma.order.findMany({
+          skip,
+          take: size,
+          where,
+          include: {
+            order_details: {
+              include: {
+                product: { include: { images: true } },
+                size: true,
+                ToppingOrderDetail: {
+                  include: {
+                    topping: { include: { images: true } },
                   },
                 },
-              },
-              optionValue: {
-                include: {
-                  option_group: true,
-                },
+                optionValue: { include: { option_group: true } },
               },
             },
+            Customer: true,
+            Staff: true,
           },
-          Customer: true,
-          Staff: true,
-        },
-        orderBy: { [orderBy]: orderDirection },
-      }),
-      this.prisma.order.count({ where }),
-    ]);
+          orderBy: { [orderBy]: orderDirection },
+        }),
 
-    const res: ResponseGetAllDto<any> = {
+        this.prisma.order.count({ where }),
+
+        this.prisma.order.aggregate({
+          where: whereCompleted,
+          _sum: {
+            final_price: true,
+            original_price: true,
+          },
+          _avg: {
+            final_price: true,
+          },
+        }),
+
+        // Lấy danh sách khách hàng và số lần đặt hàng
+        this.prisma.order.groupBy({
+          by: ['customerPhone'],
+          where: whereCompleted,
+          _count: { customerPhone: true },
+        }),
+
+        // Thống kê khung giờ có nhiều đơn nhất
+        this.prisma.$queryRawUnsafe<{
+          hour: number;
+          order_count: number;
+        }[]>(`
+        SELECT EXTRACT(HOUR FROM "created_at") AS hour, COUNT(*) AS order_count
+        FROM "orders"
+        WHERE status = 'completed'
+        ${where.created_at?.gte ? `AND "created_at" >= '${where.created_at.gte.toISOString()}'` : ''}
+        ${where.created_at?.lte ? `AND "created_at" <= '${where.created_at.lte.toISOString()}'` : ''}
+        GROUP BY hour
+        ORDER BY order_count DESC
+        LIMIT 1
+      `),
+      ]);
+
+    // ===== Tính toán thống kê =====
+    const totalRevenue = aggregates._sum.final_price || 0;
+    const totalOriginal = aggregates._sum.original_price || 0;
+    const totalDiscount = totalOriginal - totalRevenue;
+    const averageOrderValue = aggregates._avg.final_price || 0;
+
+    const uniqueCustomers = customerStats.filter((c) => c.customerPhone).length;
+    const repeatCustomers = customerStats.filter(
+      (c) => c._count.customerPhone > 1
+    ).length;
+
+    const peakHours =
+      peakHourStats.length > 0
+        ? {
+          hour: Number(peakHourStats[0].hour),
+          orderCount: Number(peakHourStats[0].order_count),
+        }
+        : null;
+
+    // ===== Kết quả trả về =====
+    return {
       data,
       meta: {
         page,
         size,
         total,
         totalPages: Math.ceil(total / size),
+
+        totalRevenue,
+
+        totalDiscount,
+        totalOriginal,
+        averageOrderValue,
+        uniqueCustomers,
+        repeatCustomers,
+        peakHours,
       },
     };
-
-    return res;
   }
+
 
   async findOne(id: number) {
     const order = await this.prisma.order.findUnique({
@@ -527,10 +601,15 @@ export class OrderService {
       include: {
         order_details: {
           include: {
-            product: true,
+            product: { include: { images: true } },
             size: true,
-            optionValue: true
-          }
+            ToppingOrderDetail: {
+              include: {
+                topping: { include: { images: true } },
+              },
+            },
+            optionValue: { include: { option_group: true } },
+          },
         },
         Customer: true,
         Staff: true,

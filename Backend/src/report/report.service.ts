@@ -10,7 +10,7 @@ export class ReportsService {
   /**
    * FC-10-01: Báo cáo doanh thu theo thời gian (ngày/tuần/tháng)
    */
-  async getRevenueByTime(query: ReportQueryDto){
+  async getRevenueByTime(query: ReportQueryDto) {
     const { startDate, endDate, timeUnit } = query;
 
     // Sử dụng $queryRawUnsafe để TRUNCATE date, cẩn thận với timeUnit
@@ -327,11 +327,12 @@ export class ReportsService {
       },
       select: {
         // chọn các trường khả dĩ; dùng cast tiếp nếu schema khác
-        pricePerUnit:true
+        pricePerUnit: true,
+        importQuantity: true
       },
     });
 
-    const cogs = cogsRecord.reduce((sum, i) => sum + (i.pricePerUnit ?? 0), 0);
+    const cogs = cogsRecord.reduce((sum, i) => sum + ((i.pricePerUnit ?? 0) * i.importQuantity), 0);
 
     // 3. Lợi nhuận = Doanh thu - COGS
     const profit = totalRevenue - cogs;

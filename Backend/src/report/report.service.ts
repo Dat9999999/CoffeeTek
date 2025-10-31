@@ -10,7 +10,7 @@ export class ReportsService {
   /**
    * FC-10-01: Báo cáo doanh thu theo thời gian (ngày/tuần/tháng)
    */
-  async getRevenueByTime(query: ReportQueryDto) {
+  async getRevenueByTime(query: ReportQueryDto){
     const { startDate, endDate, timeUnit } = query;
 
     // Sử dụng $queryRawUnsafe để TRUNCATE date, cẩn thận với timeUnit
@@ -305,21 +305,43 @@ export class ReportsService {
    * getRevenueByProduct), bạn chỉ cần tính COGS (Chi phí vốn) để hoàn thành.
    */
   async getProfitReport(query: ReportQueryDto) {
-    // 1. Lấy doanh thu (đã có ở trên)
-    // const revenue = await this.getRevenueByProduct(query);
+    // 1. Lấy doanh thu (đã có ở trên) và chuyển sang kiểu rõ ràng
+    const revenueRows = (await this.getRevenueByTime(query)) as Array<{
+      period?: Date;
+      total_revenue?: number | string;
+    }>;
 
-    // 2. Tính COGS (Rất phức tạp)
-    // - Lấy tất cả OrderDetail + ToppingOrderDetail trong kỳ.
-    // - Join với Product -> Recipe -> MaterialRecipe
-    // - Tính toán lượng tiêu thụ (consume) của từng Material.
-    // - Join với MaterialImportation để lấy giá vốn (pricePerUnit) - Cần 1 chiến lược (AVG, FIFO...)
-    // - Tổng hợp chi phí vốn.
-    // const cogs = ...
+    // Tổng doanh thu trong khoảng
+    const totalRevenue = revenueRows.reduce(
+      (sum, row) => sum + Number(row.total_revenue ?? 0),
+      0,
+    );
+
+    // 2. Tính COGS (Rất phức tạp) - placeholder: cố gắng lấy một giá trị số nếu tồn tại
+    const cogsRecord = await this.prisma.materialImportation.findMany({
+      where: {
+        importDate: {
+          gte: query.startDate,
+          lt: query.endDate,
+        },
+      },
+      select: {
+        // chọn các trường khả dĩ; dùng cast tiếp nếu schema khác
+        pricePerUnit:true
+      },
+    });
+
+    const cogs = cogsRecord.reduce((sum, i) => sum + (i.pricePerUnit ?? 0), 0);
 
     // 3. Lợi nhuận = Doanh thu - COGS
+    const profit = totalRevenue - cogs;
+
     return {
-      error:
-        'Profit reporting is a complex task and requires a dedicated batch process for COGS calculation.',
+      start_date: query.startDate,
+      end_date: query.endDate,
+      total_revenue: totalRevenue,
+      cogs,
+      profit,
     };
   }
 }

@@ -32,6 +32,7 @@ model User {
   MaterialImportation MaterialImportation[]
   CustomerPoint       CustomerPoint?
   Voucher             Voucher[]
+  watseLog            watseLog[]
 
   @@map("users")
 }
@@ -301,13 +302,14 @@ model Recipe {
 model Material {
   id                  Int                   @id @default(autoincrement())
   name                String                @unique
-  remain              Float                 @default(0)
   unitId              Int
   code                String                @unique
   Unit                Unit                  @relation(fields: [unitId], references: [id])
   MaterialRecipe      MaterialRecipe[]
   MaterialImportation MaterialImportation[]
   InventoryAdjustment InventoryAdjustment[]
+  materialRemain      materialRemain[]
+  watseLog            watseLog[]
 
   @@map("materials")
 }
@@ -327,11 +329,31 @@ model MaterialRecipe {
   @@map("material_recipes")
 }
 
+model materialRemain {
+  id         Int      @id @default(autoincrement())
+  materialId Int
+  Material   Material @relation(fields: [materialId], references: [id])
+  remain     Float
+  date       DateTime @default(now())
+}
+
+model watseLog {
+  id         Int      @id @default(autoincrement())
+  materialId Int
+  Mateterial Material @relation(fields: [materialId], references: [id])
+  quantity   Float
+  reason     String
+  date       DateTime
+  User       User?    @relation(fields: [employeeId], references: [id])
+  employeeId Int?
+}
+
 model MaterialImportation {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   importQuantity Float
-  Material       Material @relation(fields: [materialId], references: [id])
-  pricePerUnit   Float    @default(0)
+  Material       Material  @relation(fields: [materialId], references: [id])
+  pricePerUnit   Float     @default(0)
+  expiryDate     DateTime?
 
   materialId Int
 
@@ -347,7 +369,6 @@ model InventoryAdjustment {
   materialId     Int
   Material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
   consume        Float
-  reason         String
   relatedOrderId Int?
   relatedOrder   Order?   @relation(fields: [relatedOrderId], references: [id], onDelete: Cascade)
   adjustedAt     DateTime @default(now())

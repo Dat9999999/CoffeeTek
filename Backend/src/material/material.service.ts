@@ -12,79 +12,79 @@ import { UpdateConsumeInventoryDto } from './dto/updadte-adjustment-material.dto
 export class MaterialService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async adjustMaterialStock(
-    date: Date,
-    updateAdjustmentDto: UpdateConsumeInventoryDto,
-  ) {
-    //update material consume if any change'
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
+  // async adjustMaterialStock(
+  //   date: Date,
+  //   updateAdjustmentDto: UpdateConsumeInventoryDto,
+  // ) {
+  //   //update material consume if any change'
+  //   const startDate = new Date(date);
+  //   startDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày
 
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
-    endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
+  //   const endDate = new Date(date);
+  //   endDate.setDate(endDate.getDate() + 1); // Thêm một ngày
+  //   endDate.setHours(0, 0, 0, 0); // Đặt thời gian về đầu ngày để dùng `lt`
 
-    const consumeRecords = await this.prisma.inventoryAdjustment.findMany({
-      where: {
-        adjustedAt: {
-          gte: startDate,
-          lt: endDate,
-        },
-      },
-      select: {
-        materialId: true,
-        consume: true,
-      },
-    });
+  //   const consumeRecords = await this.prisma.inventoryAdjustment.findMany({
+  //     where: {
+  //       adjustedAt: {
+  //         gte: startDate,
+  //         lt: endDate,
+  //       },
+  //     },
+  //     select: {
+  //       materialId: true,
+  //       consume: true,
+  //     },
+  //   });
 
-    // map materialId to consume
-    const record = new Map<number, number>();
+  //   // map materialId to consume
+  //   const record = new Map<number, number>();
 
-    for (const consumeRecord of consumeRecords) {
-      const materialId = consumeRecord.materialId;
-      const currentConsume = consumeRecord.consume;
-      const prev = record.get(materialId) ?? 0;
-      record.set(materialId, prev + currentConsume);
-    }
+  //   for (const consumeRecord of consumeRecords) {
+  //     const materialId = consumeRecord.materialId;
+  //     const currentConsume = consumeRecord.consume;
+  //     const prev = record.get(materialId) ?? 0;
+  //     record.set(materialId, prev + currentConsume);
+  //   }
 
-    // reupdate material realistic remain
-    if (updateAdjustmentDto.items.length > 0) {
-      for (const item of updateAdjustmentDto.items) {
-        await this.prisma.$transaction(async (tx) => {
-          await tx.material.update({
-            where: {
-              id: item.materailId,
-            },
-            data: {
-              remain: item.realisticRemain,
-            },
-          });
-        });
-        // if there is any change remove it out of stock adjustment
-        record.delete(item.materailId);
-      }
-    }
-    for (const materailId of record.keys()) {
-      await this.prisma.$transaction(async (tx) => {
-        const totalConsume = record.get(materailId) ?? 0;
-        const remainToDeduct = await tx.material.findUnique({
-          where: {
-            id: materailId,
-          },
-        });
-        const newRemain = (remainToDeduct?.remain ?? 0) - totalConsume;
-        await tx.material.update({
-          where: {
-            id: materailId,
-          },
-          data: {
-            remain: newRemain >= 0 ? newRemain : 0,
-          },
-        });
-      });
-    }
-    return JSON.stringify(record);
-  }
+  //   // reupdate material realistic remain
+  //   if (updateAdjustmentDto.items.length > 0) {
+  //     for (const item of updateAdjustmentDto.items) {
+  //       await this.prisma.$transaction(async (tx) => {
+  //         await tx.material.update({
+  //           where: {
+  //             id: item.materailId,
+  //           },
+  //           data: {
+  //             remain: item.realisticRemain,
+  //           },
+  //         });
+  //       });
+  //       // if there is any change remove it out of stock adjustment
+  //       record.delete(item.materailId);
+  //     }
+  //   }
+  //   for (const materailId of record.keys()) {
+  //     await this.prisma.$transaction(async (tx) => {
+  //       const totalConsume = record.get(materailId) ?? 0;
+  //       const remainToDeduct = await tx.material.findUnique({
+  //         where: {
+  //           id: materailId,
+  //         },
+  //       });
+  //       const newRemain = (remainToDeduct?.remain ?? 0) - totalConsume;
+  //       await tx.material.update({
+  //         where: {
+  //           id: materailId,
+  //         },
+  //         data: {
+  //           remain: newRemain >= 0 ? newRemain : 0,
+  //         },
+  //       });
+  //     });
+  //   }
+  //   return JSON.stringify(record);
+  // }
 
   async getAdjustmentHistory(query: GetAllAdjustmentHistoryDto) {
     //store import history here if needed
@@ -183,20 +183,20 @@ export class MaterialService {
         employeeId: (dto as any).employeeId ?? 1, // employeeId = 1 is owner
       },
     });
-    const material = await this.prisma.material.update({
-      where: { id: dto.materialId },
-      data: {
-        remain: {
-          increment: dto.quantity,
-        },
-      },
-    });
+    // const material = await this.prisma.material.update({
+    //   where: { id: dto.materialId },
+    //   data: {
+    //     remain: {
+    //       increment: dto.quantity,
+    //     },
+    //   },
+    // });
     // send log import material here
     Logger.log(
       `Import material id ${dto.materialId} with quantity ${dto.quantity}`,
       `MaterialService, price per unit : ${dto.pricePerUnit}`,
     );
-    return material;
+    return dto;
   }
   async findAll(query: GetAllDto) {
     const { page, size, searchName, orderBy = 'id', orderDirection = 'asc' } = query;
@@ -281,7 +281,7 @@ export class MaterialService {
     return {
       id: m.id,
       name: m.name,
-      remain: m.remain,
+      // remain: m.remain,s
       code: m.code,
       unit: m.Unit,
     };
@@ -304,11 +304,11 @@ export class MaterialService {
       where: { id: id },
     });
     if (!material) throw new NotFoundException(`Not found order id ${id}`);
-    if (material.remain > 0) {
-      throw new NotFoundException(
-        `Material id ${id} still have remain quantity = ${material.remain}`,
-      );
-    }
+    // if (material.remain > 0) {
+    //   throw new NotFoundException(
+    //     `Material id ${id} still have remain quantity = ${material.remain}`,
+    //   );
+    // }
     return await this.prisma.material.delete({
       where: { id: id },
     });

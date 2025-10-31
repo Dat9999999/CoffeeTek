@@ -63,4 +63,8 @@ export class ReportsController {
   getCustomerPoints() {
     return this.reportsService.getCustomerPoints();
   }
+  @Get('profit-on-material-import')
+  getProfit(@Query(ValidationPipe) query: ReportQueryDto) {
+    return this.reportsService.getProfitReport(query)
+  }
 }

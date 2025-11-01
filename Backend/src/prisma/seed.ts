@@ -362,19 +362,19 @@ async function seedInventory(owner, latte, sizeM) {
           recipeId: latteRecipe.id,
           materialId: coffeeBeans.id,
           consume: 0.02,
-          sizeId: sizeM.id,
+          sizeId: 1,
         }, // 20g
         {
           recipeId: latteRecipe.id,
           materialId: milk.id,
           consume: 0.18,
-          sizeId: sizeM.id,
+          sizeId: 2,
         }, // 180ml
         {
           recipeId: latteRecipe.id,
           materialId: sugar.id,
           consume: 0.01,
-          sizeId: sizeM.id,
+          sizeId: 3,
         }, // 10g
       ],
     });

@@ -4,8 +4,6 @@ import { GetAllDto } from "src/common/dto/pagination.dto";
 
 export class GetAllAdjustmentHistoryDto extends GetAllDto {
 
-    @IsNotEmpty()
-    type: string;
 
     @IsNotEmpty()
     @Type(() => Date)

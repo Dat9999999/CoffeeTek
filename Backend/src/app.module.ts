@@ -23,6 +23,8 @@ import { PromotionModule } from './promotion/promotion.module';
 import { LoyalLevelModule } from './loyal-level/loyal-level.module';
 import { VoucherModule } from './voucher/voucher.module';
 import { ReportModule } from './report/report.module';
+import { MaterialLossModule } from './material-loss/material-loss.module';
+import { MaterialRemainModule } from './material-remain/material-remain.module';
 
 
 @Module({
@@ -53,6 +55,8 @@ import { ReportModule } from './report/report.module';
     LoyalLevelModule,
     VoucherModule,
     ReportModule,
+    MaterialLossModule,
+    MaterialRemainModule,
   ],
 })
 export class AppModule { }

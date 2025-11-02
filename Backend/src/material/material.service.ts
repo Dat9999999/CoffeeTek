@@ -191,7 +191,7 @@ export class MaterialService {
       // Kiểm tra xem có material nào có code === searchName không
       const exactMatch = await this.prisma.material.findFirst({
         where: { code: searchName },
-        include: { Unit: true },
+        include: { Unit: true, materialRemain: true },
       });
 
       if (exactMatch) {
@@ -207,7 +207,7 @@ export class MaterialService {
             where: {
               name: { contains: searchName, mode: 'insensitive' },
             },
-            include: { Unit: true },
+            include: { Unit: true, materialRemain: true },
             orderBy: { [orderBy]: orderDirection },
           }),
           this.prisma.material.count({
@@ -221,7 +221,7 @@ export class MaterialService {
         this.prisma.material.findMany({
           skip,
           take: size,
-          include: { Unit: true },
+          include: { Unit: true, materialRemain: true },
           orderBy: { [orderBy]: orderDirection },
         }),
         this.prisma.material.count(),
@@ -234,6 +234,7 @@ export class MaterialService {
       remain: m.remain,
       code: m.code,
       unit: m.Unit,
+      materialRemain: m.materialRemain
     }));
 
     const res: ResponseGetAllDto<any> = {

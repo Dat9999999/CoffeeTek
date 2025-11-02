@@ -9,14 +9,9 @@ interface SuspenseWrapperProps {
     tip?: string;
 }
 
-/**
- * SuspenseWrapper - dùng chung cho toàn bộ app
- * Hiển thị loading Ant Design đẹp trong khi chờ lazy components hoặc dữ liệu tải.
- */
 export const SuspenseWrapper: React.FC<SuspenseWrapperProps> = ({
     children,
     size = 'large',
-    tip = 'Loading...',
 }) => {
     return (
         <Suspense
@@ -26,10 +21,11 @@ export const SuspenseWrapper: React.FC<SuspenseWrapperProps> = ({
                     justify="center"
                     style={{
                         width: '100%',
-                        height: '60vh',
+                        height: '100%',
                     }}
                 >
-                    <Spin size={size} tip={tip} />
+                    <Spin size={size}>
+                    </Spin>
                 </Flex>
             }
         >

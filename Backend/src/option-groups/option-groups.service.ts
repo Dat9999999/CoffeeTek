@@ -43,6 +43,7 @@ export class OptionGroupsService {
                 take: size,
                 orderBy: { [orderBy]: orderDirection },
                 where,
+                include: { values: true }
             }),
             this.prisma.optionGroup.count({ where }),
         ]);

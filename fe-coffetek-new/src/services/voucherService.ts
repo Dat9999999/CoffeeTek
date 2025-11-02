@@ -1,27 +1,62 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://coffeetek-production.up.railway.app/api"
+import { Voucher } from "@/interfaces"
+import api from "@/lib/api"
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://coffeetek-production.up.railway.app/api"
 
 export const voucherService = {
-  async getAll(page = 1, size = 10) {
-    const res = await fetch(`${BASE_URL}/voucher?page=${page}&size=${size}`)
-    if (!res.ok) throw new Error("Failed to fetch vouchers")
-    const json = await res.json()
-    return json.content || json.data || [] // hỗ trợ cả hai kiểu
+  // ✅ Lấy danh sách voucher
+  async getAll(params?: {
+    page?: number
+    size?: number
+    searchName?: string
+    orderBy?: string
+    orderDirection?: "asc" | "desc"
+  }) {
+    const res = await api.get("/voucher", { params })
+    return res.data
   },
 
-  async exchange(promotionId: number, customerPhone: string) {
-    // Gọi đúng API: PUT /voucher?id={promotionId}
-    const res = await fetch(`${BASE_URL}/voucher?id=${promotionId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customerPhone }),
-    })
+  // ✅ Lấy voucher theo mã
+  async getByCode(code: string) {
+    const res = await api.get(`/voucher/${code}`)
+    return res.data
+  },
 
-    if (!res.ok) {
-      const errMsg = await res.text()
-      console.error("Exchange voucher failed:", errMsg)
+  // ✅ Tạo voucher mới
+  async create(data: {
+    quantity: number
+    discountRate: number
+    validFrom: string
+    validTo: string
+    minAmountOrder: number
+    requirePoint: number
+  }) {
+    const res = await api.post("/voucher", data)
+    return res.data
+  },
+
+  // ✅ Lưu voucher về tài khoản khách hàng (PUT /voucher?id=...)
+  async exchange(id: number, customerPhone: string) {
+    try {
+      const res = await api.put(`/voucher?id=${id}`, { customerPhone })
+      return res.data
+    } catch (error: any) {
+      console.error("❌ Exchange voucher failed:", error.response?.data || error)
       throw new Error("Exchange voucher failed")
     }
+  },
 
-    return await res.json()
+  // ✅ Xóa nhiều voucher
+  async deleteMany(ids: number[]) {
+    const res = await api.delete("/voucher", { data: { voucherIds: ids } })
+    return res.data
+  },
+
+  // ✅ Xóa 1 voucher
+  async delete(id: number) {
+    const res = await api.delete("/voucher", { data: { voucherIds: [id] } })
+    return res.data
   },
 }

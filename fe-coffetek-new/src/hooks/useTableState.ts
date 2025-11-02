@@ -74,16 +74,19 @@ export function useTableState(initial?: Partial<TableState>) {
     // }, [tableState]);
 
     useEffect(() => {
+        // 🛑 Bỏ qua các trang con như /create hoặc /edit
+        if (pathname.includes('/create') || pathname.includes('/edit')) return;
+
         const params = new URLSearchParams();
         params.set("page", String(tableState.currentPage));
         params.set("pageSize", String(tableState.pageSize));
         if (tableState.orderBy) params.set("orderBy", tableState.orderBy);
         if (tableState.orderDirection)
             params.set("orderDirection", tableState.orderDirection);
-        if (tableState.search) params.set("search", tableState.search);
+        // if (tableState.search) params.set("search", tableState.search);
 
         Object.keys(tableState).forEach((key) => {
-            if (!["currentPage", "pageSize", "orderBy", "orderDirection", "search"].includes(key)) {
+            if (!["currentPage", "pageSize", "orderBy", "orderDirection", "search", "searchName"].includes(key)) {
                 const value = tableState[key];
                 if (value !== undefined && value !== null && value !== "")
                     params.set(key, String(value));

@@ -1,4 +1,5 @@
 "use client";
+// @ts-ignore
 import 'antd/dist/reset.css'; // CSS reset mới của Antd
 import type { ReactNode } from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';

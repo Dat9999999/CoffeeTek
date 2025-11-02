@@ -1,21 +1,17 @@
-// app/test/page.tsx
+"use client";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { MaterialListSelector } from "@/components/features/materials";
+import { Button } from "antd";
+import { CreateRecipe } from "@/components/features/recipes";
 
-import { SuspenseWrapper } from "@/components/commons";
-// test SuspenseWrapper
-async function fetchData() {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    return { message: '✅ Dữ liệu đã tải xong!' };
-}
+export default function Testpage({ params }: { params: { id: string } }) {
 
-async function DataComponent() {
-    const data = await fetchData();
-    return <h2>{data.message}</h2>;
-}
-
-export default function Page() {
     return (
-        <SuspenseWrapper >
-            <DataComponent />
-        </SuspenseWrapper>
-    );
+
+
+        <>
+            {/* <CreateRecipe /> */}
+        </>
+    )
 }

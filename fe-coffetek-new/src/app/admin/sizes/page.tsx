@@ -13,6 +13,8 @@ import {
     DeleteSizeModal,
     DeleteManySizesModal,
 } from "@/components/features/sizes";
+import { PageHeader } from "@/components/layouts";
+import { SlidersOutlined } from "@ant-design/icons";
 
 export default function SizePage() {
     const { tableState, setTableState } = useTableState();
@@ -62,7 +64,7 @@ export default function SizePage() {
 
     return (
         <>
-            <h1>Size Management</h1>
+            <PageHeader icon={<SlidersOutlined />} title="Size Management" />
 
             <TableToolbar
                 search={tableState.search}

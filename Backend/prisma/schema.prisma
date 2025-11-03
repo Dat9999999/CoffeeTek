@@ -335,6 +335,8 @@ model materialRemain {
   Material   Material @relation(fields: [materialId], references: [id])
   remain     Float
   date       DateTime @default(now())
+
+  @@unique([date, materialId])
 }
 
 model watseLog {

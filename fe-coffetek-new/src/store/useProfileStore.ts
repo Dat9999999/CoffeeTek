@@ -90,6 +90,7 @@ export const useProfileStore = create<UserState>((set) => ({
       if (!res.ok) throw new Error("Failed to fetch profile");
       const data = await res.json();
       
+      console.log("PROFILE URL:", API_ENDPOINTS.USER.PROFILE);
       console.log(data);
 
       set({

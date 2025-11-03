@@ -11,16 +11,17 @@ const categories = [
 
 export default function CategoryList() {
   return (
-    <div className="flex gap-4 justify-center">
+    <aside className="w-48 h-full bg-gray-50 border-r p-4 flex flex-col gap-2 fixed left-0 top-16">
+      <h2 className="text-lg font-semibold mb-3">Menu</h2>
       {categories.map((cat) => (
         <Link
           key={cat.slug}
           href={`/menu/${cat.slug}`}
-          className="px-4 py-2 border rounded hover:bg-gray-100 capitalize"
+          className="px-3 py-2 rounded hover:bg-gray-200 capitalize transition"
         >
           {cat.name}
         </Link>
       ))}
-    </div>
+    </aside>
   );
 }

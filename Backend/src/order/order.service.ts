@@ -133,15 +133,19 @@ export class OrderService {
                 end_date: {
                   gte: now
                 }
-
               }
             ]
           },
           include: {
             ProductPromotion: {
-              where: {
-                productId: productIdNum
-              }
+              where: item?.sizeId
+                ? {
+                    productId: productIdNum,
+                    productSizeId: parseInt(item.sizeId),
+                  }
+                : {
+                    productId: productIdNum,
+                  },
             }
           }
 

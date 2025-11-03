@@ -55,7 +55,7 @@ const PublicHeader = () => {
             <Link href="/" className="hover:text-coffee-600 font-medium">Home</Link>
             <Link href="/menu" className="hover:text-coffee-600 font-medium">Menu</Link>
             <Link href="/about" className="hover:text-coffee-600 font-medium">About Us</Link>
-            <Link href="/shop" className="hover:text-coffee-600 font-medium">Shop</Link>
+            <Link href="/promotions" className="hover:text-coffee-600 font-medium">Promotion</Link>
             <Link href="/contact" className="hover:text-coffee-600 font-medium">Contact</Link>
           </nav>
 

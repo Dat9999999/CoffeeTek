@@ -89,7 +89,6 @@ export class MaterialService {
   async getAdjustmentHistory(query: GetAllAdjustmentHistoryDto) {
     //store import history here if needed
     const {
-      type,
       date,
       materialId,
       orderBy = 'id',
@@ -97,7 +96,7 @@ export class MaterialService {
     } = query;
 
     Logger.log(
-      `Getting adjustment history for type ${type} and date ${date.toISOString()}`,
+      `Getting adjustment history on date ${date.toISOString()}`,
       'MaterialService',
     );
     const startDate = new Date(date);
@@ -111,42 +110,21 @@ export class MaterialService {
     let data;
     let total;
 
-    switch (type) {
-      case 'consume':
-        data = await this.prisma.inventoryAdjustment.findMany({
-          where: {
-            adjustedAt: {
-              gte: startDate,
-              lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
-            },
-            materialId: materialId,
-          },
-          skip: skip,
-          take: query.size,
-          orderBy: { [orderBy]: orderDirection },
-        });
-        total = await this.prisma.inventoryAdjustment.count();
-        break;
-      case 'import':
-        data = await this.prisma.materialImportation.findMany({
-          where: {
-            importDate: {
-              gte: startDate,
-              lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
-            },
-            materialId: materialId,
-          },
-          skip: skip,
-          take: query.size,
-          orderBy: { [orderBy]: orderDirection },
-        });
-        total = await this.prisma.materialImportation.count();
-        break;
-      default:
-        throw new NotFoundException(
-          `Adjustment history type ${type} is not valid`,
-        );
-    }
+
+    data = await this.prisma.inventoryAdjustment.findMany({
+      where: {
+        adjustedAt: {
+          gte: startDate,
+          lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
+        },
+        materialId: materialId,
+      },
+      skip: skip,
+      take: query.size,
+      orderBy: { [orderBy]: orderDirection },
+    });
+    total = await this.prisma.inventoryAdjustment.count();
+
     const response: ResponseGetAllDto<
       any
     > = {
@@ -213,7 +191,7 @@ export class MaterialService {
       // Kiểm tra xem có material nào có code === searchName không
       const exactMatch = await this.prisma.material.findFirst({
         where: { code: searchName },
-        include: { Unit: true },
+        include: { Unit: true, materialRemain: true },
       });
 
       if (exactMatch) {
@@ -229,7 +207,7 @@ export class MaterialService {
             where: {
               name: { contains: searchName, mode: 'insensitive' },
             },
-            include: { Unit: true },
+            include: { Unit: true, materialRemain: true },
             orderBy: { [orderBy]: orderDirection },
           }),
           this.prisma.material.count({
@@ -243,7 +221,7 @@ export class MaterialService {
         this.prisma.material.findMany({
           skip,
           take: size,
-          include: { Unit: true },
+          include: { Unit: true, materialRemain: true },
           orderBy: { [orderBy]: orderDirection },
         }),
         this.prisma.material.count(),
@@ -256,6 +234,7 @@ export class MaterialService {
       remain: m.remain,
       code: m.code,
       unit: m.Unit,
+      materialRemain: m.materialRemain
     }));
 
     const res: ResponseGetAllDto<any> = {

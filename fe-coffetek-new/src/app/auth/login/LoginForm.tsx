@@ -3,6 +3,7 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 import { STORAGE_KEYS } from "@/lib/constant/storageKey.constant";
@@ -48,27 +49,42 @@ export default function LoginForm() {
         body: JSON.stringify({ username, password }),
       });
 
-      const contentType = response.headers.get("content-type");
+      const data = await response.json();
 
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
+      if (response.ok && data.access_token) {
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
+        localStorage.setItem("customerPhone", username);
 
-        if (response.ok) {
-          if (data.access_token) {
-            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
-            console.log("Access token saved:", data.access_token);
-          } else {
-            console.warn("No access token returned from API.");
+        // 🔁 Kiểm tra nếu có pending voucher
+        const pendingVoucherId = localStorage.getItem("pendingVoucherId");
+        if (pendingVoucherId) {
+          try {
+            const res = await fetch(
+              `${API_ENDPOINTS.VOUCHER.EXCHANGE}/${pendingVoucherId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${data.access_token}`,
+                },
+                body: JSON.stringify({ customerPhone: username }),
+              }
+            );
+
+            if (res.ok)
+              toast.success("🎉 Voucher đã được lưu vào tài khoản của bạn!");
+            else toast.error("Lưu voucher thất bại!");
+          } catch {
+            toast.error("Không thể lưu voucher, vui lòng thử lại.");
+          } finally {
+            localStorage.removeItem("pendingVoucherId");
           }
-
-          router.push("/?login=success");
-        } else {
-          setErrors({ general: data.message || "Login failed" });
         }
+
+        toast.success("Đăng nhập thành công!");
+        router.push("/promotions");
       } else {
-        const text = await response.text();
-        console.error("Non-JSON response:", text);
-        setErrors({ general: "Server did not return JSON. Check API URL." });
+        setErrors({ general: data.message || "Login failed" });
       }
     } catch (error) {
       console.error("Error during login:", error);
@@ -89,7 +105,6 @@ export default function LoginForm() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Username */}
         <FormInput
           id="username"
           type="text"
@@ -102,7 +117,6 @@ export default function LoginForm() {
         />
         <FormError message={errors.username} />
 
-        {/* Password */}
         <div className="relative">
           <FormInput
             id="password"
@@ -114,24 +128,18 @@ export default function LoginForm() {
             label="Password"
             required
           />
-        <Link
-          href="/auth/forgot-password"
-          className="absolute right-0 -bottom-7 text-[15px] font-medium text-gray-100 hover:text-green-400 underline underline-offset-2 transition-all"
-        >
-          Forgot your password?
-        </Link>
+          <Link
+            href="/auth/forgot-password"
+            className="absolute right-0 -bottom-7 text-[15px] font-medium text-gray-100 hover:text-green-400 underline underline-offset-2 transition-all"
+          >
+            Forgot your password?
+          </Link>
         </div>
         <FormError message={errors.password} />
 
-        {/* General error */}
         <FormError message={errors.general} />
 
-        {/* Submit */}
-        <FormButton
-          type="submit"
-          className="w-full mt-4"
-          disabled={loading}
-        >
+        <FormButton type="submit" className="w-full mt-4" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </FormButton>
       </form>

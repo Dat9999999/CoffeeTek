@@ -171,15 +171,7 @@ export function OrderDetailComponent({
                     </Button>
                 )}
 
-                {order.status === OrderStatus.COMPLETED && (
-                    <Button
-                        icon={<DownloadOutlined />}
-                        type="primary"
-                        onClick={handleGetInvoice}
-                    >
-                        Get Invoice
-                    </Button>
-                )}
+
             </Flex>
 
             {/* ===== ORDER INFO ===== */}
@@ -478,16 +470,29 @@ export function OrderDetailComponent({
             </Collapse>
 
             <Divider />
-            <Flex justify="flex-end">
-                {canCancel && activeConfirmButton && (
-                    <Button
-                        icon={<CloseCircleOutlined />}
-                        danger
-                        onClick={handleCancel}
-                    >
-                        Cancel Order
-                    </Button>
-                )}
+            <Flex justify="space-between">
+                <div>
+                    {order.status === OrderStatus.COMPLETED && (
+                        <Button
+                            icon={<DownloadOutlined />}
+                            type="primary"
+                            onClick={handleGetInvoice}
+                        >
+                            Get Invoice
+                        </Button>
+                    )}
+                </div>
+                <div>
+                    {canCancel && activeConfirmButton && (
+                        <Button
+                            icon={<CloseCircleOutlined />}
+                            danger
+                            onClick={handleCancel}
+                        >
+                            Cancel Order
+                        </Button>
+                    )}
+                </div>
             </Flex>
         </div>
     );

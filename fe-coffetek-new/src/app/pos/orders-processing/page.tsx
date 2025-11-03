@@ -8,6 +8,7 @@ import { MenuUnfoldOutlined } from "@ant-design/icons";
 import { orderService } from "@/services/orderService";
 import type { Order } from "@/interfaces";
 import { OrderDetailComponent } from "@/components/features/orders";
+import { NewOrderNotifier } from "@/components/listeners";
 
 const { Sider, Content } = Layout;
 
@@ -55,46 +56,50 @@ export default function OrdersPage() {
     };
 
     return (
-        <Layout style={{ minHeight: "100vh", position: "relative" }}>
-            <LeftSider
-                onSelect={setSelectedOrderId}
-                defaultSelected={selectedOrderId}
-                collapsed={collapsed}
-                onCollapse={setCollapsed}
-                collapsedWidth={isMobile ? 0 : 70}
-                style={{
-                    position: isMobile ? "fixed" : undefined,
-                    left: isMobile ? 0 : undefined,
-                    top: isMobile ? 0 : undefined,
-                    height: isMobile ? "100vh" : undefined,
-                    zIndex: isMobile ? 1000 : undefined,
-                }}
-                orders={orders}
-                loading={loadingOrders}
-            />
-            <Layout style={{ width: "100%" }}>
-                <Content
+        <>
+            <Layout style={{ minHeight: "100vh", position: "relative" }}>
+                <LeftSider
+                    onSelect={setSelectedOrderId}
+                    defaultSelected={selectedOrderId}
+                    collapsed={collapsed}
+                    onCollapse={setCollapsed}
+                    collapsedWidth={isMobile ? 0 : 70}
                     style={{
-                        padding: 24,
-                        margin: 0,
-                        minHeight: 300,
-                        background: token.colorBgContainer,
-                        borderRadius: token.borderRadiusLG,
+                        position: isMobile ? "fixed" : undefined,
+                        left: isMobile ? 0 : undefined,
+                        top: isMobile ? 0 : undefined,
+                        height: isMobile ? "100vh" : undefined,
+                        zIndex: isMobile ? 1000 : undefined,
                     }}
-                >
-                    {isMobile && (
-                        <Button
-                            type="text"
-                            icon={<MenuUnfoldOutlined />}
-                            onClick={() => setCollapsed(false)}
-                            style={{ marginBottom: 16 }}
-                        >
+                    orders={orders}
+                    loading={loadingOrders}
+                    fetchOrders={fetchOrders}
+                />
+                <Layout style={{ width: "100%" }}>
+                    <Content
+                        style={{
+                            padding: 24,
+                            margin: 0,
+                            minHeight: 300,
+                            background: token.colorBgContainer,
+                            borderRadius: token.borderRadiusLG,
+                        }}
+                    >
+                        {isMobile && (
+                            <Button
+                                type="text"
+                                icon={<MenuUnfoldOutlined />}
+                                onClick={() => setCollapsed(false)}
+                                style={{ marginBottom: 16 }}
+                            >
 
-                        </Button>
-                    )}
-                    <OrderDetailComponent header={null} orderId={selectedOrderId} onStatusUpdate={fetchOrders} />
-                </Content>
+                            </Button>
+                        )}
+                        <OrderDetailComponent header={null} orderId={selectedOrderId} onStatusUpdate={fetchOrders} />
+                    </Content>
+                </Layout>
             </Layout>
-        </Layout>
+            <NewOrderNotifier />
+        </>
     );
 }

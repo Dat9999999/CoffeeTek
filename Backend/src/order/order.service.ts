@@ -29,6 +29,7 @@ import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { B2Service } from 'src/storage-file/b2.service';
 import { InventoryService } from 'src/inventory/inventory.service';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class OrderService {
@@ -38,6 +39,7 @@ export class OrderService {
     private readonly invoiceService: InvoiceService,
     private readonly b2Service: B2Service,
     private readonly inventoryService: InventoryService,
+    private readonly eventsGateway: EventsGateway,
   ) { }
 
   async getInvoice(orderId: number) {
@@ -195,7 +197,7 @@ export class OrderService {
     const final_price = original_price;
     //create order
 
-    return await this.prisma.$transaction(async (tx) => {
+    const newOrder = await this.prisma.$transaction(async (tx) => {
 
       for (const item of order_details) {
         // 1. KIỂM TRA TỒN TẠI (Lỗi bạn đang gặp)
@@ -282,7 +284,55 @@ export class OrderService {
           },
         },
       });
+
     });
+
+    //  4. PHÁT SỰ KIỆN SAU KHI TRANSACTION THÀNH CÔNG
+
+    await this.broadcastNewOrder(newOrder);
+    await this.broadcastProcessOrderCount();
+    return newOrder;
+  }
+
+  async broadcastNewOrder(order: any) {
+    try {
+
+      this.eventsGateway.sendToAll('newOrder', order);
+
+
+    } catch (error) {
+      console.error("Failed to broadcast active order count:", error);
+    }
+  }
+
+  async broadcastProcessOrderCount() {
+    try {
+      // 1. Đếm TỔNG SỐ LƯỢNG đơn hàng có trạng thái 'pending' HOẶC 'paid'
+      const totalProcessOrderCount = await this.prisma.order.count({
+        where: {
+          status: {
+            in: [OrderStatus.PENDING, OrderStatus.PAID], // Lấy tổng của cả hai
+          },
+        },
+      });
+
+      // 2. Phát sự kiện (ví dụ: 'activeOrderCount')
+      this.eventsGateway.sendToAll('processOrderCount', totalProcessOrderCount);
+
+    } catch (error) {
+      console.error("Failed to broadcast active order count:", error);
+    }
+  }
+
+  async getProcessOrderCount() {
+    const count = await this.prisma.order.count({
+      where: {
+        status: {
+          in: ["pending", "paid"],
+        },
+      },
+    });
+    return { count }; // Trả về dạng { count: 10 }
   }
 
   async findAll(query: GetAllOrderDto) {
@@ -482,6 +532,8 @@ export class OrderService {
       },
     });
 
+
+
     return updatedOrder;
   }
 
@@ -490,6 +542,8 @@ export class OrderService {
       where: { id },
     });
     if (!deleteOrder) throw new NotFoundException(`Notfound order id = ${id}`);
+    await this.broadcastProcessOrderCount();
+
     return deleteOrder;
   }
 
@@ -640,6 +694,9 @@ export class OrderService {
         });
       }
     }
+
+    await this.broadcastProcessOrderCount();
+
     return order;
   }
 

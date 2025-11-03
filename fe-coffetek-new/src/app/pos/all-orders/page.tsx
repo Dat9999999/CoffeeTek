@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { ControlOutlined, ReconciliationOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import CountUp from "react-countup";
 import { OrderDetailComponent } from "@/components/features/orders/OrderDetailComponent";
+import { NewOrderNotifier } from "@/components/listeners";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -294,6 +295,7 @@ export default function OrderPosPage() {
                 onClose={() => setStatusRecord(null)}
                 onSuccess={handleSuccess}
             />
+            <NewOrderNotifier />
         </div>
     );
 }

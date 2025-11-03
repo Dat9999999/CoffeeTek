@@ -13,14 +13,14 @@ import {
     Space,
     theme,
     Flex,
-    Divider,
     InputNumber,
     Card,
     Row,
     Col,
 } from "antd";
-import { promotionService } from "@/services/promotionService";
-import { PromotionItem, Product, Size } from "@/interfaces";
+// ✅ FIX: Import thêm PromotionItemDto và sửa import từ @/interfaces
+import { promotionService, PromotionItemDto } from "@/services/promotionService";
+import { Product, Size, ProductPromotionItem } from "@/interfaces";
 import dayjs from "dayjs";
 import { formatPrice } from "@/utils";
 import {
@@ -40,11 +40,15 @@ export default function EditPromotionPage() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-    const [productNewPrices, setProductNewPrices] = useState<Record<string, number>>({});
+    const [productNewPrices, setProductNewPrices] = useState<
+        Record<string, number>
+    >({});
     const [editPriceModalVisible, setEditPriceModalVisible] = useState(false);
     const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
     const [currentSize, setCurrentSize] = useState<Size | null>(null);
-    const [currentProductSizeId, setCurrentProductSizeId] = useState<number | null>(null);
+    const [currentProductSizeId, setCurrentProductSizeId] = useState<
+        number | null
+    >(null);
     const [currentOldPrice, setCurrentOldPrice] = useState<number>(0);
     const [editPriceForm] = Form.useForm();
     const [selectorVisible, setSelectorVisible] = useState(false);
@@ -65,12 +69,19 @@ export default function EditPromotionPage() {
                 const productsMap = new Map<number, Product>();
                 const newPrices: Record<string, number> = {};
 
-                data.ProductPromotion.forEach((pp: any) => {
+                // ✅ FIX: Dùng type 'ProductPromotionItem' thay vì 'any'
+                data.ProductPromotion.forEach((pp: ProductPromotionItem) => {
                     const product = pp.Product;
                     productsMap.set(product.id, product);
 
-                    const psId = pp.productSizedId ?? null;
-                    const key = psId ? `${product.id}-${psId}` : `${product.id}-default`;
+                    // ✅ FIX: Đề phòng trường hợp API trả về 'productSizeId' (theo types.ts)
+                    // hoặc 'productSizedId' (theo service.ts)
+                    // @ts-ignore
+                    const psId = pp.productSizedId ?? pp.productSizeId ?? null;
+
+                    // ✅ FIX: Dùng 'pp.productId' để tạo key thay vì 'product.id'.
+                    // Đây là mấu chốt để map giá mới chính xác.
+                    const key = psId ? `${pp.productId}-${psId}` : `${pp.productId}-default`;
                     newPrices[key] = pp.new_price;
                 });
 
@@ -92,7 +103,8 @@ export default function EditPromotionPage() {
             setLoading(true);
 
             const [startDate, endDate] = values.validPeriod || [];
-            const items: PromotionItem[] = [];
+            // ✅ FIX: Dùng type 'PromotionItemDto' đã import
+            const items: PromotionItemDto[] = [];
 
             selectedProducts.forEach((p) => {
                 if (!p.is_multi_size || p.isTopping) {
@@ -121,7 +133,9 @@ export default function EditPromotionPage() {
             };
 
             if (items.length === 0) {
-                message.warning("Please set at least one product with a lower price to update the promotion.");
+                message.warning(
+                    "Please set at least one product with a lower price to update the promotion."
+                );
                 setLoading(false);
                 return;
             }
@@ -131,7 +145,9 @@ export default function EditPromotionPage() {
             router.push("/admin/promotions");
         } catch (err: any) {
             if (err?.response?.status === 409) {
-                message.error(err.response.data?.message || "This promotion name already exists.");
+                message.error(
+                    err.response.data?.message || "This promotion name already exists."
+                );
             } else if (!err.errorFields) {
                 message.error("Something went wrong, please try again.");
             }
@@ -159,7 +175,9 @@ export default function EditPromotionPage() {
         editPriceForm.setFieldsValue({
             newPrice: initialNewPrice,
             discountPercentage:
-                oldPrice === 0 ? 0 : Number(((oldPrice - initialNewPrice) / oldPrice * 100).toFixed(2)),
+                oldPrice === 0
+                    ? 0
+                    : Number(((oldPrice - initialNewPrice) / oldPrice) * 100).toFixed(2),
         });
         setEditPriceModalVisible(true);
     };
@@ -179,13 +197,34 @@ export default function EditPromotionPage() {
         }
     };
 
-    const allSizes = new Set<string>();
+    // const allSizes = new Set<string>();
+    // selectedProducts.forEach((p) => {
+    //     if (p.is_multi_size && !p.isTopping && p.sizes) {
+    //         p.sizes.forEach((ps) => allSizes.add(ps.size.name));
+    //     }
+    // });
+    // const sortedSizes = Array.from(allSizes).sort();
+    // const hasMultiSize = selectedProducts.some(
+    //     (p) => p.is_multi_size && !p.isTopping && p.sizes && p.sizes.length > 0
+    // );
+
+    const allSizesMap = new Map<string, Size>();
     selectedProducts.forEach((p) => {
         if (p.is_multi_size && !p.isTopping && p.sizes) {
-            p.sizes.forEach((ps) => allSizes.add(ps.size.name));
+            p.sizes.forEach((ps) => {
+                // Dùng Map để lưu object Size duy nhất (dựa vào tên)
+                if (!allSizesMap.has(ps.size.name)) {
+                    allSizesMap.set(ps.size.name, ps.size);
+                }
+            });
         }
     });
-    const sortedSizes = Array.from(allSizes).sort();
+
+    // Sắp xếp mảng các object Size dựa trên sort_index, sau đó lấy tên
+    const sortedSizes = Array.from(allSizesMap.values())
+        .sort((a, b) => a.sort_index - b.sort_index)
+        .map((size) => size.name);
+
     const hasMultiSize = selectedProducts.some(
         (p) => p.is_multi_size && !p.isTopping && p.sizes && p.sizes.length > 0
     );
@@ -218,10 +257,14 @@ export default function EditPromotionPage() {
                                                 {formatPrice(oldPrice, { includeSymbol: true })}
                                             </Text>
                                         )}
-                                        <span>{formatPrice(newPrice, { includeSymbol: true })}</span>
+                                        <span>
+                                            {formatPrice(newPrice, { includeSymbol: true })}
+                                        </span>
                                         {isChanged && (
                                             <Space size={4}>
-                                                <ArrowDownOutlined style={{ color: token.colorSuccess }} />
+                                                <ArrowDownOutlined
+                                                    style={{ color: token.colorSuccess }}
+                                                />
                                                 <Text type="success">{percentChange}%</Text>
                                             </Space>
                                         )}
@@ -246,7 +289,9 @@ export default function EditPromotionPage() {
                     const oldPrice = ps?.price ?? record.price ?? 0;
                     const newPrice = productNewPrices[key] ?? oldPrice;
                     const percentChange =
-                        oldPrice === 0 ? "0.00" : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
+                        oldPrice === 0
+                            ? "0.00"
+                            : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
                     const isChanged = newPrice < oldPrice;
 
                     return {
@@ -260,14 +305,18 @@ export default function EditPromotionPage() {
                                 <span>{formatPrice(newPrice, { includeSymbol: true })}</span>
                                 {isChanged && (
                                     <Space size={4}>
-                                        <ArrowDownOutlined style={{ color: token.colorSuccess }} />
+                                        <ArrowDownOutlined
+                                            style={{ color: token.colorSuccess }}
+                                        />
                                         <Text type="success">{percentChange}%</Text>
                                     </Space>
                                 )}
                                 <Button
                                     icon={<EditOutlined />}
                                     type="link"
-                                    onClick={() => handleEditPrice(record, ps?.id ?? null, ps?.size ?? null)}
+                                    onClick={() =>
+                                        handleEditPrice(record, ps?.id ?? null, ps?.size ?? null)
+                                    }
                                 />
                             </Space>
                         ),
@@ -283,11 +332,17 @@ export default function EditPromotionPage() {
                 const oldPrice = record.price ?? 0;
                 const newPrice = productNewPrices[key] ?? oldPrice;
                 const percentChange =
-                    oldPrice === 0 ? "0.00" : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
+                    oldPrice === 0
+                        ? "0.00"
+                        : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
                 const isChanged = newPrice < oldPrice;
                 return (
                     <Space>
-                        {isChanged && <Text delete>{formatPrice(oldPrice, { includeSymbol: true })}</Text>}
+                        {isChanged && (
+                            <Text delete>
+                                {formatPrice(oldPrice, { includeSymbol: true })}
+                            </Text>
+                        )}
                         <span>{formatPrice(newPrice, { includeSymbol: true })}</span>
                         {isChanged && (
                             <Space size={4}>
@@ -295,12 +350,15 @@ export default function EditPromotionPage() {
                                 <Text type="success">{percentChange}%</Text>
                             </Space>
                         )}
-                        <Button icon={<EditOutlined />} type="link" onClick={() => handleEditPrice(record)} />
+                        <Button
+                            icon={<EditOutlined />}
+                            type="link"
+                            onClick={() => handleEditPrice(record)}
+                        />
                     </Space>
                 );
             },
         };
-
 
     const selectedProductsColumns = [
         {
@@ -310,11 +368,17 @@ export default function EditPromotionPage() {
             render: (_: any, record: Product) => {
                 return (
                     <Space size={"middle"}>
-                        <AppImageSize preview={false} src={record?.images?.[0]?.image_name} alt={record.name} width={40} height={40} />
+                        <AppImageSize
+                            preview={false}
+                            src={record?.images?.[0]?.image_name}
+                            alt={record.name}
+                            width={40}
+                            height={40}
+                        />
                         <span>{record.name}</span>
                     </Space>
                 );
-            }
+            },
         },
         priceColumn,
     ];
@@ -322,7 +386,12 @@ export default function EditPromotionPage() {
     return (
         <div style={{ minHeight: "100vh" }}>
             {/* Header */}
-            <Flex align="center" justify="space-between" wrap style={{ marginBottom: 24 }}>
+            <Flex
+                align="center"
+                justify="space-between"
+                wrap
+                style={{ marginBottom: 24 }}
+            >
                 <Space align="center" wrap>
                     <Button
                         icon={<ArrowLeftOutlined />}
@@ -337,14 +406,20 @@ export default function EditPromotionPage() {
 
             {/* Form */}
             <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-                <Card title="Promotion Details" bordered={false} style={{ marginBottom: 32 }}>
+                <Card
+                    title="Promotion Details"
+                    bordered={false}
+                    style={{ marginBottom: 32 }}
+                >
                     <Form form={form} layout="vertical" onFinish={handleSubmit}>
                         <Row gutter={[16, 16]}>
                             <Col xs={24} sm={12}>
                                 <Form.Item
                                     name="name"
                                     label="Promotion Name"
-                                    rules={[{ required: true, message: "Please enter a promotion name." }]}
+                                    rules={[
+                                        { required: true, message: "Please enter a promotion name." },
+                                    ]}
                                 >
                                     <Input placeholder="E.g. Summer Sale 2025" />
                                 </Form.Item>
@@ -353,7 +428,9 @@ export default function EditPromotionPage() {
                                 <Form.Item
                                     name="validPeriod"
                                     label="Valid Period"
-                                    rules={[{ required: true, message: "Please choose a date range." }]}
+                                    rules={[
+                                        { required: true, message: "Please choose a date range." },
+                                    ]}
                                 >
                                     <DatePicker.RangePicker
                                         format="DD/MM/YYYY"
@@ -365,9 +442,17 @@ export default function EditPromotionPage() {
                                 <Form.Item
                                     name="description"
                                     label="Description"
-                                    rules={[{ required: true, message: "Please add a short description." }]}
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: "Please add a short description.",
+                                        },
+                                    ]}
                                 >
-                                    <Input.TextArea rows={3} placeholder="Describe this promotion briefly..." />
+                                    <Input.TextArea
+                                        rows={3}
+                                        placeholder="Describe this promotion briefly..."
+                                    />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -432,9 +517,12 @@ export default function EditPromotionPage() {
                     editPriceForm.resetFields();
                 }}
                 okText="Save"
+                getContainer={false}
+
                 centered
             >
                 <Form
+
                     form={editPriceForm}
                     layout="vertical"
                     onValuesChange={(changedValues) => {
@@ -446,7 +534,9 @@ export default function EditPromotionPage() {
                         if ("newPrice" in changedValues) {
                             const np = changedValues.newPrice || 0;
                             const percent =
-                                currentOldPrice === 0 ? 0 : ((currentOldPrice - np) / currentOldPrice) * 100;
+                                currentOldPrice === 0
+                                    ? 0
+                                    : ((currentOldPrice - np) / currentOldPrice) * 100;
                             editPriceForm.setFieldsValue({
                                 discountPercentage: Number(percent.toFixed(2)),
                             });
@@ -454,7 +544,11 @@ export default function EditPromotionPage() {
                     }}
                 >
                     <Form.Item name="discountPercentage" label="Discount (%)">
-                        <InputNumber step={0.01} addonAfter="%" style={{ width: "100%" }} />
+                        <InputNumber
+                            step={0.01}
+                            addonAfter="%"
+                            style={{ width: "100%" }}
+                        />
                     </Form.Item>
                     <Form.Item
                         name="newPrice"
@@ -465,11 +559,18 @@ export default function EditPromotionPage() {
                                 validator: (_, value) =>
                                     value <= currentOldPrice
                                         ? Promise.resolve()
-                                        : Promise.reject(new Error("The new price must be lower than the current price.")),
+                                        : Promise.reject(
+                                            new Error(
+                                                "The new price must be lower than the current price."
+                                            )
+                                        ),
                             },
                         ]}
                     >
-                        <InputNumber placeholder="Enter new price" style={{ width: "100%" }} />
+                        <InputNumber
+                            placeholder="Enter new price"
+                            style={{ width: "100%" }}
+                        />
                     </Form.Item>
                 </Form>
             </Modal>

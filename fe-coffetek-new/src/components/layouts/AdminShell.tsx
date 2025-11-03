@@ -129,7 +129,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const selectedKey = allKeys.find((k) => pathname.startsWith(k)) ?? "";
 
     return (
-        <Layout>
+        <Layout >
             <Sider
                 theme={mode}
                 collapsed={collapsed}
@@ -140,8 +140,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 style={{
                     position: typeof window !== "undefined" && window.innerWidth < 992 ? "fixed" : "relative",
                     zIndex: 1000,
-                    height: "100%",
+                    minHeight: "100%",
                     transition: "all 0.1s",
+                    background: colorBgBase
                 }}
             >
                 {/* Header của sidebar */}

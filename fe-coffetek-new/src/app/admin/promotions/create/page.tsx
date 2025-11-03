@@ -19,8 +19,8 @@ import {
     Row,
     Col,
 } from "antd";
-import { promotionService } from "@/services/promotionService";
-import { PromotionItem, Product, Size } from "@/interfaces";
+import { PromotionItemDto, promotionService } from "@/services/promotionService";
+import { Product, Size } from "@/interfaces";
 import dayjs from "dayjs";
 import { formatPrice } from "@/utils";
 import {
@@ -57,7 +57,7 @@ export default function CreatePromotionPage() {
             setLoading(true);
 
             const [startDate, endDate] = values.validPeriod || [];
-            const items: PromotionItem[] = [];
+            const items: PromotionItemDto[] = [];
 
             selectedProducts.forEach((p) => {
                 if (!p.is_multi_size || p.isTopping) {
@@ -99,12 +99,21 @@ export default function CreatePromotionPage() {
 
             router.push("/admin/promotions");
         } catch (err: any) {
+            const serverMessage =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Something went wrong, please try again.";
+
             if (err?.response?.status === 409) {
                 message.error(err.response.data?.message || "This promotion name already exists.");
+            } else if (err?.response?.status === 400) {
+                // ✅ Trường hợp lỗi overlap date
+                message.warning(serverMessage);
             } else if (!err.errorFields) {
-                message.error("Something went wrong, please try again.");
+                message.error(serverMessage);
             }
-        } finally {
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -148,13 +157,34 @@ export default function CreatePromotionPage() {
         }
     };
 
-    const allSizes = new Set<string>();
+    // const allSizes = new Set<string>();
+    // selectedProducts.forEach((p) => {
+    //     if (p.is_multi_size && !p.isTopping && p.sizes) {
+    //         p.sizes.forEach((ps) => allSizes.add(ps.size.name));
+    //     }
+    // });
+    // const sortedSizes = Array.from(allSizes).sort();
+    // const hasMultiSize = selectedProducts.some(
+    //     (p) => p.is_multi_size && !p.isTopping && p.sizes && p.sizes.length > 0
+    // );
+
+    const allSizesMap = new Map<string, Size>();
     selectedProducts.forEach((p) => {
         if (p.is_multi_size && !p.isTopping && p.sizes) {
-            p.sizes.forEach((ps) => allSizes.add(ps.size.name));
+            p.sizes.forEach((ps) => {
+                // Dùng Map để lưu object Size duy nhất (dựa vào tên)
+                if (!allSizesMap.has(ps.size.name)) {
+                    allSizesMap.set(ps.size.name, ps.size);
+                }
+            });
         }
     });
-    const sortedSizes = Array.from(allSizes).sort();
+
+    // Sắp xếp mảng các object Size dựa trên sort_index, sau đó lấy tên
+    const sortedSizes = Array.from(allSizesMap.values())
+        .sort((a, b) => a.sort_index - b.sort_index)
+        .map((size) => size.name);
+
     const hasMultiSize = selectedProducts.some(
         (p) => p.is_multi_size && !p.isTopping && p.sizes && p.sizes.length > 0
     );
@@ -359,6 +389,7 @@ export default function CreatePromotionPage() {
                     }
                 >
                     <Table
+
                         bordered
                         columns={selectedProductsColumns}
                         dataSource={selectedProducts}
@@ -402,6 +433,7 @@ export default function CreatePromotionPage() {
                     editPriceForm.resetFields();
                 }}
                 okText="Save"
+                getContainer={false}
                 centered
             >
                 <Form
@@ -423,8 +455,30 @@ export default function CreatePromotionPage() {
                         }
                     }}
                 >
-                    <Form.Item name="discountPercentage" label="Discount (%)">
-                        <InputNumber step={0.01} addonAfter="%" style={{ width: "100%" }} />
+                    <Form.Item
+                        name="discountPercentage"
+                        label="Discount (%)"
+                        rules={[
+                            { required: true, message: "Please enter discount percentage." },
+                            {
+                                validator: (_, value) => {
+                                    if (value === undefined || value === null) return Promise.resolve();
+                                    if (value < 0 || value > 100)
+                                        return Promise.reject(
+                                            new Error("Discount must be between 0% and 100%.")
+                                        );
+                                    return Promise.resolve();
+                                },
+                            },
+                        ]}
+                    >
+                        <InputNumber
+                            min={0}
+                            max={100}
+                            step={0.01}
+                            addonAfter="%"
+                            style={{ width: "100%" }}
+                        />
                     </Form.Item>
                     <Form.Item
                         name="newPrice"

@@ -34,3 +34,20 @@ export interface ProductDetailResponse {
   toppings: Topping[];
   optionGroups: ProductOptionValueGroup[];
 }
+
+// 2. Interface ProductSizeResponse (gốc - không đổi)
+export interface ProductSizeResponse {
+  id: number;
+  price: number;
+  size: Size;
+}
+
+export interface PosProductSizeResponse extends ProductSizeResponse {
+  old_price?: number;
+}
+
+// ✅ Kế thừa ProductDetailResponse
+export interface PosProductDetailResponse extends ProductDetailResponse {
+  old_price?: number | null;
+  sizes: PosProductSizeResponse[];
+}

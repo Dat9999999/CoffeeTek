@@ -6,7 +6,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDto } from './dto/get-all-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
-import { ProductDetailResponse } from './dto/response.dto';
+import { PosProductDetailResponse, PosProductSizeResponse, ProductDetailResponse } from './dto/response.dto';
 
 @Injectable()
 export class ProductsService {
@@ -81,7 +81,7 @@ export class ProductsService {
           : undefined,
       },
     });
-    
+
     const new_product_detail = await this.findOne(product.id);
     return new_product_detail;
   }
@@ -134,7 +134,14 @@ export class ProductsService {
         include: {
           category: true,
           images: true,
-          sizes: { include: { size: true } },
+          sizes: {
+            include: { size: true },
+            orderBy: {
+              size: {
+                sort_index: 'asc' // Sắp xếp theo 'sort_index' của 'size'
+              }
+            }
+          },
           toppings: {
             select: {
               topping: {
@@ -223,6 +230,193 @@ export class ProductsService {
     };
   }
 
+  async findAllPos(
+    query: GetAllProductsDto,
+    // ✅ 1. Thay đổi kiểu trả về sang Response Type mới
+  ): Promise<ResponseGetAllDto<PosProductDetailResponse>> {
+    const {
+      page,
+      size,
+      search,
+      orderBy = 'id',
+      orderDirection = 'asc',
+      categoryId,
+      isTopping,
+    } = query;
+
+    let categoryIds: number[] | undefined;
+
+    //  Nếu có filter theo categoryId, lấy tất cả category con (nếu có)
+    if (categoryId) {
+      const parent = await this.prisma.category.findUnique({
+        where: { id: categoryId },
+        include: { subcategories: true },
+      });
+
+      if (parent) {
+        // Gộp category cha + con
+        categoryIds = [parent.id, ...parent.subcategories.map((c) => c.id)];
+      }
+    }
+
+    const where: Prisma.ProductWhereInput = {
+      AND: [
+        search
+          ? { name: { contains: search, mode: Prisma.QueryMode.insensitive } }
+          : {},
+        categoryId === -1 // nếu chọn "Chưa phân loại"
+          ? { category_id: null }
+          : categoryIds
+            ? { category_id: { in: categoryIds } }
+            : {},
+        isTopping !== undefined ? { isTopping } : {},
+      ],
+    };
+
+    // ✅ 2. Lấy ngày giờ hiện tại để lọc các khuyến mãi hợp lệ
+    const now = new Date();
+    const promotionFilter = {
+      Promotion: {
+        is_active: true,
+        start_date: { lte: now }, // Bắt đầu <= hiện tại
+        end_date: { gte: now }, // Kết thúc >= hiện tại
+      },
+    };
+
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+          images: true,
+          // ✅ 3. Include KM cho sản phẩm 1 size (hoặc base product)
+          ProductPromotion: {
+            where: {
+              productSizeId: null, // Lọc KM cho base product (không phải size)
+              ...promotionFilter,
+            },
+            select: { new_price: true },
+          },
+          sizes: {
+            orderBy: { size: { sort_index: 'asc' } }, // Sắp xếp size
+            include: {
+              size: true,
+              // ✅ 4. Include KM cho từng size (sản phẩm nhiều size)
+              ProductPromotion: {
+                where: promotionFilter, // Tự động lọc theo productSizeId
+                select: { new_price: true },
+              },
+            },
+          },
+          // ✅ 5. Topping: Giữ nguyên, không lấy KM
+          toppings: {
+            select: {
+              topping: {
+                include: {
+                  images: true,
+                },
+              },
+            },
+          },
+          optionValues: {
+            include: {
+              option_value: {
+                include: { option_group: true },
+              },
+            },
+          },
+        },
+        orderBy: { [orderBy]: orderDirection },
+        skip: (page - 1) * size,
+        take: size,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    // 🔹 Map dữ liệu sang PosProductDetailResponse
+    // ✅ 6. Thay đổi kiểu của data sang Response Type mới
+    const data: PosProductDetailResponse[] = products.map((product) => {
+      const optionGroupsMap = new Map<number, any>();
+
+      for (const pov of product.optionValues) {
+        const group = pov.option_value.option_group;
+        const value = pov.option_value;
+
+        if (!optionGroupsMap.has(group.id)) {
+          optionGroupsMap.set(group.id, {
+            id: group.id,
+            name: group.name,
+            values: [],
+          });
+        }
+
+        optionGroupsMap.get(group.id).values.push({
+          id: value.id,
+          name: value.name,
+          sort_index: value.sort_index,
+        });
+      }
+
+      // ✅ 7. Xử lý giá cho sản phẩm 1 size
+      const mainOldPrice = product.price ?? null;
+      const mainPromotion = product.ProductPromotion?.[0]; // Lấy KM đã lọc
+      const mainPrice = mainPromotion?.new_price ?? mainOldPrice;
+
+      // ✅ 8. Xử lý giá cho sản phẩm nhiều size
+      const mappedSizes: PosProductSizeResponse[] = product.sizes.map((s) => {
+        const sizeOldPrice = s.price;
+        const sizePromotion = s.ProductPromotion?.[0]; // Lấy KM đã lọc cho size này
+        const sizePrice = sizePromotion?.new_price ?? sizeOldPrice;
+
+        return {
+          id: s.id,
+          price: sizePrice, // Giá mới (hoặc giá cũ)
+          old_price: sizePrice !== sizeOldPrice ? sizeOldPrice : undefined, // Chỉ gán nếu có KM
+          size: s.size,
+        };
+      });
+
+      // ✅ 9. Xử lý toppings (trả về giá gốc)
+      const mappedToppings = product.toppings.map((t) => {
+        return {
+          id: t.topping.id,
+          name: t.topping.name,
+          price: t.topping.price ?? 0, // Luôn là giá gốc
+          image_name: t.topping.images[0]?.image_name || null,
+          sort_index: t.topping.images[0]?.sort_index || 0,
+        };
+      });
+
+      return {
+        id: product.id,
+        name: product.name,
+        is_multi_size: product.is_multi_size,
+        product_detail: product.product_detail,
+        isTopping: product.isTopping,
+        price: mainPrice, // Giá mới (hoặc giá cũ)
+        old_price: mainPrice !== mainOldPrice ? mainOldPrice : undefined, // Chỉ gán nếu có KM
+        category_id: product.category_id,
+        category: product.category,
+        images: product.images,
+        sizes: mappedSizes,
+        toppings: mappedToppings,
+        optionGroups: Array.from(optionGroupsMap.values()),
+      };
+    });
+
+    // 🔹 Kết quả trả về
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        size,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+  }
+
   async findOne(id: number): Promise<ProductDetailResponse> {
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -231,6 +425,11 @@ export class ProductsService {
         images: true,
         sizes: {
           include: { size: true },
+          orderBy: {
+            size: {
+              sort_index: 'asc' // Sắp xếp theo 'sort_index' của 'size'
+            }
+          }
         },
         toppings: {
           select: {

@@ -16,6 +16,11 @@ import { VerifyReturnUrl } from 'vnpay';
 export class OrderController {
   constructor(private readonly orderService: OrderService) { }
 
+  @Get('process-count')
+  getActiveOrderCount() {
+    return this.orderService.getProcessOrderCount();
+  }
+
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
@@ -68,7 +73,6 @@ export class OrderController {
   getInvoice(@Param('orderId') orderId: string) {
     return this.orderService.getInvoice(+orderId);
   }
-  
 
 
 

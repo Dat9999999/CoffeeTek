@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -15,7 +16,7 @@ import { GetAllDto } from '../common/dto/pagination.dto';
 
 @Controller('promotion')
 export class PromotionController {
-  constructor(private readonly promotionService: PromotionService) {}
+  constructor(private readonly promotionService: PromotionService) { }
 
   @Post()
   create(@Body() createPromotionDto: CreatePromotionDto) {
@@ -43,5 +44,19 @@ export class PromotionController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.promotionService.remove(+id);
+  }
+
+  @Patch(':id/active')
+  toggleActive(
+    @Param('id') id: string,
+    @Body('isActive') isActive: boolean,
+  ) {
+    return this.promotionService.toggleActive(+id, isActive);
+  }
+
+
+  @Delete()
+  removeMany(@Body() body: { ids: number[] }) {
+    return this.promotionService.removeMany(body.ids);
   }
 }

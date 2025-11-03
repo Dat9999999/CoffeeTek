@@ -1,16 +1,25 @@
 "use client";
 
 import React from "react";
-import { Layout, Menu, Spin, theme, Typography, Button, Divider, type Breakpoint, Tag } from "antd";
 import {
-    MenuFoldOutlined,
-    MenuUnfoldOutlined,
-} from "@ant-design/icons";
+    Layout,
+    Menu,
+    Spin,
+    theme,
+    Typography,
+    Button,
+    Divider,
+    type Breakpoint,
+    Tag,
+    Empty,
+} from "antd";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import type { Order } from "@/interfaces";
 import dayjs from "dayjs";
 import { useDarkMode } from "@/components/providers";
 import { getStatusColor } from "@/utils";
-import { isAbsolute } from "path";
+import { ProcessOrderCountDisplay } from "@/components/features/pos";
+import Link from "next/link";
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -25,6 +34,7 @@ interface LeftSiderProps {
     style?: React.CSSProperties;
     orders: Order[];
     loading: boolean;
+    fetchOrders: () => void;
 }
 
 export default function LeftSider({
@@ -37,6 +47,7 @@ export default function LeftSider({
     style,
     orders,
     loading,
+    fetchOrders,
 }: LeftSiderProps) {
     const { token } = theme.useToken();
     const { mode } = useDarkMode();
@@ -55,15 +66,93 @@ export default function LeftSider({
             <div style={{ display: "flex", flexDirection: "column" }}>
                 <Text strong>{`Order #${order.id}`}</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                    <Tag style={{ marginBottom: 5 }} color={getStatusColor(order.status)}>{order.status.toUpperCase()}</Tag>{`• ${dayjs(order.created_at).format("DD-MM-YYYY HH:mm")}`}
+                    <Tag
+                        style={{ marginBottom: 5 }}
+                        color={getStatusColor(order.status)}
+                    >
+                        {order.status.toUpperCase()}
+                    </Tag>
+                    {`• ${dayjs(order.created_at).format("DD-MM-YYYY HH:mm")}`}
                 </Text>
             </div>
         ),
         title: `Order #${order.id} (${order.status.toUpperCase()})`,
-        style: { marginBottom: 5, paddingTop: 5, paddingBottom: 5 },
+        style: {
+            marginBottom: 1,
+            paddingTop: 24,  // <-- Tăng giá trị này
+            paddingBottom: 24 // <-- Tăng giá trị này
+        },
     }));
 
-    console.log(menuItems);
+    // console.log(menuItems); // Bạn có thể xoá dòng này nếu không cần
+
+    /**
+     * Định nghĩa nội dung Sider dựa trên trạng thái
+     */
+    const renderSiderContent = () => {
+        // 1. Trạng thái Đang tải
+        if (loading) {
+            return (
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                    }}
+                >
+                    <Spin />
+                </div>
+            );
+        }
+
+        // 2. Trạng thái Trống (Tải xong, không có dữ liệu)
+        if (!loading && orders.length === 0) {
+            return (
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        textAlign: "center",
+                        boxSizing: "border-box",
+                        overflowY: "hidden"
+                    }}
+                >
+                    {/* Chỉ hiển thị text khi Sider đang mở */}
+                    {!collapsed && (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            styles={{ image: { height: 60 } }}
+                            description={
+                                <Typography.Text>
+                                    No orders
+                                </Typography.Text>
+                            }
+                        >
+                            <Link href={"/pos"}><Button type="primary">Create Now</Button></Link>
+                        </Empty>
+                    )}
+                </div>
+            );
+        }
+
+        // 3. Trạng thái có dữ liệu
+        return (
+            <Menu
+                theme={mode}
+                mode="inline"
+                items={menuItems}
+                onClick={({ key }) => onSelect(Number(key))}
+                defaultSelectedKeys={
+                    defaultSelected ? [defaultSelected.toString()] : []
+                }
+                style={{
+                    borderRight: 0,
+                }}
+            />
+        );
+    };
 
     return (
         <Sider
@@ -110,6 +199,7 @@ export default function LeftSider({
                         }}
                         className="font-medium text-lg"
                     >
+                        <ProcessOrderCountDisplay onCountUpdate={fetchOrders} />
                         <span>Orders</span>
                     </div>
                 )}
@@ -121,40 +211,15 @@ export default function LeftSider({
                     onClick={handleToggle}
                     style={{
                         color: token.colorText,
-                        ...(collapsed ? {} : { marginLeft: "auto" }), // ✅ chỉ thêm margin khi mở
+                        ...(collapsed ? {} : { marginLeft: "auto" }),
                     }}
                 />
             </div>
 
             <Divider style={{ margin: 4 }}></Divider>
 
-
-
-            {/* Nội dung menu */}
-            {loading ? (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                    }}
-                >
-                    <Spin />
-                </div>
-            ) : (
-
-                <Menu
-                    theme={mode}
-                    mode="inline"
-                    items={menuItems}
-                    onClick={({ key }) => onSelect(Number(key))}
-                    defaultSelectedKeys={defaultSelected ? [defaultSelected.toString()] : []}
-                    style={{
-                        borderRight: 0,
-                    }}
-                />
-            )}
+            {/* Nội dung menu (đã tách ra logic) */}
+            {renderSiderContent()}
         </Sider>
     );
 }

@@ -7,17 +7,17 @@ import { promotionService } from "@/services/promotionService";
 import type { Promotion } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import {
-    CreatePromotionModal,
     PromotionDetailModal,
-    EditPromotionModal,
     DeletePromotionModal,
     DeleteManyPromotionsModal,
 } from "@/components/features/promotions";
 import { PageHeader } from "@/components/layouts";
 import { GiftOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { Tag } from "antd";
+import { Tag, message } from "antd";
 import { useRouter } from "next/navigation";
+import TogglePromotionActiveModal from "@/components/features/promotions/TogglePromotionActiveModal";
+import { TablePromotionActions } from "@/components/features/promotions/TablePromotionActions";
 
 interface PromotionResponsePaging {
     data: Promotion[];
@@ -28,6 +28,7 @@ interface PromotionResponsePaging {
         totalPages: number;
     };
 }
+
 export default function PromotionPage() {
     const router = useRouter();
     const { tableState, setTableState } = useTableState();
@@ -35,11 +36,9 @@ export default function PromotionPage() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+    const [toggleRecord, setToggleRecord] = useState<Promotion | null>(null);
 
-
-    const [openAddModal, setOpenAddModal] = useState(false);
     const [detailRecord, setDetailRecord] = useState<Promotion | null>(null);
-    const [editRecord, setEditRecord] = useState<Promotion | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Promotion | null>(null);
     const [openDeleteManyModal, setOpenDeleteManyModal] = useState(false);
 
@@ -77,11 +76,28 @@ export default function PromotionPage() {
 
     const handleDetailClick = (record: Promotion) => {
         router.push(`/admin/promotions/${record.id}/detail`);
-    }
+    };
 
     const handleEditClick = (record: Promotion) => {
         router.push(`/admin/promotions/${record.id}/edit`);
-    }
+    };
+
+    const handleToggleActiveClick = (record: Promotion) => {
+        const now = dayjs();
+        const start = dayjs(record.start_date);
+        const end = dayjs(record.end_date);
+
+        if (!record.is_active) {
+            // Chỉ cho phép bật active nếu ngày hiện tại trong khoảng thời gian hợp lệ
+            if (now.isBefore(start) || now.isAfter(end)) {
+                message.warning("You can only activate promotions within their valid period.");
+                return;
+            }
+        }
+
+        // Nếu đang active thì cho phép tắt bình thường
+        setToggleRecord(record);
+    };
 
     return (
         <>
@@ -124,6 +140,7 @@ export default function PromotionPage() {
                     {
                         title: "Status",
                         dataIndex: "is_active",
+                        align: "center",
                         render: (value: boolean) => (
                             <Tag color={value ? "success" : "default"}>
                                 {value ? "Active" : "Inactive"}
@@ -132,18 +149,17 @@ export default function PromotionPage() {
                         sorter: true,
                     },
                 ]}
-                onDetail={(record) => handleDetailClick(record)}
-                onEdit={(record) => handleEditClick(record)}
-                onDelete={(record) => setDeleteRecord(record)}
+                renderActions={(record) => (
+                    <TablePromotionActions<Promotion>
+                        record={record}
+                        onDetail={handleDetailClick}
+                        onEdit={handleEditClick}
+                        onDelete={(record) => setDeleteRecord(record)}
+                        onToggleActive={handleToggleActiveClick}
+                    />
+                )}
                 onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
                 enableRowSelection={true}
-            />
-
-            {/* CREATE */}
-            <CreatePromotionModal
-                open={openAddModal}
-                onClose={() => setOpenAddModal(false)}
-                onSuccess={fetchData}
             />
 
             {/* DETAIL */}
@@ -151,14 +167,6 @@ export default function PromotionPage() {
                 open={!!detailRecord}
                 onClose={() => setDetailRecord(null)}
                 record={detailRecord}
-            />
-
-            {/* EDIT */}
-            <EditPromotionModal
-                open={!!editRecord}
-                onClose={() => setEditRecord(null)}
-                record={editRecord}
-                onSuccess={fetchData}
             />
 
             {/* DELETE ONE */}
@@ -179,6 +187,14 @@ export default function PromotionPage() {
                 onSuccess={handleDeleteSuccess}
                 totalItems={total}
                 tableState={tableState}
+            />
+
+            {/* TOGGLE ACTIVE */}
+            <TogglePromotionActiveModal
+                open={!!toggleRecord}
+                record={toggleRecord}
+                onClose={() => setToggleRecord(null)}
+                onSuccess={fetchData}
             />
         </>
     );

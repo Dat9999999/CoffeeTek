@@ -58,6 +58,7 @@ export class PromotionService {
               new_price: item.newPrice,
             })),
           },
+          is_active: false,
         },
       });
 
@@ -114,6 +115,10 @@ export class PromotionService {
             Product: {
               include: {
                 images: true,
+                sizes: {
+                  orderBy: { size: { sort_index: 'asc' } },
+                  include: { size: true },
+                },
               },
             },
           },
@@ -137,6 +142,7 @@ export class PromotionService {
           productId: item.productId,
           promotionId: id,
           new_price: item.newPrice,
+          productSizeId: item.productSizedId
         }));
 
         // Create ALL the new items using a single createMany operation.
@@ -154,10 +160,66 @@ export class PromotionService {
         },
       });
     });
-    return updatePromotionDto;
+    const promotionUpdated = await this.findOne(id)
+    return promotionUpdated;
   }
 
   async remove(id: number) {
     return await this.prisma.promotion.delete({ where: { id } });
+  }
+
+  // promotion.service.ts
+  async toggleActive(id: number, isActive: boolean) {
+    const promotion = await this.prisma.promotion.findUnique({ where: { id } });
+    if (!promotion) {
+      throw new BadRequestException('Promotion not found');
+    }
+
+    // Nếu yêu cầu bật active
+    if (isActive) {
+      const now = new Date();
+
+      // 1️⃣ Kiểm tra ngày hợp lệ
+      if (promotion.start_date > now || promotion.end_date < now) {
+        throw new BadRequestException('Cannot activate promotion outside its valid date range');
+      }
+
+      // 2️⃣ Kiểm tra có promotion nào khác đang active không
+      const existingActive = await this.prisma.promotion.findFirst({
+        where: {
+          is_active: true,
+          id: { not: id },
+        },
+      });
+
+      if (existingActive) {
+        throw new BadRequestException(
+          `Another promotion "${existingActive.name}" is already active`,
+        );
+      }
+    }
+
+    // ✅ Cập nhật trạng thái
+    return await this.prisma.promotion.update({
+      where: { id },
+      data: { is_active: isActive },
+    });
+  }
+
+  async removeMany(ids: number[]) {
+
+
+    const deleted = await this.prisma.promotion.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      message: `Successfully deleted ${deleted.count} promotions`,
+      count: deleted.count,
+    };
   }
 }

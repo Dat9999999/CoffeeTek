@@ -30,6 +30,11 @@ export class ProductsController {
     return this.productsService.findAll(query);
   }
 
+  @Get("pos")
+  findAllPos(@Query() query: GetAllProductsDto) {
+    return this.productsService.findAllPos(query);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(+id);

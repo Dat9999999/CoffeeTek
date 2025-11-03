@@ -9,6 +9,7 @@ import { useDarkMode } from "@/components/providers";
 import {
     ShopOutlined,
 } from "@ant-design/icons";
+import { BadgeProcessOrderCountDisplay } from "../features/pos/socket-io/BadgeProcessOrderCountDisplay";
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -24,7 +25,10 @@ export function PosShell({ children }: { children: React.ReactNode }) {
     const items1 = [
         {
             key: "/pos/orders-processing",
-            label: <Link href="/pos/orders-processing">Processing Orders</Link>,
+            label:
+                <BadgeProcessOrderCountDisplay>
+                    <Link href="/pos/orders-processing">Processing Orders</Link>
+                </BadgeProcessOrderCountDisplay>,
             style: { padding: 1 }
         },
         {

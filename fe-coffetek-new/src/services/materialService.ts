@@ -50,28 +50,5 @@ export const materialService = {
         return res.data;
     },
 
-    async getAdjustmentHistory(params: {
-        type: "import" | "consume";
-        date: Date;
-        materialId?: number;
-        page?: number;
-        size?: number;
-        orderBy?: string;
-        orderDirection?: "asc" | "desc";
-    }) {
-        const res = await api.get("/material/adjustment-history", {
-            params: {
-                ...params,
-                date: params.date.toISOString(),
-            },
-        });
-        return res.data;
-    },
 
-    async confirmAdjustmentHistory(date: Date, items: { materailId: number; realisticRemain: number }[]) {
-        const res = await api.put("/material/adjustment-history/confirm", { items }, {
-            params: { date: date.toISOString() },
-        });
-        return res.data;
-    },
 };

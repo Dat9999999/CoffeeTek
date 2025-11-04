@@ -12,7 +12,7 @@ import { GetAllDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class VoucherService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async exchangeVoucher(id: number, dto: ExchangeVoucherDTO) {
     await this.prisma.$transaction(async (tx) => {

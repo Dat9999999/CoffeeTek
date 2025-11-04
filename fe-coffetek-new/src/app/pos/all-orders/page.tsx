@@ -295,7 +295,6 @@ export default function OrderPosPage() {
                 onClose={() => setStatusRecord(null)}
                 onSuccess={handleSuccess}
             />
-            <NewOrderNotifier />
         </div>
     );
 }

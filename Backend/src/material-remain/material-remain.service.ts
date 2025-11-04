@@ -156,4 +156,26 @@ export class MaterialRemainService {
   remove(id: number) {
     return this.prisma.materialRemain.delete({ where: { id } });
   }
+
+
+  async findOneByMaterialId(materialId: number) {
+    // Tìm bản ghi mới nhất theo materialId
+    const remain = await this.prisma.materialRemain.findMany({
+      where: { materialId },
+      orderBy: { date: 'desc' },
+      include: {
+        Material: {
+          include: { Unit: true },
+        },
+      },
+    });
+
+    // Nếu không có -> có thể trả null hoặc throw NotFound
+    if (!remain) {
+      return null;
+      // hoặc: throw new NotFoundException(`No remain found for material ${materialId}`);
+    }
+
+    return remain;
+  }
 }

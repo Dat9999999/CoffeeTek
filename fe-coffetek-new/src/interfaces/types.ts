@@ -4,6 +4,27 @@ import { GenderEnum } from "@/enum";
 
 // Add these to types.ts
 
+export interface WastageLog {
+    id: number;
+    materialId: number;
+    quantity: number;
+    reason: string;
+    date: string; // ISO string
+    userId?: number | null;
+    Mateterial?: Material; // chú ý backend đang dùng "Mateterial" (viết sai chính tả)
+    User?: User | null;
+}
+
+
+export interface MaterialRemain {
+    id: number;
+    materialId: number;
+    remain: number;
+    date: string; // ISO string
+    Material: Material;
+}
+
+
 export enum OrderStatus {
     PENDING = 'pending',
     COMPLETED = 'completed',
@@ -125,6 +146,7 @@ export interface Material {
     remain: number;
     code: string;
     unit: Unit;
+    Unit: Unit;
 }
 
 export interface Topping {
@@ -215,13 +237,6 @@ export interface Product {
     toppings?: Topping[];
     images?: ProductImage[];
     category?: Category | null;
-}
-
-export interface PaginationMeta {
-    total: number;
-    page: number;
-    size: number;
-    totalPages: number;
 }
 
 /**

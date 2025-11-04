@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 
 import { useEffect, useState } from "react";
 import { DataTable } from "@/components/commons/table/DataTable";
@@ -10,7 +11,7 @@ import { CreateMaterialModal, ImportMaterialButton, DeleteManyMaterialsModal, De
 import { PageHeader } from "@/components/layouts";
 import { ExperimentOutlined } from "@ant-design/icons";
 
-export default function MaterialPage() {
+export default function InventoryPage() {
     const { tableState, setTableState } = useTableState();
     const [data, setData] = useState<Material[]>([]);
     const [total, setTotal] = useState(0);
@@ -59,17 +60,17 @@ export default function MaterialPage() {
 
     return (
         <>
-            <PageHeader icon={<ExperimentOutlined />} title="Material Management" />
+            <PageHeader icon={<ExperimentOutlined />} title="Material List" />
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) =>
                     setTableState({ ...tableState, search: value })
                 }
-                onAdd={() => setOpenAddModal(true)}
+                // onAdd={() => setOpenAddModal(true)}
                 addLabel="Add"
                 onDeleteMany={selectedRowKeys.length > 0 ? handleDeleteMany : undefined}
                 deleteManyLabel="Delete"
-                buttonRights={<ImportMaterialButton />}
+            // buttonRights={<ImportMaterialButton />}
             />
 
             <DataTable<Material>
@@ -86,10 +87,10 @@ export default function MaterialPage() {
                     { title: "Unit", dataIndex: ["unit", "name"] },
                 ]}
                 onDetail={(record) => setDetailRecord(record)}
-                onEdit={(record) => setEditRecord(record)}
-                onDelete={(record) => setDeleteRecord(record)}
-                onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
-                enableRowSelection={true}
+                // onEdit={(record) => setEditRecord(record)}
+                // onDelete={(record) => setDeleteRecord(record)}
+                // onRowSelectionChange={(selectedKeys) => setSelectedRowKeys(selectedKeys)}
+                enableRowSelection={false}
             />
 
             {/* CREATE */}

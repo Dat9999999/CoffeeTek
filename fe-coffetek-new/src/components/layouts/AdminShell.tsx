@@ -112,13 +112,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     icon: <ExperimentOutlined />,
                     label: <Link href="/admin/materials">Material</Link>,
                 },
-                {
-                    key: "/admin/materials/confirm-changes",
-                    icon: <FileSyncOutlined />,
-                    label: <Link href="/admin/materials/confirm-changes">
-                        Confirm Changes
-                    </Link>,
-                },
+                // {
+                //     key: "/admin/materials/confirm-changes",
+                //     icon: <FileSyncOutlined />,
+                //     label: <Link href="/admin/materials/confirm-changes">
+                //         Confirm Changes
+                //     </Link>,
+                // },
             ],
         },
     ];

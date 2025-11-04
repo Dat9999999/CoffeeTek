@@ -11,4 +11,5 @@ export * from "./materialService";
 export * from "./recipeService";
 export * from "./loyalLevelService";
 export * from "./reportService";
+export * from "./wastageLogService";
 

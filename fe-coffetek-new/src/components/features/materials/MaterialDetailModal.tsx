@@ -9,12 +9,12 @@ import { inventoryService } from "@/services/inventoryService";
 interface MaterialDetailModalProps {
     open: boolean;
     onClose: () => void;
-    record?: Material | null;
+    recordId?: number | null;
 }
 
 const PAGE_SIZE = 5;
 
-export function MaterialDetailModal({ open, onClose, record }: MaterialDetailModalProps) {
+export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailModalProps) {
     const [detail, setDetail] = useState<Material | null>(null);
     const [loading, setLoading] = useState(false);
     const { token } = theme.useToken();
@@ -25,24 +25,24 @@ export function MaterialDetailModal({ open, onClose, record }: MaterialDetailMod
 
     // Load material detail
     useEffect(() => {
-        if (open && record?.id) {
+        if (open && recordId) {
             setLoading(true);
             materialService
-                .getById(record.id)
+                .getById(recordId)
                 .then((res) => setDetail(res))
                 .catch(() => message.error("Failed to load material details"))
                 .finally(() => setLoading(false));
         } else {
             setDetail(null);
         }
-    }, [open, record]);
+    }, [open, recordId]);
 
     // Load inventory history
     useEffect(() => {
-        if (open && record?.id) {
+        if (open && recordId) {
             setHistoryLoading(true);
             inventoryService
-                .getByMaterialId(record.id)
+                .getByMaterialId(recordId)
                 .then((res) => {
                     setHistory(res);
                     setList(res.slice(0, PAGE_SIZE));
@@ -55,7 +55,7 @@ export function MaterialDetailModal({ open, onClose, record }: MaterialDetailMod
             setList([]);
             setPage(1);
         }
-    }, [open, record]);
+    }, [open, recordId]);
 
     const onLoadMore = () => {
         const nextPage = page + 1;

@@ -100,7 +100,7 @@ export default function MaterialPage() {
             />
 
             {/* DETAIL - static */}
-            <MaterialDetailModal open={!!detailRecord} record={detailRecord} onClose={() => setDetailRecord(null)} />
+            <MaterialDetailModal open={!!detailRecord} recordId={detailRecord?.id} onClose={() => setDetailRecord(null)} />
 
             {/* EDIT - static */}
             <EditMaterialModal open={!!editRecord} materialId={editRecord?.id} onClose={() => setEditRecord(null)} onSuccess={fetchData} />

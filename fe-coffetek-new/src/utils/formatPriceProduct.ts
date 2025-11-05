@@ -3,7 +3,6 @@ import {
     formatPrice,
     formatPriceRange,
     FormatPriceOptions,
-    globalCurrency,
     formatCompactPrice,
     formatCompactPriceRange,
 } from "@/utils/priceFormatter"; // tuỳ theo đường dẫn của bạn

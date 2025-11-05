@@ -6,9 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AvatarMenuPos } from "../commons";
 import { useDarkMode } from "@/components/providers";
-import {
-    ShopOutlined,
-} from "@ant-design/icons";
+
 import { BadgeProcessOrderCountDisplay } from "../features/pos/socket-io/BadgeProcessOrderCountDisplay";
 
 const { Title } = Typography;
@@ -17,7 +15,7 @@ const { Header, Content } = Layout;
 export function PosShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const {
-        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG, colorBorderBg, colorPrimaryBorder, colorBgBase },
+        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG, colorBgBase },
     } = theme.useToken();
     const { mode } = useDarkMode();
 

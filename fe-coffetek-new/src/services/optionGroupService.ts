@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { OptionGroup } from "@/interfaces";
+
 
 export const optionGroupService = {
     async getAll(params?: { page?: number; size?: number; search?: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {

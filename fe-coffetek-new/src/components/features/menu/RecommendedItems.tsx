@@ -1,6 +1,6 @@
 "use client";
 
-import MenuItemCard from "./MenuItemCard";
+// import MenuItemCard from "./MenuItemCard";
 import { menuItems } from "@/lib/menuData";
 
 export default function RecommendedItems({ currentItemId }: any) {
@@ -8,11 +8,11 @@ export default function RecommendedItems({ currentItemId }: any) {
 
   return (
     <div className="mt-12">
-      <h2 className="text-xl font-semibold mb-6">Recommended products</h2>
+      <h2 className="text-xl font-semibold mb-6">Recommended products ///// error fix here //// </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {recommended.map((item) => (
+        {/* {recommended.map((item) => (
           <MenuItemCard key={item.id} {...item} />
-        ))}
+        ))} */}
       </div>
     </div>
   );

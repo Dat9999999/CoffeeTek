@@ -1,4 +1,3 @@
-import { OptionValue } from "./OptionValue";
 import { OptionGroup } from "./types";
 
 

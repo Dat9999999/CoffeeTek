@@ -130,7 +130,7 @@ export const ProfitChart: React.FC = () => {
 
     useEffect(() => {
         fetchData(year);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [year]);
 
     const years = Array.from({ length: 6 }, (_, i) => currentYear - i);

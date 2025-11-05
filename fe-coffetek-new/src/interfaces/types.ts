@@ -1,5 +1,5 @@
 // this is front-end file: types.ts
-import type { UploadFile } from "antd";
+
 import { GenderEnum } from "@/enum";
 
 // Add these to types.ts

@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import type { User, UserDetail } from "@/interfaces";
+import type { User } from "@/interfaces";
 import type { GenderEnum } from "@/enum";
 
 /**

@@ -80,6 +80,7 @@ export function EditRecipe({
                                 remain: mr.Material.remain,
                                 code: mr.Material.code,
                                 unit: mr.Material.Unit,
+                                Unit: mr.Material.Unit,
                             },
                             consume: [],
                         });

@@ -1,4 +1,4 @@
-import { Material, Product, Size, Unit } from "@/interfaces";
+import { Material, Size, Unit } from "@/interfaces";
 import api from "@/lib/api";
 
 

@@ -20,7 +20,7 @@ export default function MyVouchersPage() {
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
-        const data = await voucherService.getAll(1, 10)
+        const data = await voucherService.getAll({ size: 1, page: 10 });
         setVouchers(data)
       } catch (err) {
         console.error("Error fetching vouchers:", err)

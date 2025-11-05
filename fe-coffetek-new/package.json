@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+      "lint": "eslint . --ext .ts,.tsx --no-cache",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.6",

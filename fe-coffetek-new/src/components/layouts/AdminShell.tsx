@@ -17,7 +17,7 @@ import {
     IdcardOutlined,
     SolutionOutlined,
     ReconciliationOutlined,
-    FileSyncOutlined,
+    AuditOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import Link from "next/link";
@@ -112,13 +112,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     icon: <ExperimentOutlined />,
                     label: <Link href="/admin/materials">Material</Link>,
                 },
-                // {
-                //     key: "/admin/materials/confirm-changes",
-                //     icon: <FileSyncOutlined />,
-                //     label: <Link href="/admin/materials/confirm-changes">
-                //         Confirm Changes
-                //     </Link>,
-                // },
+                {
+                    key: "/admin/inventory-checking",
+                    icon: <AuditOutlined />,
+                    label: <Link href="/admin/inventory-checking">Inventory Checking</Link>,
+                },
             ],
         },
     ];

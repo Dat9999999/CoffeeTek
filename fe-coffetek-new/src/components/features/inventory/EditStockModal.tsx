@@ -3,7 +3,7 @@
 import { Modal, Form, InputNumber, Typography, Space, theme } from "antd";
 import { useEffect } from "react";
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined } from "@ant-design/icons";
-import type { ExtendedRecord } from "./page";
+import type { ExtendedRecord } from "./InventoryCheckingComponent";
 
 interface EditStockModalProps {
     open: boolean;

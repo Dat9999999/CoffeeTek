@@ -29,5 +29,14 @@ export const inventoryService = {
         });
         return res.data;
     },
+
+    async create(data: { date: Date; remainReality: { materialId: number; remain: number }[] }) {
+        const res = await api.post(`/material-remain`, {
+            date: data.date.toISOString(),
+            remainReality: data.remainReality,
+        });
+        return res.data;
+    },
+
 };
 

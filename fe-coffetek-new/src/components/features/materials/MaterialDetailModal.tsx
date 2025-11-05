@@ -98,7 +98,7 @@ export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailM
                             itemLayout="horizontal"
                             dataSource={list}
                             loadMore={loadMore}
-                            renderItem={(item) => {
+                            renderItem={(item, index) => {
                                 const itemDate = new Date(item.date);
                                 const now = new Date();
 
@@ -107,13 +107,16 @@ export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailM
                                     itemDate.getMonth() === now.getMonth() &&
                                     itemDate.getDate() === now.getDate();
 
+                                // chỉ phần tử đầu tiên và là ngày hôm nay
+                                const isFirstToday = index === 0 && isToday;
+
                                 return (
                                     <List.Item>
                                         <List.Item.Meta
                                             title={
                                                 <>
                                                     Date:{" "}
-                                                    {isToday ? (
+                                                    {isFirstToday ? (
                                                         <>
                                                             {itemDate.toLocaleString()}{" "}
                                                             <span style={{ color: token.colorTextSecondary }}>
@@ -130,6 +133,7 @@ export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailM
                                     </List.Item>
                                 );
                             }}
+
                         />
                     ) : (
                         <p>No inventory history</p>

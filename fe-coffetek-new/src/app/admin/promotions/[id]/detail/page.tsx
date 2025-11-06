@@ -11,6 +11,7 @@ import {
     Card,
     Row,
     Col,
+    Spin,
 } from "antd";
 import { promotionService } from "@/services/promotionService";
 import { Product, Size } from "@/interfaces";
@@ -34,7 +35,9 @@ export default function PromotionDetailPage() {
 
     const [promotion, setPromotion] = useState<any>(null); // Use any to match API response structure
     const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-    const [productNewPrices, setProductNewPrices] = useState<Record<string, number>>({});
+    const [productNewPrices, setProductNewPrices] = useState<
+        Record<string, number>
+    >({});
 
     useEffect(() => {
         const fetchPromotion = async () => {
@@ -49,9 +52,14 @@ export default function PromotionDetailPage() {
                     const product = pp.Product;
                     productsMap.set(product.id, product);
 
-                    // Assume productSizedId may be present; fallback to null
-                    const psId = pp.productSizedId ?? null;
-                    const key = psId ? `${product.id}-${psId}` : `${product.id}-default`;
+                    const psId = pp.productSizeId ?? null;
+
+                    // ✅ Sửa lỗi key: Dùng pp.productId (từ gốc) thay vì product.id (từ lồng ghép)
+                    // để đảm bảo tính nhất quán
+                    const key = psId
+                        ? `${pp.productId}-${psId}`
+                        : `${pp.productId}-default`;
+
                     newPrices[key] = pp.new_price;
                 });
 
@@ -67,16 +75,30 @@ export default function PromotionDetailPage() {
     }, [id, router]);
 
     if (!promotion) {
-        return <div>Loading...</div>;
+        return (
+            <div className="flex justify-center items-center min-h-[300px]">
+                <Spin size="large" />
+            </div>
+        );
     }
 
-    const allSizes = new Set<string>();
+    const allSizesMap = new Map<string, Size>();
     selectedProducts.forEach((p) => {
         if (p.is_multi_size && !p.isTopping && p.sizes) {
-            p.sizes.forEach((ps) => allSizes.add(ps.size.name));
+            p.sizes.forEach((ps) => {
+                // Dùng Map để lưu object Size duy nhất (dựa vào tên)
+                if (!allSizesMap.has(ps.size.name)) {
+                    allSizesMap.set(ps.size.name, ps.size);
+                }
+            });
         }
     });
-    const sortedSizes = Array.from(allSizes).sort();
+
+    // Sắp xếp mảng các object Size dựa trên sort_index, sau đó lấy tên
+    const sortedSizes = Array.from(allSizesMap.values())
+        .sort((a, b) => a.sort_index - b.sort_index)
+        .map((size) => size.name);
+
     const hasMultiSize = selectedProducts.some(
         (p) => p.is_multi_size && !p.isTopping && p.sizes && p.sizes.length > 0
     );
@@ -90,6 +112,7 @@ export default function PromotionDetailPage() {
                 render: (record: Product) => {
                     if (!record.is_multi_size || record.isTopping) {
                         if (i === 0) {
+                            // ✅ Key cho sản phẩm 1 size (dùng record.id)
                             const key = `${record.id}-default`;
                             const oldPrice = record.price ?? 0;
                             const newPrice = productNewPrices[key] ?? oldPrice;
@@ -107,10 +130,14 @@ export default function PromotionDetailPage() {
                                                 {formatPrice(oldPrice, { includeSymbol: true })}
                                             </Text>
                                         )}
-                                        <span>{formatPrice(newPrice, { includeSymbol: true })}</span>
+                                        <span>
+                                            {formatPrice(newPrice, { includeSymbol: true })}
+                                        </span>
                                         {isChanged && (
                                             <Space size={4}>
-                                                <ArrowDownOutlined style={{ color: token.colorSuccess }} />
+                                                <ArrowDownOutlined
+                                                    style={{ color: token.colorSuccess }}
+                                                />
                                                 <Text type="success">{percentChange}%</Text>
                                             </Space>
                                         )}
@@ -124,11 +151,14 @@ export default function PromotionDetailPage() {
                     }
 
                     const ps = record.sizes?.find((s) => s.size.name === sizeName);
+                    // ✅ Key cho sản phẩm nhiều size (dùng record.id và productSize.id)
                     const key = ps ? `${record.id}-${ps.id}` : `${record.id}-default`;
                     const oldPrice = ps?.price ?? record.price ?? 0;
                     const newPrice = productNewPrices[key] ?? oldPrice;
                     const percentChange =
-                        oldPrice === 0 ? "0.00" : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
+                        oldPrice === 0
+                            ? "0.00"
+                            : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
                     const isChanged = newPrice < oldPrice;
 
                     return (
@@ -158,11 +188,17 @@ export default function PromotionDetailPage() {
                 const oldPrice = record.price ?? 0;
                 const newPrice = productNewPrices[key] ?? oldPrice;
                 const percentChange =
-                    oldPrice === 0 ? "0.00" : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
+                    oldPrice === 0
+                        ? "0.00"
+                        : ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
                 const isChanged = newPrice < oldPrice;
                 return (
                     <Space>
-                        {isChanged && <Text delete>{formatPrice(oldPrice, { includeSymbol: true })}</Text>}
+                        {isChanged && (
+                            <Text delete>
+                                {formatPrice(oldPrice, { includeSymbol: true })}
+                            </Text>
+                        )}
                         <span>{formatPrice(newPrice, { includeSymbol: true })}</span>
                         {isChanged && (
                             <Space size={4}>
@@ -184,8 +220,13 @@ export default function PromotionDetailPage() {
                 const imageSrc = record?.images?.[0]?.image_name || "/placeholder.png";
                 return (
                     <Space size={"middle"}>
-
-                        <AppImageSize preview={false} src={imageSrc} alt={record.name} width={40} height={40} />
+                        <AppImageSize
+                            preview={false}
+                            src={imageSrc}
+                            alt={record.name}
+                            width={40}
+                            height={40}
+                        />
                         <span>{record.name}</span>
                     </Space>
                 );
@@ -197,7 +238,12 @@ export default function PromotionDetailPage() {
     return (
         <div style={{ minHeight: "100vh" }}>
             {/* Header */}
-            <Flex align="center" justify="space-between" wrap style={{ marginBottom: 24 }}>
+            <Flex
+                align="center"
+                justify="space-between"
+                wrap
+                style={{ marginBottom: 24 }}
+            >
                 <Space align="center" wrap>
                     <Button
                         icon={<ArrowLeftOutlined />}
@@ -212,7 +258,11 @@ export default function PromotionDetailPage() {
 
             {/* Content */}
             <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-                <Card title="Promotion Details" bordered={false} style={{ marginBottom: 32 }}>
+                <Card
+                    title="Promotion Details"
+                    bordered={false}
+                    style={{ marginBottom: 32 }}
+                >
                     <Row gutter={[16, 16]}>
                         <Col xs={24} sm={12}>
                             <Text strong>Promotion Name</Text>

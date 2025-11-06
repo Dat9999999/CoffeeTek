@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
 import { MaterialLossService } from './material-loss.service';
 import { CreateMaterialLossDto } from './dto/create-material-loss.dto';
 import { UpdateMaterialLossDto } from './dto/update-material-loss.dto';
+import { GetAllDto } from 'src/common/dto/pagination.dto';
+import { GetAllMaterialLossDto } from './dto/get-all-material-loss.dto';
 
 @Controller('material-loss')
 export class MaterialLossController {
@@ -13,8 +15,8 @@ export class MaterialLossController {
   }
 
   @Get()
-  findAll() {
-    return this.materialLossService.findAll();
+  findAll(@Query() paginationDto: GetAllMaterialLossDto) {
+    return this.materialLossService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -30,5 +32,10 @@ export class MaterialLossController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.materialLossService.remove(+id);
+  }
+
+  @Delete()
+  removeMany(@Body() body: { ids: number[] }) {
+    return this.materialLossService.removeMany(body.ids);
   }
 }

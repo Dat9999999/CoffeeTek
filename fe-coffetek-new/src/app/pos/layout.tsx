@@ -6,6 +6,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntConfigProvider, DarkModeProvider } from '@/components/providers';
 import { AdminShell, PosShell } from '@/components/layouts';
 import { SuspenseWrapper } from '@/components/commons';
+import { GlobalNotifiers } from '@/components/listeners';
 
 export default function PosLayout({ children }: { children: ReactNode }) {
     return (
@@ -15,6 +16,7 @@ export default function PosLayout({ children }: { children: ReactNode }) {
 
                     <PosShell>
                         <SuspenseWrapper>
+                            <GlobalNotifiers />
                             {children}
                         </SuspenseWrapper>
                     </PosShell>

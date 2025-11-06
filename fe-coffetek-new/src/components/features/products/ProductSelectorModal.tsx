@@ -149,6 +149,7 @@ export function ProductSelectorModal({
       onOk={handleConfirm}
       okText="Confirm"
       cancelText="Cancel"
+      getContainer={false}
       destroyOnClose
     >
       <Flex gap={16} wrap style={{ marginBottom: 16 }}>

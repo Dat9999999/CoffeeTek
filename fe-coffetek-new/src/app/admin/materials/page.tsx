@@ -7,6 +7,8 @@ import { materialService } from "@/services/materialService";
 import type { Material } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import { CreateMaterialModal, ImportMaterialButton, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
+import { PageHeader } from "@/components/layouts";
+import { ExperimentOutlined } from "@ant-design/icons";
 
 export default function MaterialPage() {
     const { tableState, setTableState } = useTableState();
@@ -57,8 +59,7 @@ export default function MaterialPage() {
 
     return (
         <>
-            <h1>Material Management</h1>
-
+            <PageHeader icon={<ExperimentOutlined />} title="Material Management" />
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) =>
@@ -80,7 +81,7 @@ export default function MaterialPage() {
                 columns={[
                     { title: "ID", dataIndex: "id", sorter: true },
                     { title: "Name", dataIndex: "name", sorter: true },
-                    { title: "Remain", dataIndex: "remain", sorter: true },
+                    { title: "System quantity", dataIndex: "remain", sorter: false, render: (value: any) => (value ?? "N/A") },
                     { title: "Code", dataIndex: "code", sorter: true },
                     { title: "Unit", dataIndex: ["unit", "name"] },
                 ]}
@@ -99,7 +100,7 @@ export default function MaterialPage() {
             />
 
             {/* DETAIL - static */}
-            <MaterialDetailModal open={!!detailRecord} record={detailRecord} onClose={() => setDetailRecord(null)} />
+            <MaterialDetailModal open={!!detailRecord} recordId={detailRecord?.id} onClose={() => setDetailRecord(null)} />
 
             {/* EDIT - static */}
             <EditMaterialModal open={!!editRecord} materialId={editRecord?.id} onClose={() => setEditRecord(null)} onSuccess={fetchData} />

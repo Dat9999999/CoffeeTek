@@ -97,7 +97,7 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
             }
 
             // ✅ Thêm voucher vào danh sách nếu chưa có
-            let updatedVouchers = selectedCustomer?.Voucher ? [...selectedCustomer.Voucher] : [];
+            const updatedVouchers = selectedCustomer?.Voucher ? [...selectedCustomer.Voucher] : [];
             if (!updatedVouchers.some(v => v.id === voucher.id)) {
                 updatedVouchers.push(voucher);
             }

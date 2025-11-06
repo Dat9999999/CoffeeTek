@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Modal, Form, Input, InputNumber, message } from "antd";
 import { loyalLevelService } from "@/services/loyalLevelService";
-import type { LoyalLevel } from "@/services/loyalLevelService";
+import { LoyalLevel } from "@/interfaces";
 
 interface CreateLoyalLevelModalProps {
     open: boolean;

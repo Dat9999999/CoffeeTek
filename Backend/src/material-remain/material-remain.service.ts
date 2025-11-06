@@ -22,8 +22,10 @@ export class MaterialRemainService {
     // Ngày hôm sau của ngày hôm trước (Date End của kỳ trước)
     const lastDateEnd = new Date(lastDateStart);
     lastDateEnd.setUTCDate(lastDateEnd.getUTCDate() + 1);
-    const materials = await this.prisma.material.findMany();
-    let res: { record: number; materialId: number }[] = []
+
+
+    const materials = await this.prisma.material.findMany({ include: { Unit: true }, });
+    let res: { record: number; materialId: number, materialName: string, materialUnit: string, lastRemainQuantity: number }[] = []
 
     for (const materialRemain of materials) {
       const materialId = materialRemain.id;
@@ -94,14 +96,30 @@ export class MaterialRemainService {
           record: lastRemainQuantity + importQuantity - (totalConsume + loss),
           materialId: materialId
         }
-        res.push(systemrecord)
+        // res.push(systemrecord)
+
+        res.push({
+          record: lastRemainQuantity + importQuantity - (totalConsume + loss),
+          materialId: materialId,
+          materialName: materialRemain.name,
+          materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
+          lastRemainQuantity: lastRemainQuantity,
+        });
 
       } else {
         const systemrecord = {
           record: lastRemain.remain + importMaterial.importQuantity - (totalConsume + loss),
           materialId: materialId
         }
-        res.push(systemrecord)
+        // res.push(systemrecord)
+
+        res.push({
+          record: lastRemain.remain + importMaterial.importQuantity - (totalConsume + loss),
+          materialId: materialId,
+          materialName: materialRemain.name,
+          materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
+          lastRemainQuantity: lastRemain.remain,
+        });
       }
     }
 
@@ -155,5 +173,27 @@ export class MaterialRemainService {
 
   remove(id: number) {
     return this.prisma.materialRemain.delete({ where: { id } });
+  }
+
+
+  async findOneByMaterialId(materialId: number) {
+    // Tìm bản ghi mới nhất theo materialId
+    const remain = await this.prisma.materialRemain.findMany({
+      where: { materialId },
+      orderBy: { date: 'desc' },
+      include: {
+        Material: {
+          include: { Unit: true },
+        },
+      },
+    });
+
+    // Nếu không có -> có thể trả null hoặc throw NotFound
+    if (!remain) {
+      return null;
+      // hoặc: throw new NotFoundException(`No remain found for material ${materialId}`);
+    }
+
+    return remain;
   }
 }

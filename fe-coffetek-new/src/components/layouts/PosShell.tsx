@@ -6,9 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AvatarMenuPos } from "../commons";
 import { useDarkMode } from "@/components/providers";
-import {
-    ShopOutlined,
-} from "@ant-design/icons";
+
+import { BadgeProcessOrderCountDisplay } from "../features/pos/socket-io/BadgeProcessOrderCountDisplay";
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -16,15 +15,17 @@ const { Header, Content } = Layout;
 export function PosShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const {
-        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG, colorBorderBg, colorPrimaryBorder, colorBgBase },
+        token: { colorBgContainer, colorPrimary, colorBorderSecondary, borderRadiusLG, colorBgBase },
     } = theme.useToken();
     const { mode } = useDarkMode();
 
-    // ✅ Dùng <Link> thật để hỗ trợ middle click / Ctrl+click
     const items1 = [
         {
             key: "/pos/orders-processing",
-            label: <Link href="/pos/orders-processing">Processing Orders</Link>,
+            label:
+                <BadgeProcessOrderCountDisplay>
+                    <Link href="/pos/orders-processing">Processing Orders</Link>
+                </BadgeProcessOrderCountDisplay>,
             style: { padding: 1 }
         },
         {
@@ -32,6 +33,10 @@ export function PosShell({ children }: { children: React.ReactNode }) {
             label: <Link href="/pos/all-orders">All Orders</Link>,
             style: { padding: 1 }
 
+        },
+        {
+            key: "/pos/inventory",
+            label: <Link href="/pos/inventory">Inventory</Link>,
         },
     ];
 
@@ -51,7 +56,7 @@ export function PosShell({ children }: { children: React.ReactNode }) {
                 }}
             >
                 {/* 👇 Nhóm Title + Menu chung 1 cụm */}
-                <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <Title
                         level={2}
                         style={{
@@ -64,7 +69,6 @@ export function PosShell({ children }: { children: React.ReactNode }) {
                     >
                         <Space>
                             <Link href="/pos" style={{ color: colorPrimary, textDecoration: "none" }}>
-                                <ShopOutlined />
                                 <span>POS</span>
                             </Link>
                         </Space>
@@ -75,7 +79,7 @@ export function PosShell({ children }: { children: React.ReactNode }) {
                         className="custom-menu"
                         theme={mode}
                         mode="horizontal"
-                        selectedKeys={[pathname]}
+                        selectedKeys={[items1.find(item => pathname.startsWith(item.key))?.key || ""]}
                         items={items1}
                         style={{ flex: 1, minWidth: 0 }}
                     />

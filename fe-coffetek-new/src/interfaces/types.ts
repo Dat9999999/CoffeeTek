@@ -1,8 +1,29 @@
-// types.ts
-import type { UploadFile } from "antd";
+// this is front-end file: types.ts
+
 import { GenderEnum } from "@/enum";
 
 // Add these to types.ts
+
+export interface WastageLog {
+    id: number;
+    materialId: number;
+    quantity: number;
+    reason: string;
+    date: string; // ISO string
+    userId?: number | null;
+    Mateterial?: Material; // chú ý backend đang dùng "Mateterial" (viết sai chính tả)
+    User?: User | null;
+}
+
+
+export interface MaterialRemain {
+    id: number;
+    materialId: number;
+    remain: number;
+    date: string; // ISO string
+    Material: Material;
+}
+
 
 export enum OrderStatus {
     PENDING = 'pending',
@@ -74,15 +95,19 @@ export interface Promotion {
     description: string;
     start_date: string;
     end_date: string;
-    items?: PromotionItem[];
+    is_active: boolean;
+    ProductPromotion?: ProductPromotionItem[];
 }
 
-// Define PromotionItem interface based on PromotionItemDto
-export interface PromotionItem {
+export interface ProductPromotionItem {
+    id: number;
     productId: number;
-    newPrice: number;
-    productSizedId: number | null; // Nullable to accommodate is_multi_size=false hoặc isTopping=true products
+    promotionId: number;
+    new_price: number;
+    productSizeId: number | null;
+    Product: Product;
 }
+
 
 export interface Voucher {
     id: number; // ID của voucher, optional vì có thể không có khi tạo mới
@@ -121,6 +146,7 @@ export interface Material {
     remain: number;
     code: string;
     unit: Unit;
+    Unit: Unit;
 }
 
 export interface Topping {
@@ -211,4 +237,22 @@ export interface Product {
     toppings?: Topping[];
     images?: ProductImage[];
     category?: Category | null;
+}
+
+/**
+ * @description Metadata cho các API trả về có phân trang
+ */
+export interface PaginationMeta {
+    total: number;
+    page: number;
+    size: number;
+    totalPages: number;
+}
+
+/**
+ * @description Kiểu trả về chung cho các API get-all (có phân trang)
+ */
+export interface PaginatedResponse<T> {
+    data: T[];
+    meta: PaginationMeta;
 }

@@ -17,7 +17,7 @@ import {
     IdcardOutlined,
     SolutionOutlined,
     ReconciliationOutlined,
-    FileSyncOutlined,
+    AuditOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import Link from "next/link";
@@ -113,11 +113,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     label: <Link href="/admin/materials">Material</Link>,
                 },
                 {
-                    key: "/admin/materials/confirm-changes",
-                    icon: <FileSyncOutlined />,
-                    label: <Link href="/admin/materials/confirm-changes">
-                        Confirm Changes
-                    </Link>,
+                    key: "/admin/inventory-checking",
+                    icon: <AuditOutlined />,
+                    label: <Link href="/admin/inventory-checking">Inventory Checking</Link>,
                 },
             ],
         },
@@ -129,7 +127,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const selectedKey = allKeys.find((k) => pathname.startsWith(k)) ?? "";
 
     return (
-        <Layout>
+        <Layout >
             <Sider
                 theme={mode}
                 collapsed={collapsed}
@@ -140,8 +138,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 style={{
                     position: typeof window !== "undefined" && window.innerWidth < 992 ? "fixed" : "relative",
                     zIndex: 1000,
-                    height: "100%",
+                    minHeight: "100%",
                     transition: "all 0.1s",
+                    background: colorBgBase
                 }}
             >
                 {/* Header của sidebar */}

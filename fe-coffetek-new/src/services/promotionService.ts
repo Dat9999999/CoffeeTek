@@ -1,26 +1,29 @@
-import { PromotionItem } from "@/interfaces"
-import api from "@/lib/api"
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://coffeetek-production.up.railway.app/api"
+import api from "@/lib/api"; // Using axios for API calls
 
 // Define CreatePromotion interface based on CreatePromotionDto
 interface CreatePromotion {
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  items: PromotionItem[]
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  items: PromotionItemDto[];
 }
+
+// Define PromotionItemDto interface to create/update promotion
+export interface PromotionItemDto {
+  productId: number;
+  newPrice: number;
+  productSizedId: number | null; // Nullable to accommodate is_multi_size=false hoặc isTopping=true products
+}
+
 
 // Define UpdatePromotion interface based on UpdatePromotionDto (partial fields)
 interface UpdatePromotion {
-  name?: string
-  description?: string
-  startDate?: string
-  endDate?: string
-  items?: PromotionItem[]
+  name?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  items?: PromotionItemDto[];
 }
 
 export const promotionService = {
@@ -60,9 +63,14 @@ export const promotionService = {
     return res.data
   },
 
-  // ✅ Xóa nhiều khuyến mãi
   async deleteMany(ids: number[]) {
-    const res = await api.delete("/promotion", { data: { ids } })
-    return res.data
+    const res = await api.delete("/promotion", { data: { ids } });
+    return res.data;
   },
-}
+
+  /** ✅ Toggle active state of a promotion */
+  async toggleActive(id: number, isActive: boolean) {
+    const res = await api.patch(`/promotion/${id}/active`, { isActive });
+    return res.data;
+  },
+};

@@ -109,4 +109,8 @@ export const orderService = {
         const res = await api.get(`/order/invoice/${orderId}`);
         return res.data;
     },
+    async getProcessOrderCount() {
+        const res = await api.get(`/order/process-count`);
+        return res.data;
+    },
 };

@@ -191,7 +191,12 @@ export class MaterialService {
       // Kiểm tra xem có material nào có code === searchName không
       const exactMatch = await this.prisma.material.findFirst({
         where: { code: searchName },
-        include: { Unit: true, materialRemain: true },
+        include: {
+          Unit: true, materialRemain: {
+            orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
+            take: 1, // chỉ lấy 1 bản ghi
+          },
+        },
       });
 
       if (exactMatch) {
@@ -207,7 +212,13 @@ export class MaterialService {
             where: {
               name: { contains: searchName, mode: 'insensitive' },
             },
-            include: { Unit: true, materialRemain: true },
+            include: {
+              Unit: true,
+              materialRemain: {
+                orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
+                take: 1, // chỉ lấy 1 bản ghi
+              },
+            },
             orderBy: { [orderBy]: orderDirection },
           }),
           this.prisma.material.count({
@@ -221,7 +232,13 @@ export class MaterialService {
         this.prisma.material.findMany({
           skip,
           take: size,
-          include: { Unit: true, materialRemain: true },
+          include: {
+            Unit: true,
+            materialRemain: {
+              orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
+              take: 1, // chỉ lấy 1 bản ghi
+            },
+          },
           orderBy: { [orderBy]: orderDirection },
         }),
         this.prisma.material.count(),
@@ -231,10 +248,9 @@ export class MaterialService {
     const data = materials.map((m) => ({
       id: m.id,
       name: m.name,
-      remain: m.remain,
+      remain: m.materialRemain.length > 0 ? m.materialRemain[0].remain : null,
       code: m.code,
       unit: m.Unit,
-      materialRemain: m.materialRemain
     }));
 
     const res: ResponseGetAllDto<any> = {
@@ -253,16 +269,24 @@ export class MaterialService {
 
   async findOne(id: number) {
     const m = await this.prisma.material.findUnique({
-      where: { id: id },
-      include: { Unit: true },
+      where: { id },
+      include: {
+        Unit: true,
+        materialRemain: {
+          orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
+          take: 1, // chỉ lấy 1 bản ghi
+        },
+      },
     });
-    if (!m) throw new NotFoundException(`Not found order id ${id}`);
+
+    if (!m) throw new NotFoundException(`Not found material id ${id}`);
+
     return {
       id: m.id,
       name: m.name,
-      // remain: m.remain,s
       code: m.code,
       unit: m.Unit,
+      remain: m.materialRemain.length > 0 ? m.materialRemain[0].remain : null,
     };
   }
 

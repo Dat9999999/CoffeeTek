@@ -26,6 +26,10 @@ export class MaterialRemainController {
   findOne(@Param('id') id: string) {
     return this.materialRemainService.findOne(+id);
   }
+  @Get('/materials/:id')
+  findOneByMaterialId(@Param('id') id: string) {
+    return this.materialRemainService.findOneByMaterialId(+id);
+  }
 
   @Put(':id')
   update(@Param('id') id: string, @Body() updateMaterialRemainDto: UpdateMaterialRemainDto) {

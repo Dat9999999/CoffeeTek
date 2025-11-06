@@ -1,9 +1,10 @@
 
+import { PosProduct } from "@/services";
 import { OptionGroup, OptionValue, Product, Size, Topping } from "./types";
 
 export interface ProductPosItem {
     posItemId: string;
-    product: Product;
+    product: PosProduct;
     toppings?: {
         topping: Topping;
         toppingQuantity: number;

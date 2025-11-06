@@ -1,4 +1,4 @@
-import { Voucher } from "@/interfaces"
+
 import api from "@/lib/api"
 
 const BASE_URL =

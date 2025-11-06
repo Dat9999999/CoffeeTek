@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+      "lint": "eslint . --ext .ts,.tsx --no-cache",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.6.6",
     "@ant-design/icons": "^6.1.0",
     "@ant-design/nextjs-registry": "^1.1.0",
+    "@ant-design/plots": "^2.6.6",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -54,6 +57,7 @@
     "react-social-icons": "^6.25.0",
     "recharts": "2.15.4",
     "root": "git+https://github.com/tanstack/react-query.git",
+    "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
     "sooner": "^1.1.4",
     "swiper": "^12.0.2",

@@ -6,4 +6,5 @@ export * from "./DeleteManyMaterialsModal";
 export * from "./MaterialSearchSelector";
 export * from "./ImportMaterialButton";
 export * from "./MaterialListSelector";
+export * from "./MaterialSearchSelectorV2";
 

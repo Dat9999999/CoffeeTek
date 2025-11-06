@@ -1,4 +1,4 @@
-import { Size } from "@/interfaces";
+
 import api from "@/lib/api"
 // using axios for API calls
 

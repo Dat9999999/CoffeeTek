@@ -1,7 +1,5 @@
 import React from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { SocialIcon } from 'react-social-icons'
+
 import { Flex, Typography } from 'antd';
 
 const { Title } = Typography;

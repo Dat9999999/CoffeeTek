@@ -163,10 +163,14 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     // ✅ Update change when cashReceived changes
     useEffect(() => {
         if (paymentMethod === "cash") {
-            const newChange =
+            let newChange =
                 cashReceived && cashReceived > totalPayment
                     ? cashReceived - totalPayment
                     : 0;
+
+            // ✅ Làm tròn xuống hàng nghìn
+            newChange = Math.floor(newChange / 1000) * 1000;
+
             setPayment((prev) => ({ ...prev, change: newChange }));
         }
     }, [cashReceived, totalPayment, paymentMethod]);
@@ -284,9 +288,14 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     </Flex>
                     <Flex align="center" gap={4} style={{ flex: '0 1 auto', overflow: 'hidden' }}>
                         <div style={{ maxWidth: '250px', overflow: 'hidden' }}>
-                            <Text ellipsis={{
-                                tooltip: true,
-                            }} style={{ minWidth: 0 }}>
+                            <Text
+                                ellipsis={{
+                                    tooltip: true,
+                                }}
+                                style={{
+                                    minWidth: 0
+                                }}
+                            >
                                 {note || "Add note"}
                             </Text>
                         </div>

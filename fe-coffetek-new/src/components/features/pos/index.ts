@@ -8,4 +8,6 @@ export * from "./ProductPosItemModal";
 export * from "./UserSearchSelector";
 export * from "./UserOptionItem";
 export * from "./OrderBenefitsDrawer";
+export * from "./socket-io/ProcessOrderCountDisplay";
+
 

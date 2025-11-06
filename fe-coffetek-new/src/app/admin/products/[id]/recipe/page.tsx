@@ -100,6 +100,7 @@ export default function UpdateRecipePage() {
                                     code: mr.Material.code || "",
                                     remain: mr.Material.remain || 0,
                                     unit: mr.Material.Unit || { id: 0, name: "", symbol: "", class: "" },
+                                    Unit: mr.Material.Unit || { id: 0, name: "", symbol: "", class: "" },
                                 },
                                 consume: [],
                             });

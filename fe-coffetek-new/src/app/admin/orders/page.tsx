@@ -280,7 +280,7 @@ export default function OrderPage() {
                     <OrderTableActions
                         record={record}
                         onDetail={() => router.push(`/admin/orders/${record.id}/detail`)}
-                        onEdit={(record: Order) => router.push(`/admin/orders/${record.id}/edit`)}
+                        // onEdit={(record: Order) => router.push(`/admin/orders/${record.id}/edit`)}
                         onDelete={setDeleteRecord}
                         onChangeStatus={setStatusRecord}
                     />

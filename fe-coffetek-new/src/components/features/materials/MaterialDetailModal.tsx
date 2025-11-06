@@ -115,7 +115,7 @@ export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailM
                                         <List.Item.Meta
                                             title={
                                                 <>
-                                                    Date:{" "}
+                                                    Recorded at:{" "}
                                                     {isFirstToday ? (
                                                         <>
                                                             {itemDate.toLocaleString()}{" "}
@@ -124,7 +124,7 @@ export function MaterialDetailModal({ open, onClose, recordId }: MaterialDetailM
                                                             </span>
                                                         </>
                                                     ) : (
-                                                        itemDate.toLocaleDateString()
+                                                        itemDate.toLocaleString()
                                                     )}
                                                 </>
                                             }

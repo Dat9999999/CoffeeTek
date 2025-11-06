@@ -57,7 +57,7 @@ export default function PromotionList({
             <Image
               src={promo.imageUrl || "/placeholder.png"}
               alt={promo.name}
-              width={400}
+              width={220}
               height={220}
               className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />

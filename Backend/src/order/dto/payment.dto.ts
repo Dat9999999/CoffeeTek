@@ -11,6 +11,9 @@ export class PaymentDTO {
     amount: number;
 
     @IsOptional()
+    voucherCode: string
+
+    @IsOptional()
     @Type(() => Number)
     change: number;
 }

@@ -11,6 +11,7 @@ interface AppImageSizeProps {
     style?: React.CSSProperties;
     height?: number | string;
     width?: number | string;
+    className?: string;
 }
 
 export const AppImageSize: React.FC<AppImageSizeProps> = ({
@@ -21,6 +22,7 @@ export const AppImageSize: React.FC<AppImageSizeProps> = ({
     style,
     height = 200,
     width = "100%",
+    className = "",
 }) => {
     const { token } = theme.useToken();
     const [loaded, setLoaded] = useState(false);
@@ -41,6 +43,7 @@ export const AppImageSize: React.FC<AppImageSizeProps> = ({
 
     return (
         <div
+            className={className}
             style={{
                 position: "relative",
                 width,
@@ -83,7 +86,7 @@ export const AppImageSize: React.FC<AppImageSizeProps> = ({
                     width={width}
                     preview={preview}
                     style={{
-                        objectFit: "contain",
+                        objectFit: "cover",
                         borderRadius: token.borderRadiusLG,
                         opacity: loaded ? 1 : 0,
                         transition: "opacity 0.4s ease",

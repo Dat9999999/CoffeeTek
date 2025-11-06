@@ -1,12 +1,5 @@
-export interface Topping {
-    id: number;
-    name: string;
-    price: number;
-    image_name?: string;
-    sort_index: number;
-    created_at: string;
-    updated_at: string;
-}
+import { Topping } from "./types";
+
 
 export interface ToppingResponsePaging {
     data: Topping[];

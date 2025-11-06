@@ -1,74 +1,48 @@
-import { Category } from "./Category";
-import { OptionGroup } from "./OptionGroup";
-import { Size } from "./Size";
-import { Topping } from "./Topping";
 
-export interface ProductSize {
-    id: number;
-    product_id: number;
-    size_id: number;
-    price: number;
+import { PosProduct } from "@/services";
+import { OptionGroup, OptionValue, Product, Size, Topping } from "./types";
+
+export interface ProductPosItem {
+    posItemId: string;
+    product: PosProduct;
+    toppings?: {
+        topping: Topping;
+        toppingQuantity: number;
+    }[];
+    optionsSelected?: {
+        optionGroup: OptionGroup;
+        optionValue: OptionValue;
+    }[];
     size?: Size;
-}
-
-export interface ProductOptionValue {
-    id: number;
-    product_id: number;
-    option_value_id: number;
-}
-
-export interface ProductTopping {
-    id: number;
-    product_id: number;
-    topping_id: number;
-}
-
-export interface ProductImage {
-    id: number;
-    product_id: number;
-    image_name: string;
-    sort_index: number;
+    quantity: number;
 }
 
 
-export interface Product {
-    id: number;
-    name: string;
-    is_multi_size: boolean;
-    product_detail?: string | null;
-    price?: number | null;
-    category_id?: number | null;
-
-    // Quan hệ (được include trong Prisma)
-    sizes?: ProductSize[];
-    optionValues?: ProductOptionValue[];
-    toppings?: ProductTopping[];
-    images?: ProductImage[];
-    category?: Category | null;
-}
-
-
-export interface ProductDetail {
-    id: number;
-    name: string;
-    is_multi_size: boolean;
-    product_detail?: string | null;
-    price?: number | null;
-    category_id?: number | null;
-
-
-
-    sizes?: ProductSize[];
-    optionGroups?: OptionGroup[];
-    toppings?: Topping[];
-    images?: ProductImage[];
-    category?: Category | null;
+export interface GetAllProductResponse {
+    data: Product[];
+    meta: {
+        meta: {
+            total: number,
+            page: number,
+            size: number,
+            totalPages: number
+        }
+    }
 }
 
 
 
 
+
+export interface ProductDetail extends Product {
+
+}
+
+
+
+//
 // input DTOs
+//
 export interface ProductSizeInput {
     id: number;
     price: number;
@@ -89,6 +63,7 @@ export interface CreateProductDto {
     optionValueIds?: number[];
     toppingIds?: number[];
     images?: ProductImageInput[];
+    isTopping?: boolean
 }
 
 export interface UpdateProductDto {

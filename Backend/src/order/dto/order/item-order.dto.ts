@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { createToppingItemDTO } from "./create-topping-item.dto";
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsOptional } from "class-validator";
 
 export class orderItemDTO {
     @Type(() => Number)
@@ -10,5 +10,9 @@ export class orderItemDTO {
     @IsNotEmpty()
     quantity: string;
     toppingItems?: createToppingItemDTO[];
+
+    @IsOptional()
     sizeId?: string;
+    @IsOptional()
+    optionId: string[];
 }

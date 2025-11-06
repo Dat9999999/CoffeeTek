@@ -1,6 +1,6 @@
 import api from "@/lib/api";
-import type { User, UserDetail } from "@/interfaces";
-import type { GenderEnum } from "@/interfaces";
+import type { User } from "@/interfaces";
+import type { GenderEnum } from "@/enum";
 
 /**
  * ✅ Kiểu dữ liệu dùng cho query get-all
@@ -93,6 +93,11 @@ export const userService = {
 
     async getAllRole() {
         const res = await api.get("/auth/roles");
+        return res.data;
+    },
+
+    async searchPos(params: any) {
+        const res = await api.get("/user/search-pos", { params });
         return res.data;
     },
 };

@@ -11,12 +11,17 @@ import { PaymentDTO } from './dto/payment.dto';
 import { VerifyReturnUrl } from 'vnpay';
 
 @Controller('order')
+// @UseGuards(AuthGuard('jwt'), RolesGuard)
+// @Role('owner', 'manager','cashier')
 export class OrderController {
   constructor(private readonly orderService: OrderService) { }
 
+  @Get('process-count')
+  getActiveOrderCount() {
+    return this.orderService.getProcessOrderCount();
+  }
+
   @Post()
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @Role('owner', 'manager', 'cashier')
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
   }
@@ -68,6 +73,7 @@ export class OrderController {
   getInvoice(@Param('orderId') orderId: string) {
     return this.orderService.getInvoice(+orderId);
   }
+
 
 
 

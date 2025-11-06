@@ -35,10 +35,16 @@ export class AuthController {
 
     // only owner or manager can assign or remove role for user
     @Put('edit-role')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Role('owner', 'manager')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Role('owner', 'manager')
     editRole(@Body() dto: authAssignRoleDto, @Query('assign', new ParseBoolPipe) assign: boolean = true) {
         return this.authservice.editRole(dto, assign);
+    }
+
+    ///
+    @Get('roles')
+    async getAllRole() {
+        return this.authservice.getAllRole();
     }
 
 

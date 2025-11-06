@@ -46,7 +46,7 @@ export function CategorySelector({
                 ? [
                     ...builtTree,
                     {
-                        title: "Chưa phân loại",
+                        title: "Others",
                         value: -1,
                         key: "uncategorized",
                         isLeaf: true,
@@ -72,12 +72,14 @@ export function CategorySelector({
             placeholder={placeholder}
             style={{
                 marginRight: token.marginXS,
+                minWidth: 100,
             }}
             treeData={treeData}
             value={value ?? undefined}
             onChange={(val) => onChange?.(val ?? null)}
             treeDefaultExpandAll
             popupMatchSelectWidth={false}
+
         />
     );
 }

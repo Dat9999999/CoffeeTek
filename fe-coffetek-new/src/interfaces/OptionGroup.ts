@@ -1,10 +1,6 @@
-import { OptionValue } from "./OptionValue";
+import { OptionGroup } from "./types";
 
-export interface OptionGroup {
-    id: number;
-    name: string;
-    values?: OptionValue[];
-}
+
 
 export interface OptionGroupResponsePaging {
     data: OptionGroup[];

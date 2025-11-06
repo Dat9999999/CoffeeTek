@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { OptionValue } from "@/interfaces";
+
 
 export const optionValueService = {
     async getAll(params?: { page?: number; size?: number; search?: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {

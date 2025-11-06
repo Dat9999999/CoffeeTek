@@ -16,6 +16,13 @@ export const API_ENDPOINTS = {
   USER: {
     PROFILE: `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/me`,
   },
+  VOUCHER: {
+    EXCHANGE: `${process.env.NEXT_PUBLIC_API_BASE_URL}/voucher`,
+  },
+  PROMOTION: {
+    GET_ALL: `${process.env.NEXT_PUBLIC_API_BASE_URL}/promotion`,
+  },
+
 };
 
 

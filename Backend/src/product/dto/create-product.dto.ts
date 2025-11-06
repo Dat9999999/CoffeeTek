@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber, IsNotEmpty, IsBoolean } from 'class-validator';
 
 export class CreateProductDto {
     name: string;
@@ -21,4 +21,8 @@ export class CreateProductDto {
 
     @IsOptional()
     images?: { image_name: string; sort_index: number }[];
+
+    @IsNotEmpty()
+    @IsBoolean()
+    isTopping: boolean;
 }

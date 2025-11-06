@@ -9,3 +9,4 @@ export enum Role {
     STOCKTAKER = 'stocktaker',
     CASHIER = 'cashier',
 }
+

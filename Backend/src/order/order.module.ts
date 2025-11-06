@@ -6,6 +6,8 @@ import { ignoreLogger } from 'vnpay';
 import { InvoiceModule } from 'src/invoice/invoice.module';
 import { B2Service } from 'src/storage-file/b2.service';
 import { StorageFileModule } from 'src/storage-file/storage-file.module';
+import { InventoryModule } from 'src/inventory/inventory.module';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { StorageFileModule } from 'src/storage-file/storage-file.module';
       loggerFn: ignoreLogger,        // Hàm xử lý log tùy chỉnh
     }),
     InvoiceModule,
-    StorageFileModule
+    StorageFileModule,
+    InventoryModule,
+    EventsModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],

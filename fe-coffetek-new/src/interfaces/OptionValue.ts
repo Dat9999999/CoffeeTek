@@ -1,9 +1,5 @@
-export interface OptionValue {
-    id: number;
-    name: string;
-    sort_index: number;
-    option_group_id: number;
-}
+import { OptionValue } from "./types";
+
 
 export interface OptionValueDetail extends OptionValue {
     option_group: {

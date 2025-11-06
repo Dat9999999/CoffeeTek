@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useProfileStore } from "@/store/useProfileStore";
 import EditProfileForm from "@/components/features/profile/EditProfileForm";
+import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng nhập
 
 export default function ProfilePage() {
+  const { isAuthenticated, loading: authLoading } = useAuth(true); // true = auto redirect nếu chưa login
+
   const { user, orders, wishlist, loyalty, fetchProfile, loading, error } =
     useProfileStore();
 
@@ -12,12 +15,15 @@ export default function ProfilePage() {
     "profile" | "orders" | "wishlist" | "loyalty"
   >("profile");
 
+  // ✅ Khi đã xác thực xong thì mới fetch thông tin người dùng
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (isAuthenticated) {
+      fetchProfile();
+    }
+  }, [isAuthenticated, fetchProfile]);
 
-  // LOADING STATE
-  if (loading) {
+  // ⏳ Đang kiểm tra token hoặc load user
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
         Đang tải thông tin...
@@ -25,7 +31,7 @@ export default function ProfilePage() {
     );
   }
 
-  // ERROR STATE
+  // ❌ Nếu có lỗi khi lấy thông tin user
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">

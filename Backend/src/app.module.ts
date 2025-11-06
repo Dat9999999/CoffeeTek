@@ -10,12 +10,23 @@ import { OptionGroupsModule } from './option-groups/option-groups.module';
 import { OptionValuesModule } from './option-values/option-values.module';
 import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
-import { ToppingsModule } from './toppings/toppings.module';
 import { ProductsModule } from './product/product.module';
 import { UploadModule } from './upload-file/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { InvoiceModule } from './invoice/invoice.module';
+import { MaterialModule } from './material/material.module';
+import { RecipeModule } from './recipe/recipe.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { UnitModule } from './unit/unit.module';
+import { PromotionModule } from './promotion/promotion.module';
+import { LoyalLevelModule } from './loyal-level/loyal-level.module';
+import { VoucherModule } from './voucher/voucher.module';
+import { ReportModule } from './report/report.module';
+import { EventsModule } from './events/events.module';
+import { MaterialLossModule } from './material-loss/material-loss.module';
+import { MaterialRemainModule } from './material-remain/material-remain.module';
+
 
 @Module({
   imports: [
@@ -34,10 +45,19 @@ import { InvoiceModule } from './invoice/invoice.module';
     OptionValuesModule,
     SizesModule,
     CategoriesModule,
-    ToppingsModule,
     ProductsModule,
     UploadModule,
     InvoiceModule,
+    MaterialModule,
+    RecipeModule,
+    InventoryModule,
+    UnitModule,
+    PromotionModule,
+    LoyalLevelModule,
+    VoucherModule,
+    ReportModule,
+    MaterialLossModule,
+    MaterialRemainModule,
   ],
 })
 export class AppModule { }

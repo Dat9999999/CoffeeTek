@@ -6,6 +6,8 @@ import { optionGroupService } from "@/services/optionGroupService";
 import type { OptionGroup, OptionGroupResponsePaging } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import { CreateOptionGroupModal, OptionGroupDetailModal, EditOptionGroupModal, DeleteOptionGroupModal, DeleteManyOptionGroupsModal } from "@/components/features/option-groups";
+import { PageHeader } from "@/components/layouts";
+import { ControlOutlined } from "@ant-design/icons";
 
 export default function OptionGroupPage() {
     const { tableState, setTableState } = useTableState();
@@ -55,7 +57,8 @@ export default function OptionGroupPage() {
 
     return (
         <>
-            <h1>Option Group Management</h1>
+            <PageHeader icon={<ControlOutlined />} title="Option group Management" />
+
             <TableToolbar
                 search={tableState.search}
                 onSearchChange={(value: string) =>

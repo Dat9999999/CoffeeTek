@@ -10,24 +10,26 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // data validation
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-    exceptionFactory: (errors) => {
-      console.error('Validation errors:', errors); //  log ra terminal
-      return new BadRequestException(errors);
-    },
-  }));
-
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      exceptionFactory: (errors) => {
+        console.error('Validation errors:', errors); //  log ra terminal
+        return new BadRequestException(errors);
+      },
+    }),
+  );
 
   // CORS configuration
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
   //exception filter
-  app.useGlobalFilters(new PrismaExceptionFilter())
+  app.useGlobalFilters(new PrismaExceptionFilter());
   await app.listen(process.env.PORT ?? 3000);
 }
+
 bootstrap();

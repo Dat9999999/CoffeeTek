@@ -11,6 +11,7 @@ type MenuItemCardProps = {
   price?: number;
   image?: string;
   description?: string;
+  category?: string; 
 };
 
 export default function MenuItemCard({

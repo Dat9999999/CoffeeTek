@@ -7,6 +7,10 @@ import CategoryList from "@/components/features/menu/CategoryList";
 import SearchFilter from "@/components/features/menu/SearchFilter";
 import { productService } from "@/services/productService";
 
+const IMAGE_BASE_URL =
+  process.env.NEXT_PUBLIC_IMAGE_BASE_URL ||
+  "https://images.unsplash.com/photo-1509042239860-f550ce710b93";
+
 export default function MenuPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,14 +24,26 @@ export default function MenuPage() {
           orderBy: "id",
           orderDirection: "asc",
         });
+
+        // ✅ Lấy danh sách sản phẩm chuẩn
         const list = Array.isArray(res) ? res : res?.data || [];
-        setProducts(list);
+
+        // ✅ Chuẩn hóa image_url thành URL đầy đủ
+        const normalized = list.map((item: any) => ({
+          ...item,
+          image_url: item.image_url
+            ? `${IMAGE_BASE_URL.replace(/\/$/, "")}/${item.image_url.replace(/^\//, "")}`
+            : "https://images.unsplash.com/photo-1509042239860-f550ce710b93",
+        }));
+
+        setProducts(normalized);
       } catch (error) {
-        console.error("Failed to load products:", error);
+        console.error("❌ Failed to load products:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
@@ -57,15 +73,14 @@ export default function MenuPage() {
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.map((item) => (
-              <Link key={item.id} href={`/menu/item/${item.id}`}>
-                <MenuItemCard
-                  id={item.id}
-                  name={item.name}
-                  price={item.price || 0}
-                  description={item.description}
-                  image={item.image_url || "/placeholder.png"}
-                />
-              </Link>
+              <MenuItemCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                price={item.price || 0}
+                description={item.description}
+                image={item.image_url} // ✅ đã là URL đầy đủ
+              />
             ))}
           </div>
         </section>

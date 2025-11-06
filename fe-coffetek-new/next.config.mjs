@@ -15,8 +15,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "your-server.com",
-        pathname: "**",
+        hostname: "f006.backblazeb2.com",
       },
     ],
   },

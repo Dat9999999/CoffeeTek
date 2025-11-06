@@ -4,6 +4,7 @@ import Image from "next/image";
 import ReviewSection from "./ReviewSection";
 import ImageCarousel from "@/components/features/menu/ImageCarousel";
 import React from "react";
+import { getImageUrl } from "@/utils/image";
 
 type ItemDetailProps = {
   id: string | number;
@@ -26,14 +27,27 @@ const ItemDetail: React.FC<ItemDetailProps> = ({
   size = [],
   calories,
 }) => {
+  const mainImage = getImageUrl(image);
+  const gallery = images.map((img) => getImageUrl(img));
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
       {/* Ảnh sản phẩm */}
       <div className="relative w-full h-[400px] lg:h-[500px] rounded-xl overflow-hidden shadow-lg">
-        {images.length > 1 ? (
-          <ImageCarousel images={images} />
+        {gallery.length > 1 ? (
+          <ImageCarousel images={gallery} />
         ) : (
-          <Image src={image} alt={name} fill className="object-cover" priority />
+          <Image
+            src={mainImage}
+            alt={name}
+            fill
+            className="object-cover"
+            priority
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                "https://images.unsplash.com/photo-1509042239860-f550ce710b93";
+            }}
+          />
         )}
       </div>
 
@@ -42,7 +56,9 @@ const ItemDetail: React.FC<ItemDetailProps> = ({
         <h1 className="text-3xl font-bold mb-4">{name}</h1>
         <p className="text-gray-600 leading-relaxed mb-6">{description}</p>
 
-        <p className="text-2xl font-semibold text-green-600 mb-2">{price}₫</p>
+        <p className="text-2xl font-semibold text-green-600 mb-2">
+          {price.toLocaleString()}₫
+        </p>
 
         {calories && (
           <p className="text-sm text-gray-500 mb-6">

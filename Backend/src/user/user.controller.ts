@@ -32,6 +32,14 @@ import { B2Service } from 'src/storage-file/b2.service';
 
 export class UserController {
   constructor(private readonly userService: UserService, private readonly b2Service: B2Service) { }
+
+  //owner or manager only
+  @Get('get-all')
+  // @UseGuards(AuthGuard('jwt'), RolesGuard)
+  // @Role('owner', 'manager')
+  async getAllUsers(@Query() query: GetAllDto) {
+    return await this.userService.getAllUsers(query);
+  }
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   getUsers(@GetUser() user: client.User) {
@@ -85,13 +93,7 @@ export class UserController {
   //   return await this.userService.updateInfo(id, updateDto, url_avt);
   // }
 
-  //owner or manager only
-  @Get('get-all')
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @Role('owner', 'manager')
-  async getAllUsers(@Query() query: GetAllDto) {
-    return await this.userService.getAllUsers(query);
-  }
+
 
   @Delete('lock/:id')
   // @UseGuards(AuthGuard('jwt'), RolesGuard)

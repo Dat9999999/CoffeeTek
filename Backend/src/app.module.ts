@@ -31,13 +31,13 @@ import { MaterialRemainModule } from './material-remain/material-remain.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'), // Điều chỉnh rootPath
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'public'), // Điều chỉnh rootPath
+    // }),
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'uploads'),
+    //   serveRoot: '/uploads',
+    // }),
     AuthModule,
     UserModule,
     PrismaModule,

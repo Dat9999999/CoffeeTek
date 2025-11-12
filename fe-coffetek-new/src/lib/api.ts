@@ -1,12 +1,13 @@
+// lib/api.ts
+
 import axios from "axios";
 import { toast } from "sonner";
+import { STORAGE_KEYS } from "./constant/storageKey.constant";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
-export const STORAGE_KEYS = {
-  ACCESS_TOKEN: "access_token",
-};
+
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -37,8 +38,7 @@ api.interceptors.response.use(
     ) {
       if (typeof window !== "undefined") {
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem("customerPhone");
-        toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        toast.error("The login session has expired. Please log in again.");
         window.location.href = "/auth/login";
       }
     }

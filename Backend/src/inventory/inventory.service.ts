@@ -22,8 +22,6 @@ export class InventoryService {
                     })
                     if (!material) throw new NotFoundException('Material not found in inventory ');
     
-    
-    
                     //new rermain with out considerate about size of product
     
                     // store consume value in inventory adjustment table

@@ -32,6 +32,9 @@ import { MaterialRemainModule } from './material-remain/material-remain.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'), // Điều chỉnh rootPath
+    }),
+    ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),

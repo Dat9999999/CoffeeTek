@@ -5,8 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Menu, X, User } from 'lucide-react'  // ✅ Thêm icon User
-import { ModeToggle } from '@/components/commons/mode-toggle'
 import { STORAGE_KEYS } from '@/lib/constant/storageKey.constant'
+import { RoleNavigationButtons } from '../commons/RoleNavigationButtons'
 
 const PublicHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -61,7 +61,6 @@ const PublicHeader = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <ModeToggle />
 
             {!isLoggedIn ? (
               <>
@@ -74,6 +73,7 @@ const PublicHeader = () => {
               </>
             ) : (
               <>
+                <RoleNavigationButtons />
                 {/* ✅ Thêm icon user */}
                 <Link
                   href="/profile"
@@ -103,6 +103,7 @@ const PublicHeader = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
+
               {['Home', 'Menu', 'About Us', 'Shop', 'Contact'].map((item, i) => (
                 <Link
                   key={i}
@@ -115,7 +116,6 @@ const PublicHeader = () => {
             </div>
 
             <div className="px-5 py-4 border-t border-gray-200 space-y-2">
-              <ModeToggle />
               {!isLoggedIn ? (
                 <>
                   <Button variant="outline" className="w-full">
@@ -127,6 +127,8 @@ const PublicHeader = () => {
                 </>
               ) : (
                 <>
+                  <RoleNavigationButtons />
+
                   {/* ✅ Thêm icon user ở menu mobile */}
                   <Link
                     href="/profile"

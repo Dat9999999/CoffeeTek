@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/utils/image";
+import { AppImage } from "@/components/commons/AppImage";
 
 type MenuItemCardProps = {
   id: number;
@@ -11,7 +10,7 @@ type MenuItemCardProps = {
   price?: number;
   image?: string;
   description?: string;
-  category?: string; 
+  category?: string;
 };
 
 export default function MenuItemCard({
@@ -21,41 +20,49 @@ export default function MenuItemCard({
   image,
   description,
 }: MenuItemCardProps) {
-  const imageUrl = getImageUrl(image);
-
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-      {/* Hình ảnh */}
-      <div className="relative aspect-square mb-3 overflow-hidden rounded-lg">
-        <Image
-          src={imageUrl}
+    <div
+      className="group bg-white p-5 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 
+                hover:-translate-y-1 border border-transparent hover:border-green-100"
+    >
+      <div className="relative aspect-square mb-3 overflow-hidden rounded-xl">
+        <AppImage
+          src={image}
           alt={name}
-          fill
-          className="object-cover transition-transform duration-300 hover:scale-110"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1509042239860-f550ce710b93";
+          preview={false}
+          isContain={false}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
           }}
         />
+
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
       </div>
 
-      {/* Nội dung */}
       <div className="text-center">
-        <h3 className="text-lg font-semibold mb-1">{name}</h3>
+        <h3 className="text-lg font-semibold mb-1 text-gray-800 group-hover:text-green-700 transition-colors">
+          {name}
+        </h3>
         {price && (
-          <p className="text-amber-700 font-medium mb-1">
+          <p className="text-gray-500 font-medium mb-1">
             {price.toLocaleString()}₫
           </p>
         )}
         {description && (
-          <p className="text-gray-500 text-sm line-clamp-2 mb-3">
+          <p className="text-gray-500 text-sm line-clamp-2 mb-4">
             {description}
           </p>
         )}
 
         <Link href={`/menu/${id}`}>
-          <Button className="w-full py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-medium transition">
-            Xem chi tiết
+          <Button
+            className="w-full py-2 rounded-full bg-green-600 hover:bg-green-700 
+                      text-white font-medium transition-all duration-300 
+                      hover:scale-[1.02] shadow-sm hover:shadow-md"
+          >
+            See details
           </Button>
         </Link>
       </div>

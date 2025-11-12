@@ -79,7 +79,7 @@ export default function MenuPage() {
                 name={item.name}
                 price={item.price || 0}
                 description={item.description}
-                image={item.image_url} // ✅ đã là URL đầy đủ
+                image={item.images?.[0]?.image_name || "/placeholder.jpg"} 
               />
             ))}
           </div>

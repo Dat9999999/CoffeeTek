@@ -1,0 +1,11 @@
+.imageWrapper :global(.ant-upload-list-item-container div) {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* .imageWrapper :global(.ant-upload-list-item img) {
+    object-fit: contain !important;
+    width: 100% !important;
+    height: 100% !important;
+
+} */

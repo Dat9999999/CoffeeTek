@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "src/prisma/seed.ts"
+    ],
+    "compilerOptions": {
+        "outDir": "prisma/dist",
+        "module": "NodeNext",
+        "skipLibCheck": true
+    }
+}

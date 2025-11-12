@@ -1,0 +1,440 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  phone_number String @unique
+  email        String @unique
+  // password hash for security
+  hash         String
+
+  first_name String      @default("empty")
+  last_name  String      @default("empty")
+  is_locked  Boolean     @default(false)
+  roles      Role[]      @relation("UserRoles")
+  detail     UserDetail?
+
+  customerOrders Order[] @relation("CustomerOrders")
+
+  staffOrders         Order[]               @relation("StaffOrders")
+  MaterialImportation MaterialImportation[]
+  CustomerPoint       CustomerPoint?
+  Voucher             Voucher[]
+  watseLog            watseLog[]
+
+  @@map("users")
+}
+
+model UserDetail {
+  id         Int      @id @default(autoincrement())
+  birthday   DateTime
+  sex        String
+  avatar_url String
+  address    String
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  @@map("user_details")
+}
+
+model Role {
+  id        Int    @id @default(autoincrement())
+  role_name String @unique
+  users     User[] @relation("UserRoles")
+
+  @@map("roles")
+}
+
+model OptionGroup {
+  id     Int           @id @default(autoincrement())
+  name   String
+  values OptionValue[] // 1 group có nhiều value
+
+  @@map("option_groups")
+}
+
+model OptionValue {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  sort_index         Int
+  option_group       OptionGroup          @relation(fields: [option_group_id], references: [id])
+  option_group_id    Int
+  ProductOptionValue ProductOptionValue[]
+  orderDetails       OrderDetail[]
+
+  @@map("option_values")
+}
+
+model Size {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  sort_index     Int
+  OrderDetail    OrderDetail[]
+  ProductSize    ProductSize[]
+  MaterialRecipe MaterialRecipe[]
+
+  @@map("sizes")
+}
+
+model Category {
+  id                 Int     @id @default(autoincrement())
+  name               String
+  sort_index         Int
+  is_parent_category Boolean @default(false)
+
+  parent_category_id Int?
+  parent_category    Category?  @relation("CategoryToSubcategories", fields: [parent_category_id], references: [id])
+  subcategories      Category[] @relation("CategoryToSubcategories")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             Int       @id @default(autoincrement())
+  name           String
+  is_multi_size  Boolean   @default(false)
+  product_detail String?
+  price          Float?
+  isActive       Boolean   @default(true)
+  isTopping      Boolean   @default(false)
+  category_id    Int? // FK có thể null
+  category       Category? @relation(fields: [category_id], references: [id])
+
+  sizes            ProductSize[] // 1 product có nhiều size
+  optionValues     ProductOptionValue[] // 1 product có nhiều option value
+  images           ProductImage[]
+  orderDetails     OrderDetail[]
+  Recipe           Recipe[]             @relation("RecipeProduct")
+  ProductPromotion ProductPromotion[]
+
+  // "I am a base product (e.g., Latte) and these are my available toppings"
+  toppings ProductTopping[] @relation("BaseProduct")
+
+  // "I am a topping (e.g., Pearl) and I am available on these base products"
+  toppingOn ProductTopping[] @relation("Topping")
+
+  // "I am a topping and I am part of this order detail"
+  ToppingOrderDetail ToppingOrderDetail[] @relation("ToppingOrder")
+
+  @@map("products")
+}
+
+model ProductSize {
+  id    Int   @id @default(autoincrement())
+  price Float
+
+  product_id Int
+  size_id    Int
+
+  product          Product            @relation(fields: [product_id], references: [id])
+  size             Size               @relation(fields: [size_id], references: [id])
+  ProductPromotion ProductPromotion[]
+
+  @@map("product_sizes")
+}
+
+model ProductOptionValue {
+  id Int @id @default(autoincrement())
+
+  product_id      Int
+  option_value_id Int
+
+  product       Product     @relation(fields: [product_id], references: [id])
+  option_value  OptionValue @relation(fields: [option_value_id], references: [id])
+  orderDetailId Int?
+
+  @@map("product_option_values")
+}
+
+model ProductTopping {
+  id Int @id @default(autoincrement())
+
+  product_id Int // ID of the base product (e.g., Latte)
+  topping_id Int // ID of the topping product (e.g., Pearl)
+
+  // Relation for the base product
+  baseProduct Product @relation("BaseProduct", fields: [product_id], references: [id], onDelete: Cascade)
+
+  // Relation for the topping
+  topping Product @relation("Topping", fields: [topping_id], references: [id], onDelete: Cascade)
+
+  @@map("product_toppings")
+}
+
+model ProductImage {
+  id         Int    @id @default(autoincrement())
+  image_name String
+  sort_index Int
+
+  product_id Int
+  product    Product @relation(fields: [product_id], references: [id])
+
+  @@map("product_images")
+}
+
+model Order {
+  id             Int           @id @default(autoincrement())
+  note           String?
+  original_price Float
+  final_price    Float
+  created_at     DateTime      @default(now())
+  order_details  OrderDetail[]
+  status         String        @default("pending") // pending, paid,completed, cancelled
+
+  customerPhone String?
+  Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
+
+  staffId             Int
+  Staff               User                  @relation("StaffOrders", fields: [staffId], references: [id])
+  paymentDetailId     Int?                  @unique
+  PaymentDetail       PaymentDetail?        @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
+  invoiceUrl          String?
+  InventoryAdjustment InventoryAdjustment[]
+
+  @@map("orders")
+}
+
+model OrderDetail {
+  id           Int     @id @default(autoincrement())
+  quantity     Int
+  unit_price   Float
+  product_name String?
+
+  order_id Int
+  order    Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  product_id         Int
+  product            Product              @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  size_id            Int?
+  size               Size?                @relation(fields: [size_id], references: [id])
+  ToppingOrderDetail ToppingOrderDetail[]
+  optionValue        OptionValue[]
+
+  @@map("order_details")
+}
+
+model ToppingOrderDetail {
+  id         Int   @id @default(autoincrement())
+  quantity   Int
+  unit_price Float
+
+  order_detail_id Int
+  order_detail    OrderDetail @relation(fields: [order_detail_id], references: [id], onDelete: Cascade)
+
+  topping_id Int
+  topping    Product @relation("ToppingOrder", fields: [topping_id], references: [id], onDelete: Cascade)
+
+  @@map("topping_order_details")
+}
+
+model PaymentMethod {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  is_active     Boolean         @default(true)
+  created_at    DateTime        @default(now())
+  PaymentDetail PaymentDetail[]
+
+  @@map("payment_methods")
+}
+
+model PaymentDetail {
+  id                Int           @id @default(autoincrement())
+  payment_method    PaymentMethod @relation(fields: [payment_method_id], references: [id])
+  payment_method_id Int
+  amount            Float
+  change            Int?          @default(0)
+  paymentcode       String?
+  payment_time      DateTime      @default(now())
+  status            String        @default("completed") // completed, failed, pending
+  Order             Order?        @relation("OrderPaymentDetail")
+
+  @@map("payment_details")
+}
+
+model Unit {
+  id              Int              @id @default(autoincrement())
+  name            String
+  symbol          String           @unique
+  class           String // weight or volume or count
+  fromConversions UnitConversion[] @relation("FromUnit")
+  toConversions   UnitConversion[] @relation("ToUnit")
+  Material        Material[]
+
+  @@map("units")
+}
+
+model UnitConversion {
+  id        Int   @id @default(autoincrement())
+  from_unit Int
+  to_unit   Int
+  factor    Float
+  fromUnit  Unit  @relation("FromUnit", fields: [from_unit], references: [id])
+  toUnit    Unit  @relation("ToUnit", fields: [to_unit], references: [id])
+
+  @@unique([from_unit, to_unit])
+  @@map("unit_conversions")
+}
+
+model Recipe {
+  id             Int              @id @default(autoincrement())
+  product_id     Int              @unique
+  Product        Product          @relation("RecipeProduct", fields: [product_id], references: [id], onDelete: Cascade)
+  MaterialRecipe MaterialRecipe[]
+
+  @@map("recipes")
+}
+
+model Material {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique
+  unitId              Int
+  code                String                @unique
+  Unit                Unit                  @relation(fields: [unitId], references: [id])
+  MaterialRecipe      MaterialRecipe[]
+  MaterialImportation MaterialImportation[]
+  InventoryAdjustment InventoryAdjustment[]
+  materialRemain      materialRemain[]
+  watseLog            watseLog[]
+
+  @@map("materials")
+}
+
+model MaterialRecipe {
+  id       Int    @id @default(autoincrement())
+  consume  Float
+  Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId Int
+
+  Material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId Int
+
+  Size   Size? @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  sizeId Int?
+
+  @@map("material_recipes")
+}
+
+model materialRemain {
+  id         Int      @id @default(autoincrement())
+  materialId Int
+  Material   Material @relation(fields: [materialId], references: [id])
+  remain     Float
+  date       DateTime @default(now())
+
+  @@unique([date, materialId])
+}
+
+model watseLog {
+  id         Int      @id @default(autoincrement())
+  materialId Int
+  Mateterial Material @relation(fields: [materialId], references: [id])
+  quantity   Float
+  reason     String
+  date       DateTime
+  User       User?    @relation(fields: [employeeId], references: [id])
+  employeeId Int?
+}
+
+model MaterialImportation {
+  id             Int       @id @default(autoincrement())
+  importQuantity Float
+  Material       Material  @relation(fields: [materialId], references: [id])
+  pricePerUnit   Float     @default(0)
+  expiryDate     DateTime?
+
+  materialId Int
+
+  importDate DateTime @default(now())
+  Employee   User     @relation(fields: [employeeId], references: [id])
+  employeeId Int
+
+  @@map("material_importations")
+}
+
+model InventoryAdjustment {
+  id             Int      @id @default(autoincrement())
+  materialId     Int
+  Material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  consume        Float
+  relatedOrderId Int?
+  relatedOrder   Order?   @relation(fields: [relatedOrderId], references: [id], onDelete: Cascade)
+  adjustedAt     DateTime @default(now())
+
+  @@map("inventory_adjustments")
+}
+
+model LoyalLevel {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  required_points Int
+  CustomerPoint   CustomerPoint[]
+
+  @@map("loyal_levels")
+}
+
+model CustomerPoint {
+  id            Int         @id @default(autoincrement())
+  points        Int         @default(0)
+  customerPhone String      @unique
+  Customer      User        @relation(fields: [customerPhone], references: [phone_number])
+  loyalLevel    LoyalLevel? @relation(fields: [loyalLevelId], references: [id])
+  loyalLevelId  Int?
+
+  @@map("customer_points")
+}
+
+model Promotion {
+  id               Int                @id @default(autoincrement())
+  name             String
+  description      String?
+  start_date       DateTime
+  end_date         DateTime
+  is_active        Boolean            @default(true)
+  ProductPromotion ProductPromotion[]
+
+  @@map("promotions")
+}
+
+model ProductPromotion {
+  id            Int          @id @default(autoincrement())
+  productId     Int
+  promotionId   Int
+  Product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Promotion     Promotion    @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  new_price     Float        @default(0)
+  productSize   ProductSize? @relation(fields: [productSizeId], references: [id])
+  productSizeId Int?
+
+  @@map("product_promotions")
+}
+
+model Voucher {
+  id                  Int    @id @default(autoincrement())
+  code                String @unique
+  discount_percentage Float
+  minAmountOrder      Float
+  requirePoint        Float
+
+  valid_from    DateTime
+  valid_to      DateTime
+  is_active     Boolean  @default(true)
+  customerPhone String?
+  User          User?    @relation(fields: [customerPhone], references: [phone_number])
+
+  @@map("vouchers")
+}

@@ -47,7 +47,6 @@ export default function OrderPosPage() {
     const [loading, setLoading] = useState(false);
     const [meta, setMeta] = useState<any>(null);
 
-    // ✅ record đang xem chi tiết (nếu có)
     const [detailRecord, setDetailRecord] = useState<Order | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<Order | null>(null);
     const [statusRecord, setStatusRecord] = useState<Order | null>(null);

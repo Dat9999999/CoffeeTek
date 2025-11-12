@@ -38,7 +38,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                 onClick={() => setSelected(o)}
                 className="mt-2 text-sm underline"
               >
-                Xem chi tiết
+                See details
               </button>
             </div>
           </li>

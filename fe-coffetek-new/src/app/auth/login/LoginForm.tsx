@@ -12,6 +12,8 @@ import FormContainer from "@/components/forms/FormContainer";
 import FormInput from "@/components/forms/FormInput";
 import FormButton from "@/components/forms/FormButton";
 import FormError from "@/components/forms/FormError";
+import { authService } from "@/services";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface LoginErrors {
   username?: string;
@@ -25,6 +27,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
+  const { setUser, setIsAuthenticated } = useAuthContext();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,6 +82,15 @@ export default function LoginForm() {
           } finally {
             localStorage.removeItem("pendingVoucherId");
           }
+        }
+        try {
+          const userInfo = await authService.getUserLoginInfo();
+          localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
+          // Cập nhật AuthContext
+          setUser(userInfo);
+          setIsAuthenticated(true);
+        } catch {
+          console.log("Fetch user login failed");
         }
 
         toast.success("Đăng nhập thành công!");

@@ -6,19 +6,20 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntConfigProvider, DarkModeProvider } from '@/components/providers';
 import { AdminShell } from '@/components/layouts';
 import { SuspenseWrapper } from '@/components/commons';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <AntdRegistry>
       <DarkModeProvider>
         <AntConfigProvider>
-
-          <AdminShell>
-            <SuspenseWrapper>
-              {children}
-            </SuspenseWrapper>
-          </AdminShell>
-
+          <AuthGuard>
+            <AdminShell>
+              <SuspenseWrapper>
+                {children}
+              </SuspenseWrapper>
+            </AdminShell>
+          </AuthGuard>
         </AntConfigProvider>
       </DarkModeProvider>
     </AntdRegistry>

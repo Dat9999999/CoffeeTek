@@ -31,12 +31,12 @@ const PaymentResultPage = () => {
         if (!searchParams) return;
 
         const data: PaymentData = {
-            status: searchParams.get("status"),
-            orderInfo: decodeURIComponent(searchParams.get("orderInfo") || ""),
-            paymentTime: searchParams.get("paymentTime"),
-            transactionId: searchParams.get("transactionId"),
-            totalPrice: searchParams.get("totalPrice"),
-            transactionStatus: searchParams.get("transactionStatus"),
+            status: searchParams.get("vnp_TransactionStatus"),
+            orderInfo: decodeURIComponent(searchParams.get("vnp_OrderInfo") || ""),
+            paymentTime: searchParams.get("vnp_PayDate"),
+            transactionId: searchParams.get("vnp_TransactionNo"),
+            totalPrice: searchParams.get("vnp_Amount"),
+            transactionStatus: searchParams.get("vnp_TransactionStatus"),
         };
 
         // Format data
@@ -63,8 +63,8 @@ const PaymentResultPage = () => {
         );
     }
 
-    const isSuccess = paymentData.status === "1";
-    const isCancelled = paymentData.transactionStatus === "02";
+    const isSuccess = paymentData.status === "00";
+    const isCancelled = paymentData.status === "99";
 
     let resultStatus: "success" | "warning" | "error" = "error";
     let resultIcon = <CloseCircleOutlined />;
@@ -85,7 +85,7 @@ const PaymentResultPage = () => {
         resultIcon = <WarningOutlined />;
         resultTitle = "Transaction cancelled!";
         resultSubTitle =
-            "Your transaction has been cancelled. Please try again or contact support if needed.";
+            "Your transaction has been cancelled.The payment bank is under maintenance. Please try again or contact support if needed.";
         transactionStatusText = "Cancelled";
     }
 

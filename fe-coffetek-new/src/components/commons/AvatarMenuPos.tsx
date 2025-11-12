@@ -2,19 +2,32 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Avatar, Badge, Dropdown, MenuProps, Typography, theme } from 'antd';
+import { Avatar, Badge, Dropdown, MenuProps, Modal, Spin, Typography, theme } from 'antd';
 import {
     UserOutlined,
     LogoutOutlined,
     ProfileOutlined,
     DashboardOutlined,
+    HomeOutlined,
 } from '@ant-design/icons';
 import { AdminDarkModeToggleMini } from './AdminDarkModeSwitch';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { authService } from '@/services';
 
 const { Text } = Typography;
 
 export const AvatarMenuPos: React.FC = () => {
     const { token } = theme.useToken();
+
+    const { user, loading, setUser, setIsAuthenticated } = useAuthContext();
+    if (loading) {
+        return (
+            <div style={{ padding: 48, textAlign: "center" }}>
+                <Spin size="default" />
+            </div>
+        );
+    }
+    if (!user) return null;
 
     // ✅ Dùng kiểu an toàn của Ant Design
     const menuItems: MenuProps['items'] = [
@@ -36,6 +49,11 @@ export const AvatarMenuPos: React.FC = () => {
             ),
             icon: <ProfileOutlined />,
         },
+        {
+            key: 'homepage',
+            label: <Link href="/">Home page</Link>,
+            icon: <HomeOutlined />,
+        },
         { type: 'divider' as const },
         {
             key: 'theme',
@@ -54,13 +72,18 @@ export const AvatarMenuPos: React.FC = () => {
         { type: 'divider' as const },
         {
             key: 'logout',
-            label: (
-                <Link href="/login" style={{ color: 'inherit' }}>
-                    <Text>Logout</Text>
-                </Link>
-            ),
+            label: <Text style={{ cursor: 'pointer' }}>Logout</Text>,
             icon: <LogoutOutlined />,
-        },
+            onClick: () => {
+                Modal.confirm({
+                    title: 'Confirm Logout',
+                    content: 'Are you sure you want to logout?',
+                    okText: 'Yes',
+                    cancelText: 'No',
+                    onOk: () => authService.logout(setUser, setIsAuthenticated),
+                });
+            },
+        }
     ];
 
     return (
@@ -69,13 +92,16 @@ export const AvatarMenuPos: React.FC = () => {
             trigger={['click']}
             placement="bottomRight"
         >
-            <Badge dot color="green" offset={[-1, 38]}>
-                <Avatar
-                    style={{ cursor: 'pointer' }}
-                    size="default"
-                    icon={<UserOutlined />}
-                />
-            </Badge>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span>{user?.first_name} {user?.last_name}</span>
+                <Badge dot={true} color="green" offset={[-1, 38]}>
+                    <Avatar
+                        style={{ cursor: 'pointer' }}
+                        size="default"
+                        icon={<UserOutlined />}
+                    />
+                </Badge>
+            </div>
         </Dropdown>
     );
 };

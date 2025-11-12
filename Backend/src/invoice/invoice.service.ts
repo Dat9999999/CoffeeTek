@@ -50,9 +50,7 @@ function generatePdfBuffer(invoice: any): Promise<Buffer> {
 }
 
 function generateHeader(doc: any) {
-  const logoPath = path.join(process.cwd(), 'public', 'img', 'logo.jpg');
   doc
-    .image(logoPath, 50, 45, { width: 50 })
     .fillColor('#444444')
     .fontSize(20)
     .text('CoffeeTek', 110, 57)

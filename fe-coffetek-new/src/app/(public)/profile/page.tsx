@@ -60,10 +60,9 @@ export default function ProfilePage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`text-left px-4 py-2 rounded-lg transition w-full whitespace-nowrap
-                    ${
-                      activeTab === tab.id
-                        ? "bg-green-100 text-green-700 font-medium ring-1 ring-green-300"
-                        : "hover:bg-gray-100 text-gray-700"
+                    ${activeTab === tab.id
+                      ? "bg-green-100 text-green-700 font-medium ring-1 ring-green-300"
+                      : "hover:bg-gray-100 text-gray-700"
                     }`}
                 >
                   {tab.label}
@@ -160,7 +159,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* WISHLIST TAB */}
+            {/* WISHLIST TAB
             {activeTab === "wishlist" && (
               <div>
                 <h3 className="text-xl font-semibold mb-4">Wishlist</h3>
@@ -185,7 +184,7 @@ export default function ProfilePage() {
                   <p>Danh sách yêu thích trống.</p>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* LOYALTY TAB */}
             {activeTab === "loyalty" && (

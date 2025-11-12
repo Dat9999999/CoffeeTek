@@ -69,7 +69,7 @@ export default function PromotionCard({
                      hover:from-[#9b6a3f] hover:to-[#7e5430]
                      text-white font-semibold rounded-xl py-2 mt-2 transition-all duration-200"
         >
-          Xem chi tiết
+          See details
         </Button>
       </CardContent>
 

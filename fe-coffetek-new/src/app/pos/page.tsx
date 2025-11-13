@@ -156,8 +156,8 @@ export default function PosPageTest() {
             if (paymentMethod === "cash") {
                 const payData = {
                     orderId,
-                    amount: payment.cashReceived,
-                    change: payment.change,
+                    amount: 99999999,
+                    change: 0,
                     voucherCode
                 };
                 await orderService.payByCash(payData);

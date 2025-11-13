@@ -93,6 +93,7 @@ export function DataTable<T extends { id: number | string }>({
 
     return (
         <Table<T>
+            size="middle"
             bordered
             rowKey="id"
             rowSelection={

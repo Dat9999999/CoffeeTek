@@ -425,13 +425,13 @@ async function seedInventory(owner, latte, sizeM) {
       logger.log('🪄 Seeding contracting (initial snapshot)...');
 
       // Create a "snapshot" of the initial inventory
-      const materialRemains = await prisma.materialRemain.findMany();
-      const snapshotData = materialRemains.map(m => ({
-        material_remainId: m.id,
-        quantity: 5, // Use the initial 10
+      const materials = await prisma.material.findMany();
+      const snapshotData = materials.map(m => ({
+        materialId: m.id,
+        quantity: 5, // initial quantity value
+        empoloyeeId: owner.id, // record who created the contracting entry
         created_at: new Date(),
       }));
-
       await prisma.contracting.createMany({ data: snapshotData });
       logger.log('✅ Seeded contracting');
     } else {

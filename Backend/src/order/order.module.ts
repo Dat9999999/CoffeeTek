@@ -6,7 +6,6 @@ import { ignoreLogger } from 'vnpay';
 import { InvoiceModule } from 'src/invoice/invoice.module';
 import { B2Service } from 'src/storage-file/b2.service';
 import { StorageFileModule } from 'src/storage-file/storage-file.module';
-import { InventoryModule } from 'src/inventory/inventory.module';
 import { EventsModule } from 'src/events/events.module';
 
 @Module({
@@ -24,7 +23,6 @@ import { EventsModule } from 'src/events/events.module';
     }),
     InvoiceModule,
     StorageFileModule,
-    InventoryModule,
     EventsModule,
   ],
   controllers: [OrderController],

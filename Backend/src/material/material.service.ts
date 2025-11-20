@@ -111,19 +111,6 @@ export class MaterialService {
     let total;
 
 
-    data = await this.prisma.inventoryAdjustment.findMany({
-      where: {
-        adjustedAt: {
-          gte: startDate,
-          lt: endDate, // Lấy tất cả các bản ghi trước 00:00 của ngày tiếp theo
-        },
-        materialId: materialId,
-      },
-      skip: skip,
-      take: query.size,
-      orderBy: { [orderBy]: orderDirection },
-    });
-    total = await this.prisma.inventoryAdjustment.count();
 
     const response: ResponseGetAllDto<
       any

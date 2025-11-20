@@ -21,15 +21,8 @@ export class MaterialLossService {
         date: 'desc', // lấy bản ghi mới nhất trước hoặc bằng ngày đó
       },
     });
-    const importMaterials = await this.prisma.materialImportation.findMany({ where: { materialId: createMaterialLossDto.materialId, importDate: createMaterialLossDto.date } })
-    const consumes = await this.prisma.inventoryAdjustment.findMany({ where: { materialId: createMaterialLossDto.materialId, adjustedAt: createMaterialLossDto.date } })
-    // loss must less than remain + imports + consumes
-    const totalConsume = consumes.reduce((sum, i) => sum + i.consume, 0)
-    const totalImport = importMaterials.reduce((sum, i) => sum + i.importQuantity, 0)
-
     if (!last_remain) throw new Error('this material does not exits');
 
-    if (createMaterialLossDto.quantity >= totalConsume + totalImport + (last_remain?.remain)) throw new BadRequestException(`loss is larger than last remain + import + consume `)
 
 
     return await this.prisma.watseLog.create({

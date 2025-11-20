@@ -207,7 +207,6 @@ model Order {
   paymentDetailId     Int?                  @unique
   PaymentDetail       PaymentDetail?        @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
   invoiceUrl          String?
-  InventoryAdjustment InventoryAdjustment[]
 
   @@map("orders")
 }
@@ -310,7 +309,6 @@ model Material {
   Unit                Unit                  @relation(fields: [unitId], references: [id])
   MaterialRecipe      MaterialRecipe[]
   MaterialImportation MaterialImportation[]
-  InventoryAdjustment InventoryAdjustment[]
   materialRemain      materialRemain[]
   watseLog            watseLog[]
 
@@ -370,17 +368,6 @@ model MaterialImportation {
   @@map("material_importations")
 }
 
-model InventoryAdjustment {
-  id             Int      @id @default(autoincrement())
-  materialId     Int
-  Material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  consume        Float
-  relatedOrderId Int?
-  relatedOrder   Order?   @relation(fields: [relatedOrderId], references: [id], onDelete: Cascade)
-  adjustedAt     DateTime @default(now())
-
-  @@map("inventory_adjustments")
-}
 
 model LoyalLevel {
   id              Int             @id @default(autoincrement())

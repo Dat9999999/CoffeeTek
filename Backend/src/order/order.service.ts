@@ -28,7 +28,6 @@ import {
 import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { B2Service } from 'src/storage-file/b2.service';
-import { InventoryService } from 'src/inventory/inventory.service';
 import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
@@ -38,7 +37,6 @@ export class OrderService {
     private readonly vnpayService: VnpayService,
     private readonly invoiceService: InvoiceService,
     private readonly b2Service: B2Service,
-    private readonly inventoryService: InventoryService,
     private readonly eventsGateway: EventsGateway,
   ) { }
 
@@ -657,46 +655,6 @@ export class OrderService {
           invoiceUrl: key,
         },
       });
-    }
-    //adjust inventory  when order is completed
-    if (dto.status == OrderStatus.COMPLETED) {
-      const orderDetails = await this.prisma.orderDetail.findMany({
-        where: {
-          order_id: order.id,
-        },
-      });
-      for (const detail of orderDetails) {
-        try {
-          const inventory_change =
-            await this.inventoryService.adjustInventoryByOrderDetail(
-              detail.product_id,
-              detail.quantity,
-              order.id,
-              detail.size_id ?? undefined,
-            );
-          Logger.log(`Inventory adjusted: ${JSON.stringify(inventory_change)}`);
-        } catch (error: BadRequestException | NotFoundException | Error | any) {
-          Logger.error(
-            `Failed to adjust inventory for order detail id ${detail.id}: ${error.message}`,
-          );
-          return error;
-        }
-      }
-
-      // accumalate point
-      if (order.customerPhone) {
-        let additional_point = order.final_price / 1000;
-        await this.prisma.customerPoint.update({
-          where: {
-            customerPhone: order.customerPhone,
-          },
-          data: {
-            points: {
-              increment: additional_point,
-            },
-          },
-        });
-      }
     }
 
     await this.broadcastProcessOrderCount();

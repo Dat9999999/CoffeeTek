@@ -17,7 +17,6 @@ import { join } from 'path';
 import { InvoiceModule } from './invoice/invoice.module';
 import { MaterialModule } from './material/material.module';
 import { RecipeModule } from './recipe/recipe.module';
-import { InventoryModule } from './inventory/inventory.module';
 import { UnitModule } from './unit/unit.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { LoyalLevelModule } from './loyal-level/loyal-level.module';
@@ -53,7 +52,6 @@ import { MaterialRemainModule } from './material-remain/material-remain.module';
     InvoiceModule,
     MaterialModule,
     RecipeModule,
-    InventoryModule,
     UnitModule,
     PromotionModule,
     LoyalLevelModule,

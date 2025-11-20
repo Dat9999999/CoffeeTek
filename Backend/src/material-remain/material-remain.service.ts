@@ -54,18 +54,6 @@ export class MaterialRemainService {
         orderBy: { importDate: 'desc' } // Lấy bản ghi mới nhất nếu có nhiều lần nhập trong ngày
       });
 
-      // TÍNH TỔNG TIÊU THỤ (Consume): Phải nằm trong phạm vi của ngày hiện tại
-      const totalConsume = await this.prisma.inventoryAdjustment
-        .findMany({
-          where: {
-            materialId: materialId,
-            adjustedAt: {
-              gte: date,
-              lt: nextDate
-            }
-          }
-        })
-        .then(e => e.reduce((sum, i) => sum + i.consume, 0));
 
       // TÍNH TỔNG HỎNG/THẢI (Loss): Phải nằm trong phạm vi của ngày hiện tại
       const loss = await this.prisma.watseLog
@@ -93,13 +81,13 @@ export class MaterialRemainService {
         // Nếu cho phép tồn kho/nhập hàng = 0, bạn dùng logic sau:
         const systemrecord = {
 
-          record: lastRemainQuantity + importQuantity - (totalConsume + loss),
+          record: lastRemainQuantity + importQuantity - (loss),
           materialId: materialId
         }
         // res.push(systemrecord)
 
         res.push({
-          record: lastRemainQuantity + importQuantity - (totalConsume + loss),
+          record: lastRemainQuantity + importQuantity - (loss),
           materialId: materialId,
           materialName: materialRemain.name,
           materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
@@ -108,13 +96,13 @@ export class MaterialRemainService {
 
       } else {
         const systemrecord = {
-          record: lastRemain.remain + importMaterial.importQuantity - (totalConsume + loss),
+          record: lastRemain.remain + importMaterial.importQuantity - (loss),
           materialId: materialId
         }
         // res.push(systemrecord)
 
         res.push({
-          record: lastRemain.remain + importMaterial.importQuantity - (totalConsume + loss),
+          record: lastRemain.remain + importMaterial.importQuantity - (loss),
           materialId: materialId,
           materialName: materialRemain.name,
           materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',

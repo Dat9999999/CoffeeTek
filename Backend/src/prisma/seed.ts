@@ -420,10 +420,28 @@ async function seedInventory(owner, latte, sizeM) {
     } else {
       logger.warn('⚠️ MaterialRemain already exists, skipping...');
     }
+    const contractingCount = await prisma.contracting.count();
+    if (contractingCount === 0) {
+      logger.log('🪄 Seeding contracting (initial snapshot)...');
+
+      // Create a "snapshot" of the initial inventory
+      const materialRemains = await prisma.materialRemain.findMany();
+      const snapshotData = materialRemains.map(m => ({
+        material_remainId: m.id,
+        quantity: 5, // Use the initial 10
+        created_at: new Date(),
+      }));
+
+      await prisma.contracting.createMany({ data: snapshotData });
+      logger.log('✅ Seeded contracting');
+    } else {
+      logger.warn('⚠️ contracting already exists, skipping...');
+    }
     logger.log('✅ Seeded MaterialRecipe (Latte)');
   } else {
     logger.warn('⚠️ MaterialRecipe already exists, skipping...');
   }
+
 
   // =======================
   // Seed WasteLog (NEW)
@@ -462,6 +480,7 @@ async function seedInventory(owner, latte, sizeM) {
   } else {
     logger.warn('⚠️ WasteLog already exists, skipping...');
   }
+
 }
 
 /**

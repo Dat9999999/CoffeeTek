@@ -311,7 +311,6 @@ model Material {
   InventoryAdjustment InventoryAdjustment[]
   materialRemain      materialRemain[]
   watseLog            watseLog[]
-  contractings        Contracting[]
 
   @@map("materials")
 }
@@ -332,11 +331,12 @@ model MaterialRecipe {
 }
 
 model materialRemain {
-  id         Int      @id @default(autoincrement())
-  materialId Int
-  Material   Material @relation(fields: [materialId], references: [id])
-  remain     Float
-  date       DateTime @default(now())
+  id           Int           @id @default(autoincrement())
+  materialId   Int
+  Material     Material      @relation(fields: [materialId], references: [id])
+  remain       Float
+  date         DateTime      @default(now())
+  contractings Contracting[]
 
   @@unique([date, materialId])
 }
@@ -442,11 +442,13 @@ model Voucher {
 }
 
 model Contracting {
-  id          Int      @id @default(autoincrement())
-  quantity    Int
-  materialId  Int
-  Material    Material @relation(fields: [materialId], references: [id])
-  empoloyeeId Int?
-  User        User?    @relation(fields: [empoloyeeId], references: [id])
-  created_at  DateTime @default(now())
+  id                Int            @id @default(autoincrement())
+  quantity          Int
+  material_remainId Int
+  MaterialRemain    materialRemain @relation(fields: [material_remainId], references: [id])
+  empoloyeeId       Int?
+  User              User?          @relation(fields: [empoloyeeId], references: [id])
+  created_at        DateTime       @default(now())
+
+  @@map("contractings")
 }

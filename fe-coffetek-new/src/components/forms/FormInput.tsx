@@ -65,7 +65,7 @@ export default function FormInput({
   const hasValue = value && value.length > 0;
 
   return (
-    <div className="relative mt-5">
+    <div className="relative mt-3">
       <input
         id={id}
         type={type}

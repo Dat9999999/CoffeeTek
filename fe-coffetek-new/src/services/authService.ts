@@ -37,6 +37,10 @@ export interface UserLoginInfo {
 
 
 export const authService = {
+    async loginGoogle(payload: { token: string }) {
+        const res = await api.post(`/auth/google`, payload);
+        return res.data;
+    },
 
     async editRole(dto: AuthAssignRoleDto, assign: boolean) {
         const res = await api.put(`/auth/edit-role?assign=${assign}`, dto);
@@ -50,8 +54,18 @@ export const authService = {
 
     async getUserLoginInfo() {
         const res = await api.get("/user/me");
+        return res.data as UserLoginInfo;
+    },
+
+    async updateSecurity(payload: {
+        phone_number: string;
+        password: string;
+        address: string;
+    }) {
+        const res = await api.put(`/auth/security`, payload);
         return res.data;
     },
+
     // Trong authService.ts
     logout(setUser?: React.Dispatch<React.SetStateAction<UserLoginInfo | null>>, setIsAuthenticated?: React.Dispatch<React.SetStateAction<boolean>>) {
         if (typeof window !== "undefined") {

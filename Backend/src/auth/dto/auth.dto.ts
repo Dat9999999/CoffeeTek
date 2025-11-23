@@ -1,10 +1,11 @@
 import { Type } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString } from 'class-validator'
 import { Role } from 'src/common/enums/role.enum';
+import { IsEmailOrPhone } from 'src/validators/is-email-or-phone.validator';
 
 export class authLoginDto {
-    @IsPhoneNumber('VN')
     @IsNotEmpty()
+    @IsEmailOrPhone()
     username: string;
 
     @IsString()
@@ -14,8 +15,8 @@ export class authLoginDto {
 
 
 export class authSignUpDto {
-    @IsPhoneNumber('VN')
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'Phone number is required' })
+    @IsPhoneNumber('VN', { message: 'Invalid Vietnamese phone number' })
     username: string;
 
     @IsNotEmpty()
@@ -26,6 +27,9 @@ export class authSignUpDto {
 
     @IsNotEmpty()
     lastName: string;
+
+    @IsNotEmpty()
+    address: string;
 
     @IsEmail()
     @IsNotEmpty()
@@ -62,4 +66,19 @@ export class authAssignRoleDto {
     //check role is valid
     @IsEnum(Role, { message: 'role must be one of manager, staff, customer, barista, baker, stocktaker, cashier' })
     roleName: string;
+}
+
+
+export class UpdateProfileDto {
+    @IsNotEmpty({ message: 'Phone number is required' })
+    @IsPhoneNumber('VN', { message: 'Invalid Vietnamese phone number' })
+    phone_number: string;
+
+    @IsNotEmpty({ message: 'Password is required' })
+    @IsString()
+    password: string;
+
+    @IsNotEmpty({ message: 'Address is required' })
+    @IsString()
+    address: string;
 }

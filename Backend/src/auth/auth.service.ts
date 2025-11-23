@@ -1,16 +1,16 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto } from './dto';
+import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto } from './dto';
 import * as argon from 'argon2';
 import * as client from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from 'src/common/mail/mail.service';
 import { RedisService } from 'src/redis/redis.service';
-
+import { OAuth2Client } from 'google-auth-library';
 @Injectable()
 export class AuthService {
-
+    private client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
     constructor(
         private prisma: PrismaService,
@@ -18,13 +18,29 @@ export class AuthService {
         private config: ConfigService,
         private mailService: MailService,
         private redisService: RedisService
-    ) { }
+    ) {
+    }
     async login(dto: authLoginDto) {
+        //cũ
+
+        // const user = await this.prisma.user.findUnique({
+        //     where: {
+        //         phone_number: dto.username,
+        //     }
+        // })
+
+
+        const username = dto.username.trim();
+
+        // Xác định username là email hay số điện thoại
+        const isEmail = username.includes('@');
+
         const user = await this.prisma.user.findUnique({
-            where: {
-                phone_number: dto.username,
-            }
-        })
+            where: isEmail
+                ? { email: username }
+                : { phone_number: username }
+        });
+
         if (!user) throw new ForbiddenException("username doesn't exits or password is wrong!")
         const pwMatches = await argon.verify(user.hash, dto.password);
 
@@ -51,7 +67,7 @@ export class AuthService {
                             birthday: new Date('2000-01-01'),
                             sex: 'other',
                             avatar_url: 'default.png',
-                            address: 'Unknown',
+                            address: dto.address ?? 'Unknown',
                         }
                     },
 
@@ -71,14 +87,16 @@ export class AuthService {
                         }
                     },
 
-                }
+                },
+                include: { roles: true, detail: true }
+
             });
         return this.signToken(user.id, user.phone_number);
     }
     async signToken(userId: number, phone_number: string): Promise<{ access_token: string }> {
         const payload = { sub: userId, phone_number };
         const token = await this.jwt.signAsync(payload, {
-            expiresIn: '15m',
+            expiresIn: '1y',
             secret: this.config.get('JWT_SECRET'),
         })
         return {
@@ -206,6 +224,116 @@ export class AuthService {
             orderBy: {
                 id: 'asc',
             },
+        });
+    }
+
+    async googleLogin(token: string) {
+        type UserWithRelation = client.Prisma.UserGetPayload<{
+            include: { roles: true, detail: true }
+        }>;
+
+        let payload: any;
+
+        try {
+            const ticket = await this.client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_WEB_CLIENT_ID,
+            });
+            payload = ticket.getPayload();
+            console.log(payload)
+        } catch (error) {
+            throw new ForbiddenException('Invalid Google token');
+        }
+
+        if (!payload?.email)
+            throw new ForbiddenException('Google token payload missing email');
+
+        let user: UserWithRelation | null = await this.prisma.user.findUnique({
+            where: { email: payload.email },
+            include: { roles: true, detail: true },
+        });
+
+        if (!user) {
+            user = await this.prisma.user.create({
+                data: {
+                    email: payload.email,
+                    phone_number: `google_${payload.sub}`,
+                    first_name: payload.family_name || 'Unknown',
+                    last_name: payload.given_name || 'Unknown',
+                    hash: payload.sub,
+
+                    detail: {
+                        // user details default 
+                        create: {
+                            birthday: new Date('2000-01-01'),
+                            sex: 'other',
+                            avatar_url: 'default.png',
+                            address: 'Unknown',
+                        }
+                    },
+
+                    //signup user with customer role
+                    roles: {
+                        connect: { role_name: 'customer' }
+                    },
+                    // create customer point 
+                    CustomerPoint: {
+                        create: {
+                            points: 0,
+                            loyalLevel: {
+                                connect: {
+                                    id: 1
+                                }
+                            }
+                        }
+                    },
+                },
+                include: { roles: true, detail: true },
+            });
+        }
+
+        return this.signToken(user.id, user.phone_number);
+    }
+
+
+    async updateSecurity(userId: number, dto: UpdateProfileDto) {
+        // 1. Lấy user hiện tại
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: { detail: true }
+        });
+
+        if (!user) throw new NotFoundException('User not found');
+
+        // 2. Kiểm tra số điện thoại đã tồn tại chưa
+        if (dto.phone_number !== user.phone_number) {
+            const existingPhone = await this.prisma.user.findUnique({
+                where: { phone_number: dto.phone_number }
+            });
+
+            if (existingPhone) {
+                throw new ForbiddenException('Phone number already in use');
+            }
+        }
+
+        // 3. Hash mật khẩu mới 
+        const hashedPassword = await argon.hash(dto.password);
+
+        // 4. Cập nhật user + user_details
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                phone_number: dto.phone_number,
+                hash: hashedPassword,
+                detail: {
+                    update: {
+                        address: dto.address
+                    }
+                }
+            },
+            include: {
+                detail: true
+            }
         });
     }
 

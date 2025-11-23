@@ -34,22 +34,22 @@ export default function RootLayout({
       > */}
       <body
         className={cn(
-          'bg-background  font-sans antialiased',
+          'bg-background font-sans antialiased',
           fontVariables
         )}
       >
 
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"   // bắt buộc light
+          enableSystem={false}   // không dùng theme hệ thống
           disableTransitionOnChange
         >
           <AuthProvider>
             {children}
           </AuthProvider>
         </ThemeProvider>
-        <Toaster richColors />
+        <Toaster position="top-center" richColors />
       </body>
     </html >
   );

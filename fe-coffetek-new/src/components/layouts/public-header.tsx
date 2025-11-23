@@ -4,20 +4,33 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Menu, X, User } from 'lucide-react'  // ✅ Thêm icon User
+import { Menu, X, User, LogOut } from 'lucide-react'
 import { STORAGE_KEYS } from '@/lib/constant/storageKey.constant'
 import { RoleNavigationButtons } from '../commons/RoleNavigationButtons'
+import { toast } from 'sonner'
+
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog'  // ShadCN AlertDialog
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authService } from '@/services'
 
 const PublicHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+
+  const { setIsAuthenticated, setUser } = useAuthContext();
 
   useEffect(() => {
-    // ✅ Kiểm tra token mỗi khi component mount
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
     setIsLoggedIn(!!token)
 
-    // ✅ Cập nhật trạng thái khi login/logout ở nơi khác
     const handleStorageChange = () => {
       const newToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
       setIsLoggedIn(!!newToken)
@@ -30,9 +43,15 @@ const PublicHeader = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
 
   const handleLogout = () => {
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-    setIsLoggedIn(false)
-    window.location.href = '/' // reload lại để reset UI
+    // Đóng dialog và menu (nếu đang mở trên mobile)
+    setIsLogoutDialogOpen(false)
+    setIsMenuOpen(false)
+
+    toast.success("Logout success!")
+
+    // Gọi service logout và truyền vào các hàm setter state từ context
+    // Service sẽ lo việc xóa localStorage, set state về null/false và redirect
+    authService.logout(setUser, setIsAuthenticated);
   }
 
   return (
@@ -54,14 +73,13 @@ const PublicHeader = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/" className="hover:text-coffee-600 font-medium">Home</Link>
             <Link href="/menu" className="hover:text-coffee-600 font-medium">Menu</Link>
-            <Link href="/about" className="hover:text-coffee-600 font-medium">About Us</Link>
             <Link href="/promotions" className="hover:text-coffee-600 font-medium">Promotion</Link>
+            <Link href="/about" className="hover:text-coffee-600 font-medium">About Us</Link>
             <Link href="/contact" className="hover:text-coffee-600 font-medium">Contact</Link>
           </nav>
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-
             {!isLoggedIn ? (
               <>
                 <Button variant="outline" className="px-6">
@@ -74,7 +92,6 @@ const PublicHeader = () => {
             ) : (
               <>
                 <RoleNavigationButtons />
-                {/* ✅ Thêm icon user */}
                 <Link
                   href="/profile"
                   className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition"
@@ -83,9 +100,28 @@ const PublicHeader = () => {
                   <User className="h-6 w-6 text-coffee-600" />
                 </Link>
 
-                <Button variant="destructive" onClick={handleLogout}>
-                  Logout
-                </Button>
+                {/* ShadCN AlertDialog for Logout */}
+                <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="flex items-center gap-1">
+                      <LogOut className="h-4 w-4" /> Logout
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+                      Are you sure you want to log out?
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <Button variant="outline" onClick={() => setIsLogoutDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" onClick={handleLogout}>
+                        Logout
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             )}
           </div>
@@ -103,7 +139,6 @@ const PublicHeader = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
-
               {['Home', 'Menu', 'About Us', 'Shop', 'Contact'].map((item, i) => (
                 <Link
                   key={i}
@@ -128,8 +163,6 @@ const PublicHeader = () => {
               ) : (
                 <>
                   <RoleNavigationButtons />
-
-                  {/* ✅ Thêm icon user ở menu mobile */}
                   <Link
                     href="/profile"
                     className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50"
@@ -138,13 +171,28 @@ const PublicHeader = () => {
                     <span>Trang cá nhân</span>
                   </Link>
 
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </Button>
+                  {/* Mobile Logout */}
+                  <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full flex items-center gap-1">
+                        <LogOut className="h-4 w-4" /> Logout
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+                        Are you sure you want to log out?
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <Button variant="outline" onClick={() => setIsLogoutDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleLogout}>
+                          Logout
+                        </Button>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
               )}
             </div>

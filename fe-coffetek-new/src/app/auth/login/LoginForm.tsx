@@ -14,11 +14,30 @@ import FormButton from "@/components/forms/FormButton";
 import FormError from "@/components/forms/FormError";
 import { authService } from "@/services";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { GoogleLoginComponent } from "@/components/auth";
 
 interface LoginErrors {
   username?: string;
   password?: string;
   general?: string;
+}
+
+// Hàm parse lỗi từ API/NestJS
+function parseErrorMessage(data: any): string {
+  if (!data) return "Login failed";
+
+  if (typeof data.message === "string") return data.message;
+
+  if (Array.isArray(data.message)) {
+    const first = data.message[0];
+    if (first?.constraints) {
+      return Object.values(first.constraints)[0] as string;
+    }
+  }
+
+  return "Login failed";
 }
 
 export default function LoginForm() {
@@ -36,8 +55,6 @@ export default function LoginForm() {
 
     if (!username) newErrors.username = "Please enter your phone number";
     if (!password) newErrors.password = "Please enter your password";
-    else if (password.length < 6)
-      newErrors.password = "Password must be at least 6 characters long";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -46,6 +63,9 @@ export default function LoginForm() {
 
     try {
       setLoading(true);
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
       const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,47 +76,20 @@ export default function LoginForm() {
 
       if (response.ok && data.access_token) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
-        localStorage.setItem("customerPhone", username);
+        setIsAuthenticated(true);
+        // try {
+        //   const userInfo = await authService.getUserLoginInfo();
+        //   localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
+        //   setUser(userInfo);
 
-        // 🔁 Kiểm tra nếu có pending voucher
-        const pendingVoucherId = localStorage.getItem("pendingVoucherId");
-        if (pendingVoucherId) {
-          try {
-            const res = await fetch(
-              `${API_ENDPOINTS.VOUCHER.EXCHANGE}/${pendingVoucherId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${data.access_token}`,
-                },
-                body: JSON.stringify({ customerPhone: username }),
-              }
-            );
+        // } catch {
+        //   console.log("Fetch user login failed");
+        // }
 
-            if (res.ok)
-              toast.success("🎉 Voucher đã được lưu vào tài khoản của bạn!");
-            else toast.error("Lưu voucher thất bại!");
-          } catch {
-            toast.error("Không thể lưu voucher, vui lòng thử lại.");
-          } finally {
-            localStorage.removeItem("pendingVoucherId");
-          }
-        }
-        try {
-          const userInfo = await authService.getUserLoginInfo();
-          localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
-          // Cập nhật AuthContext
-          setUser(userInfo);
-          setIsAuthenticated(true);
-        } catch {
-          console.log("Fetch user login failed");
-        }
-
-        toast.success("Đăng nhập thành công!");
-        router.push("/promotions");
+        toast.success("Login success");
+        router.push("/");
       } else {
-        setErrors({ general: data.message || "Login failed" });
+        setErrors({ general: parseErrorMessage(data) });
       }
     } catch (error) {
       console.error("Error during login:", error);
@@ -115,28 +108,28 @@ export default function LoginForm() {
           <Link href="/auth/signup">Sign Up</Link>
         </FormButton>
       }
+      backButton={<Link href="/"><ArrowLeftOutlined />  Back to Home</Link>}
     >
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Username */}
         <FormInput
           id="username"
           type="text"
           value={username}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setUsername(e.target.value)
-          }
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
           label="Phone Number"
           required
         />
         <FormError message={errors.username} />
 
+        {/* Password */}
         <div className="relative">
           <FormInput
             id="password"
             type="password"
             value={password}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.target.value)
-            }
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             label="Password"
             required
           />
@@ -149,11 +142,24 @@ export default function LoginForm() {
         </div>
         <FormError message={errors.password} />
 
+        {/* General errors */}
         <FormError message={errors.general} />
 
-        <FormButton type="submit" className="w-full mt-4" disabled={loading}>
+        {/* Submit button với loading spinner */}
+        <FormButton
+          type="submit"
+          className="w-full mt-4 flex items-center p-1 justify-center gap-1"
+          disabled={loading}
+        >
+          {loading && (
+            <Spinner />
+          )}
           {loading ? "Logging in..." : "Login"}
         </FormButton>
+
+        <div>
+          <GoogleLoginComponent />
+        </div>
       </form>
     </FormContainer>
   );

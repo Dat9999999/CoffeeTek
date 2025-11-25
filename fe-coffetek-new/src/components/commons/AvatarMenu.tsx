@@ -2,23 +2,25 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Avatar, Badge, Dropdown, MenuProps, Modal, Spin, Typography } from 'antd';
+import { Avatar, Badge, Dropdown, MenuProps, Modal, Space, Spin, Typography } from 'antd';
 import {
     UserOutlined,
     LogoutOutlined,
     ShopOutlined,
     ProfileOutlined,
     HomeOutlined,
+    CaretDownOutlined,
 } from '@ant-design/icons';
 import { AdminDarkModeToggleMini } from './AdminDarkModeSwitch';
-import { useAuth } from '@/hooks/useAuth';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/AuthContext'; // Đảm bảo import đúng
 import { authService } from '@/services';
+import { NotificationBellAndBadge } from './notification';
 
 const { Text } = Typography;
 
 export const AvatarMenu: React.FC = () => {
     const { user, loading, setUser, setIsAuthenticated } = useAuthContext();
+
     if (loading) {
         return (
             <div style={{ padding: 48, textAlign: "center" }}>
@@ -28,7 +30,8 @@ export const AvatarMenu: React.FC = () => {
     }
     if (!user) return null;
 
-    const menuItems: MenuProps['items'] = user ? [
+    const menuItems: MenuProps['items'] = [
+        // ... (Giữ nguyên menuItems của bạn) ...
         {
             key: 'pos',
             label: <Link href="/pos">POS page</Link>,
@@ -45,20 +48,14 @@ export const AvatarMenu: React.FC = () => {
             icon: <HomeOutlined />,
         },
         { type: 'divider' as const },
-        {
-            key: 'theme',
-            label: (
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                    }}
-                >
-                    <AdminDarkModeToggleMini />
-                </div>
-            ),
-        },
+        // {
+        //     key: 'theme',
+        //     label: (
+        //         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        //             <AdminDarkModeToggleMini />
+        //         </div>
+        //     ),
+        // },
         { type: 'divider' as const },
         {
             key: 'logout',
@@ -74,26 +71,57 @@ export const AvatarMenu: React.FC = () => {
                 });
             },
         }
-
-    ] : [];
+    ];
 
     return (
-        <Dropdown
-            menu={{ items: menuItems }}
-            trigger={['click']}
-            placement="bottomRight"
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'center',   // 💥 fix lệch dọc
+                gap: '8px',            // thay Space
+            }}
         >
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <span>{user?.first_name} {user?.last_name}</span>
-                <Badge dot={true} color="green" offset={[-1, 38]}>
+            {/* User Name */}
+            <span
+                style={{
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '30px',       // đảm bảo chiều cao đều nhau
+                }}
+            >
+                {user?.first_name} {user?.last_name}
+            </span>
+
+            {/* Notification Badge */}
+            <div style={{ height: "30px", display: 'flex', alignItems: 'center', marginRight: '8px' }}>
+                <NotificationBellAndBadge />
+            </div>
+
+            {/* Avatar Dropdown */}
+            <Dropdown
+                menu={{ items: menuItems }}
+                trigger={['click']}
+                placement="bottomRight"
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "30px",
+                        cursor: 'pointer',
+                    }}
+                >
                     <Avatar
-                        style={{ cursor: 'pointer' }}
-                        size="default"
+                        className='mr-1'
+                        size={32}
                         icon={<UserOutlined />}
                     />
-                </Badge>
-            </div>
-        </Dropdown>
+                    <CaretDownOutlined style={{ color: "#bfbfbf" }} />
+                </div>
+            </Dropdown>
+        </div>
     );
 
 };

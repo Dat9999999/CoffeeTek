@@ -1,3 +1,4 @@
+// utils/orderUtils.ts
 import { OrderStatus } from "@/interfaces";
 
 export const getStatusColor = (status: OrderStatus): string => {
@@ -6,6 +7,8 @@ export const getStatusColor = (status: OrderStatus): string => {
             return "gold";
         case OrderStatus.PAID:
             return "green";
+        case OrderStatus.SHIPPING:
+            return "purple";
         case OrderStatus.COMPLETED:
             return "geekblue";
         case OrderStatus.CANCELED:
@@ -14,3 +17,4 @@ export const getStatusColor = (status: OrderStatus): string => {
             return "default";
     }
 };
+

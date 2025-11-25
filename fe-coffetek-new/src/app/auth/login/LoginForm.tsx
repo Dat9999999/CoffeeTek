@@ -12,7 +12,7 @@ import FormContainer from "@/components/forms/FormContainer";
 import FormInput from "@/components/forms/FormInput";
 import FormButton from "@/components/forms/FormButton";
 import FormError from "@/components/forms/FormError";
-import { authService } from "@/services";
+// import { authService } from "@/services"; // Nếu chưa dùng thì có thể comment
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { ArrowLeftOutlined } from "@ant-design/icons";
@@ -41,6 +41,7 @@ function parseErrorMessage(data: any): string {
 }
 
 export default function LoginForm() {
+  // Đổi tên biến state thành identifier hoặc giữ username để chung chung
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -53,7 +54,8 @@ export default function LoginForm() {
     setErrors({});
     const newErrors: LoginErrors = {};
 
-    if (!username) newErrors.username = "Please enter your phone number";
+    // Cập nhật logic validate
+    if (!username.trim()) newErrors.username = "Please enter your email or phone number";
     if (!password) newErrors.password = "Please enter your password";
 
     if (Object.keys(newErrors).length > 0) {
@@ -64,11 +66,13 @@ export default function LoginForm() {
     try {
       setLoading(true);
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // (Optional) Giữ lại dòng này nếu bạn muốn test loading, nếu không nên xóa đi
+      // await new Promise(resolve => setTimeout(resolve, 5000));
 
       const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Backend cần xử lý field "username" này để tìm trong cả cột email và phone
         body: JSON.stringify({ username, password }),
       });
 
@@ -77,11 +81,12 @@ export default function LoginForm() {
       if (response.ok && data.access_token) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
         setIsAuthenticated(true);
+
+        // Đoạn logic lấy user info (đã comment trong code gốc)
         // try {
         //   const userInfo = await authService.getUserLoginInfo();
         //   localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
         //   setUser(userInfo);
-
         // } catch {
         //   console.log("Fetch user login failed");
         // }
@@ -102,7 +107,8 @@ export default function LoginForm() {
   return (
     <FormContainer
       title="Login to your account"
-      description="Enter your phone number and password to login"
+      // Cập nhật description
+      description="Enter your email or phone number and password to login"
       link={
         <FormButton className="w-fit bg-lime-300" variant="link" asChild>
           <Link href="/auth/signup">Sign Up</Link>
@@ -112,13 +118,14 @@ export default function LoginForm() {
     >
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Username */}
+        {/* Username Input */}
         <FormInput
           id="username"
-          type="text"
+          type="text" // Để text để nhập được cả email và số điện thoại
           value={username}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-          label="Phone Number"
+          label="Email or Phone Number" // Cập nhật label
+          placeholder="example@mail.com or 0901234567" // Thêm placeholder gợi ý
           required
         />
         <FormError message={errors.username} />

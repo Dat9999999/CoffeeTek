@@ -3,6 +3,7 @@
 import { Modal, Descriptions } from "antd";
 import type { Voucher } from "@/interfaces";
 import dayjs from "dayjs";
+import { formatPrice } from "@/utils";
 
 interface VoucherDetailModalProps {
     open: boolean;
@@ -23,7 +24,7 @@ export function VoucherDetailModal({ open, onClose, record }: VoucherDetailModal
                     <Descriptions.Item label="ID">{record.id}</Descriptions.Item>
                     <Descriptions.Item label="Code">{record.code}</Descriptions.Item>
                     <Descriptions.Item label="Discount Percentage">{record.discount_percentage}%</Descriptions.Item>
-                    <Descriptions.Item label="Minimum Order Amount">{record.minAmountOrder}</Descriptions.Item>
+                    <Descriptions.Item label="Minimum Order Amount">{formatPrice(record.minAmountOrder, { includeSymbol: true })}</Descriptions.Item>
                     <Descriptions.Item label="Required Points">{record.requirePoint}</Descriptions.Item>
                     <Descriptions.Item label="Valid From">
                         {dayjs(record.valid_from).format("DD/MM/YYYY")}

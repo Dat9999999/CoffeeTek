@@ -34,7 +34,7 @@ model User {
   CustomerPoint       CustomerPoint?
   Voucher             Voucher[]
   watseLog            watseLog[]
-
+  Notifications Notification[]
   @@map("users")
 }
 
@@ -425,17 +425,37 @@ model ProductPromotion {
 }
 
 model Voucher {
-  id                  Int    @id @default(autoincrement())
-  code                String @unique
+  id                  Int      @id @default(autoincrement())
+  // Tên hiển thị của voucher
+  voucher_name        String   @default("empty")
+  code                String   @unique
   discount_percentage Float
   minAmountOrder      Float
   requirePoint        Float
-
-  valid_from    DateTime
-  valid_to      DateTime
-  is_active     Boolean  @default(true)
-  customerPhone String?
-  User          User?    @relation(fields: [customerPhone], references: [phone_number])
+  valid_from          DateTime
+  valid_to            DateTime
+  is_active           Boolean  @default(true)
+  // Mã nhóm để quản lý
+  group_name          String?
+  customerPhone       String?
+  User                User?    @relation(fields: [customerPhone], references: [phone_number])
 
   @@map("vouchers")
+}
+
+
+
+
+model Notification {
+  id           Int              @id @default(autoincrement())
+  title        String
+  message      String
+  type         String
+  isRead       Boolean          @default(false)
+
+  userId       Int
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+
+  @@map("notifications")
 }

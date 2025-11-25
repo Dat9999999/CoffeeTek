@@ -198,7 +198,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     style={{
                         background: colorBgBase,
 
-                        padding: "0 8px 0 0",
+                        padding: "0 4px 0 0",
                         borderBottom: `1px solid ${colorBorderSecondary}`,
                         display: "flex",
                         alignItems: "center",
@@ -219,6 +219,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         )}
                     </div>
                     <Flex justify="end" align="center">
+
                         <AvatarMenu />
                     </Flex>
                 </Header>

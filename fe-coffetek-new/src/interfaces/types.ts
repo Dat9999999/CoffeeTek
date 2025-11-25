@@ -1,8 +1,26 @@
-// this is front-end file: types.ts
+// this is front-end file: @/interfaces/types.ts
 
 import { GenderEnum } from "@/enum";
 
 // Add these to types.ts
+
+export enum NotificationType {
+    ORDER = 'order',
+    PROMOTION = 'promotion',
+    ORDER_TASK = 'order_task',
+    INVENTORY = 'inventory',
+    SYSTEM = 'system'
+}
+
+export interface Notification {
+    id: number;
+    title: string;
+    message: string;
+    type: NotificationType;
+    isRead: boolean;
+    userId: number;
+    createdAt: string; // API trả về ISO string
+}
 
 export interface WastageLog {
     id: number;
@@ -27,9 +45,11 @@ export interface MaterialRemain {
 
 export enum OrderStatus {
     PENDING = 'pending',
+    PAID = 'paid',
+    SHIPPING = 'shipping',
     COMPLETED = 'completed',
     CANCELED = 'canceled',
-    PAID = 'paid'
+
 }
 
 export interface ToppingOrderDetail {
@@ -119,6 +139,8 @@ export interface Voucher {
     discount_percentage: number; // Tỷ lệ giảm giá (%)
     customerPhone?: string | null; // Số điện thoại của khách hàng đã đổi voucher, optional và có thể là null
     is_active: boolean; // Trạng thái hoạt động của voucher
+    voucher_name: string; // Tên voucher
+    group_name: string; // Tên nhóm voucher
 }
 
 export interface CustomerPoint {

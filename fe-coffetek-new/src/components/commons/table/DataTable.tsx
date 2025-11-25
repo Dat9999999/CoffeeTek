@@ -18,15 +18,16 @@ interface DataTableProps<T> {
     onDetail?: (record: T) => void;
     onEdit?: (record: T) => void;
     onDelete?: (record: T) => void;
-    onRowSelectionChange?: (selectedRowKeys: number[]) => void;
+    onRowSelectionChange?: (selectedRowKeys: any[]) => void;
     enableRowSelection?: boolean; // Thêm prop mới để bật/tắt rowSelection
     renderActions?: (record: T) => React.ReactNode;
     isNoActions?: boolean;
     onRowClick?: (record: T) => void;
     showPaging?: boolean;
+    rowKey?: string | ((record: T) => string);
 }
 
-export function DataTable<T extends { id: number | string }>({
+export function DataTable<T extends object>({
     data,
     total,
     loading,
@@ -42,6 +43,7 @@ export function DataTable<T extends { id: number | string }>({
     isNoActions = false,
     onRowClick,
     showPaging = true,
+    rowKey = "id"
 }: DataTableProps<T>) {
     const handleChange = (
         newPagination: TablePaginationConfig,
@@ -94,13 +96,13 @@ export function DataTable<T extends { id: number | string }>({
     return (
         <Table<T>
             bordered
-            rowKey="id"
+            rowKey={rowKey}
             rowSelection={
                 enableRowSelection
                     ? {
                         type: "checkbox",
                         onChange: (selectedRowKeys) => {
-                            onRowSelectionChange?.(selectedRowKeys as number[]);
+                            onRowSelectionChange?.(selectedRowKeys);
                         },
                     }
                     : undefined

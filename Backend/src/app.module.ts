@@ -26,6 +26,7 @@ import { ReportModule } from './report/report.module';
 import { EventsModule } from './events/events.module';
 import { MaterialLossModule } from './material-loss/material-loss.module';
 import { MaterialRemainModule } from './material-remain/material-remain.module';
+import { NotificationModule } from './notification/notification.module';
 
 
 @Module({
@@ -61,6 +62,8 @@ import { MaterialRemainModule } from './material-remain/material-remain.module';
     ReportModule,
     MaterialLossModule,
     MaterialRemainModule,
+    NotificationModule,
+    EventsModule,
   ],
 })
 export class AppModule { }

@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" >
       {/* <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       > */}
@@ -39,16 +39,10 @@ export default function RootLayout({
         )}
       >
 
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"   // bắt buộc light
-          enableSystem={false}   // không dùng theme hệ thống
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html >

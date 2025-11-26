@@ -11,7 +11,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   // @ts-ignore
-  url= env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -34,7 +34,7 @@ model User {
   CustomerPoint       CustomerPoint?
   Voucher             Voucher[]
   watseLog            watseLog[]
-  Notifications Notification[] 
+  Notifications       Notification[]
   contractings        Contracting[]
 
   @@map("users")
@@ -430,6 +430,20 @@ model Voucher {
   User                User?    @relation(fields: [customerPhone], references: [phone_number])
 
   @@map("vouchers")
+}
+
+model Notification {
+  id      Int     @id @default(autoincrement())
+  title   String
+  message String
+  type    String
+  isRead  Boolean @default(false)
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
 }
 
 model Contracting {

@@ -38,18 +38,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(res);
                 localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(res));
                 setIsAuthenticated(true);
+                // console.log(">>> check number")
+                const phoneRegex = /^[0-9]{10,15}$/;
+                if (
+                    res.phone_number &&
+                    !phoneRegex.test(res.phone_number) &&
+                    window.location.pathname !== "/auth/change-info"
+                ) {
+                    setTimeout(() => {
+                        window.location.href = "/auth/change-info";
+                    }, 3000); // 3000ms = 3s
+                }
             } catch (err) {
                 localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
                 localStorage.removeItem(STORAGE_KEYS.USER_INFO);
                 setUser(null);
                 setIsAuthenticated(false);
+                console.log("Auth context:Fetch user login failed")
             } finally {
                 setLoading(false);
             }
         };
 
         fetchUser();
-    }, []);
+    }, [isAuthenticated]);
 
     return (
         <AuthContext.Provider value={{ user, setUser, isAuthenticated, setIsAuthenticated, loading }}>

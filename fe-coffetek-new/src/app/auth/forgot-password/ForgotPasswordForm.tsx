@@ -1,27 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import router
+import { toast } from "sonner"; // Import toast (hoặc thư viện bạn đang dùng)
 import FormContainer from "@/components/forms/FormContainer";
 import FormInput from "@/components/forms/FormInput";
 import FormButton from "@/components/forms/FormButton";
 import FormError from "@/components/forms/FormError";
-import BackButton from "@/components/commons/BackButton";
 
 export default function ForgotPasswordForm() {
+  const router = useRouter(); // Khởi tạo router
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
-  // Gửi OTP
+  // Step 1: Send OTP
   const handleSendOtp = async (e: any) => {
     e.preventDefault();
-    if (!email) return setError("Vui lòng nhập email.");
+    if (!email) return setError("Please enter your email.");
     setError("");
-    setSuccess("");
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/forget-password`, {
@@ -30,33 +30,24 @@ export default function ForgotPasswordForm() {
         body: JSON.stringify({ email }),
       });
 
-      if (!res.ok) throw new Error("Không thể gửi OTP. Vui lòng kiểm tra lại email.");
-      setSuccess("OTP đã được gửi tới email của bạn!");
-      setStep(2);
+      if (!res.ok) throw new Error("Unable to send OTP. Please check your email.");
+
+      toast.success((await res.json()).message || "OTP sent to your email.");
+      setStep(2); // Move to merged Step 2
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // Xác thực OTP
-  const handleVerifyOtp = (e: any) => {
-    e.preventDefault();
-    if (!otp) return setError("Vui lòng nhập mã OTP.");
-    setError("");
-    setSuccess("Mã OTP hợp lệ! Hãy đặt mật khẩu mới.");
-    setStep(3);
-  };
-
-  // Đặt lại mật khẩu
+  // Step 2: Verify OTP & Reset Password (Merged)
   const handleResetPassword = async (e: any) => {
     e.preventDefault();
-    if (!newPassword || !confirmPassword)
-      return setError("Vui lòng nhập đầy đủ thông tin.");
+    if (!otp || !newPassword || !confirmPassword)
+      return setError("Please fill in all fields.");
     if (newPassword !== confirmPassword)
-      return setError("Mật khẩu nhập lại không khớp.");
+      return setError("Passwords do not match.");
 
     setError("");
-    setSuccess("");
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/reset-password`, {
@@ -69,13 +60,11 @@ export default function ForgotPasswordForm() {
         }),
       });
 
-      if (!res.ok) throw new Error("Không thể đặt lại mật khẩu. OTP có thể sai hoặc đã hết hạn.");
-      setSuccess("Mật khẩu của bạn đã được đặt lại thành công!");
-      setStep(1);
-      setEmail("");
-      setOtp("");
-      setNewPassword("");
-      setConfirmPassword("");
+      if (!res.ok) throw new Error("Failed to reset password. Invalid OTP or expired.");
+
+      // Success logic
+      toast.success("Password reset successfully!");
+      router.push("/"); // Redirect to home
     } catch (err: any) {
       setError(err.message);
     }
@@ -86,19 +75,15 @@ export default function ForgotPasswordForm() {
       title="Forgot Password"
       description={
         step === 1
-          ? "Nhập email của bạn để nhận mã OTP đặt lại mật khẩu."
-          : step === 2
-            ? "Nhập mã OTP đã được gửi tới email của bạn."
-            : "Nhập mật khẩu mới để hoàn tất đặt lại."
+          ? "Enter your email to receive a password reset OTP."
+          : "Enter the OTP sent to your email and set a new password."
       }
     >
       <form
-        onSubmit={
-          step === 1 ? handleSendOtp : step === 2 ? handleVerifyOtp : handleResetPassword
-        }
+        onSubmit={step === 1 ? handleSendOtp : handleResetPassword}
         className="flex flex-col gap-4"
       >
-
+        {/* STEP 1: Email Input */}
         {step === 1 && (
           <FormInput
             id="email"
@@ -110,25 +95,24 @@ export default function ForgotPasswordForm() {
           />
         )}
 
+        {/* STEP 2: OTP + New Password + Confirm Password */}
         {step === 2 && (
-          <FormInput
-            id="otp"
-            type="text"
-            value={otp}
-            onChange={(e: any) => setOtp(e.target.value)}
-            label="OTP"
-            required
-          />
-        )}
-
-        {step === 3 && (
           <>
+            <FormInput
+              id="otp"
+              type="text"
+              value={otp}
+              onChange={(e: any) => setOtp(e.target.value)}
+              label="OTP Code"
+              required
+            />
+
             <FormInput
               id="newPassword"
               type="password"
               value={newPassword}
               onChange={(e: any) => setNewPassword(e.target.value)}
-              label="Mật khẩu mới"
+              label="New Password"
               required
             />
 
@@ -137,21 +121,16 @@ export default function ForgotPasswordForm() {
               type="password"
               value={confirmPassword}
               onChange={(e: any) => setConfirmPassword(e.target.value)}
-              label="Xác nhận mật khẩu mới"
+              label="Confirm New Password"
               required
             />
           </>
         )}
 
         {error && <FormError message={error} />}
-        {success && <p className="text-green-600 text-sm text-center">{success}</p>}
 
         <FormButton type="submit" variant="default">
-          {step === 1
-            ? "Gửi OTP"
-            : step === 2
-              ? "Xác nhận OTP"
-              : "Đặt lại mật khẩu"}
+          {step === 1 ? "Send OTP" : "Reset Password"}
         </FormButton>
       </form>
     </FormContainer>

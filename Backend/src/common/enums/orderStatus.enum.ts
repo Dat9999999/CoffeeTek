@@ -3,5 +3,6 @@ export enum OrderStatus {
     COMPLETED = 'completed',
     CANCELED = 'canceled',
     REFUND = 'refund',
-    PAID = 'paid'
+    PAID = 'paid',
+    SHIPPING = 'shipping',
 }

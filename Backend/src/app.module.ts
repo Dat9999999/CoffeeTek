@@ -25,6 +25,7 @@ import { ReportModule } from './report/report.module';
 import { EventsModule } from './events/events.module';
 import { MaterialLossModule } from './material-loss/material-loss.module';
 import { MaterialRemainModule } from './material-remain/material-remain.module';
+import { NotificationModule } from './notification/notification.module';
 import { CotractingModule } from './cotracting/cotracting.module';
 
 
@@ -60,6 +61,8 @@ import { CotractingModule } from './cotracting/cotracting.module';
     ReportModule,
     MaterialLossModule,
     MaterialRemainModule,
+    NotificationModule,
+    EventsModule,
     CotractingModule,
   ],
 })

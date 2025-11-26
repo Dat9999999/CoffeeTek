@@ -28,28 +28,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" >
       {/* <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       > */}
       <body
         className={cn(
-          'bg-background  font-sans antialiased',
+          'bg-background font-sans antialiased',
           fontVariables
         )}
       >
 
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
-        <Toaster richColors />
+
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+        <Toaster position="top-center" richColors />
       </body>
     </html >
   );

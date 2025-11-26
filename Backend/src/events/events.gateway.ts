@@ -2,6 +2,7 @@
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
@@ -25,8 +26,23 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Socket Client disconnected: ${client.id}`);
   }
 
-  // Đây là hàm public để các service khác có thể gọi
-  // và phát sự kiện đến TẤT CẢ client
+  // 1. Client cần join vào room riêng của mình để nhận thông báo cá nhân
+  @SubscribeMessage('join_room')
+  handleJoinRoom(client: Socket, userId: number | string) {
+    if (userId) {
+      const roomName = `user_${userId}`;
+      client.join(roomName);
+      console.log(`Client ${client.id} joined room: ${roomName}`);
+    }
+  }
+
+  // 2. Gửi cho MỘT user cụ thể
+  sendToUser(userId: number, eventName: string, data: any) {
+    const roomName = `user_${userId}`;
+    this.server.to(roomName).emit(eventName, data);
+  }
+
+  // 3. Gửi cho TẤT CẢ user
   sendToAll(eventName: string, data: any) {
     this.server.emit(eventName, data);
   }

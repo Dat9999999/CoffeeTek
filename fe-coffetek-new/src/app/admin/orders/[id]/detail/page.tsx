@@ -35,7 +35,7 @@ export default function OrderDetailPage() {
     if (loading)
         return (
             <Flex align="center" justify="center" style={{ height: "80vh" }}>
-                <Spin size="large" />
+                <Spin size="default" />
             </Flex>
         );
 

@@ -12,10 +12,17 @@ import { VoucherService } from './voucher.service';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { ExchangeVoucherDTO } from './dto/exchange-voucher.dto';
 import { GetAllDto } from '../common/dto/pagination.dto';
+import { GetVoucherGroupDto } from './dto/get-voucher-group.dto';
+import { GetAllVoucherDto } from './dto/get-all-voucher.dto';
 
 @Controller('voucher')
 export class VoucherController {
-  constructor(private readonly voucherService: VoucherService) {}
+  constructor(private readonly voucherService: VoucherService) { }
+
+  @Get('groups')
+  getVoucherGroups(@Query() query: GetVoucherGroupDto) {
+    return this.voucherService.findVoucherGroups(query);
+  }
 
   @Post()
   create(@Body() createVoucherDto: CreateVoucherDto) {
@@ -23,13 +30,13 @@ export class VoucherController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: GetAllDto) {
+  findAll(@Query() paginationDto: GetAllVoucherDto) {
     return this.voucherService.findAll(paginationDto);
   }
 
   @Get(':code')
-  findOne(@Param('code') query: string) {
-    return this.voucherService.findOne(query);
+  findOne(@Param('code') code: string) {
+    return this.voucherService.findOne(code);
   }
 
   @Put()
@@ -40,5 +47,21 @@ export class VoucherController {
   @Delete()
   remove(@Body('voucherIds') voucherIds: number[]) {
     return this.voucherService.remove(voucherIds);
+  }
+
+  // --- Mới ---
+  @Put('exchange-by-group')
+  exchangeByGroup(@Body() dto: ExchangeVoucherDTO & { groupName: string }) {
+    return this.voucherService.exchangeVoucherByGroup(dto.groupName, dto.customerPhone);
+  }
+
+  @Get('my-active')
+  getMyActiveVouchers(@Query('customerPhone') customerPhone: string) {
+    return this.voucherService.findActiveVouchersByCustomer(customerPhone);
+  }
+
+  @Delete('group/:groupName')
+  deleteByGroup(@Param('groupName') groupName: string) {
+    return this.voucherService.removeByGroup(groupName);
   }
 }

@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import FormButton from "./FormButton";
 
 export default function FormContainer({
   title,
@@ -16,9 +17,24 @@ export default function FormContainer({
   link,
   children,
   footer,
+  backButton,
 }: any) {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-[url(/image/login-background-1.jpg)] bg-cover">
+    <div className="relative flex p-2 items-center justify-center min-h-screen bg-gray-100 bg-[url(/image/login-background-1.jpg)] bg-cover">
+
+      {/* Nút Back góc trên trái */}
+      {backButton && (
+        <div className="absolute top-4 left-4">
+          <FormButton
+            className="bg-white/80 hover:bg-white shadow-md text-gray-800 px-3 py-1 rounded-md transition"
+            variant="link"
+            asChild
+          >
+            {backButton}
+          </FormButton>
+        </div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -28,15 +44,15 @@ export default function FormContainer({
         className="w-full max-w-lg"
       >
         <Card className="bg-white/30 backdrop-blur-md border border-white/20 shadow-xl animate-fadeSlide">
-          <CardHeader>
+          <CardHeader className="flex flex-col gap-2">
             <CardTitle className="text-2xl font-bold text-gray-800 drop-shadow">
               {title}
             </CardTitle>
+
             {description && (
-              <CardDescription className="text-gray-700">
-                {description}
-              </CardDescription>
+              <CardDescription className="text-gray-700">{description}</CardDescription>
             )}
+
             {link}
           </CardHeader>
 

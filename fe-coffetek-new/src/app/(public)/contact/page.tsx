@@ -67,7 +67,7 @@ export default function ContactPage() {
       </section>
 
       {/* --- Contact Form --- */}
-      <section className="bg-[#f6eee7] py-16">
+      {/* <section className="bg-[#f6eee7] py-16">
         <div className="container mx-auto px-6 max-w-2xl text-center">
           <h2 className="text-3xl font-bold mb-6 text-[#4a2c2a]">
             Send Us a Message
@@ -125,7 +125,7 @@ export default function ContactPage() {
             </button>
           </form>
         </div>
-      </section>
+      </section> */}
 
       {/* --- Map / Image --- */}
       <section className="container mx-auto px-6 py-16 text-center">

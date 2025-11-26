@@ -1,6 +1,6 @@
 import { Body, Controller, Get, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto } from './dto';
+import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorator';
 import * as client from '@prisma/client';
@@ -48,4 +48,17 @@ export class AuthController {
     }
 
 
+    @Post('google')
+    async googleLogin(@Body('token') token: string) {
+        return this.authservice.googleLogin(token);
+    }
+
+    @Put('security')
+    @UseGuards(AuthGuard('jwt'))
+    updateProfile(
+        @GetUser() user: client.User,
+        @Body() dto: UpdateProfileDto
+    ) {
+        return this.authservice.updateSecurity(user.id, dto);
+    }
 }

@@ -130,13 +130,13 @@ export const ProfitChart: React.FC = () => {
 
     useEffect(() => {
         fetchData(year);
-         
+
     }, [year]);
 
     const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
     if (loading) {
         return <div style={{ padding: 48, textAlign: "center" }}>
-            <Spin size="large" />
+            <Spin size="default" />
         </div>
     }
 

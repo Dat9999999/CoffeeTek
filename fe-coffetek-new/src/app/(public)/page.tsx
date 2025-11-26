@@ -29,18 +29,12 @@ export default function Home() {
 
   return (
     <div className="relative">
-      {showBanner && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeIn z-50">
-          You have successfully logged in
-        </div>
-      )}
-
       <Banner />
       <Explore />
       <OrderCoffee />
       <SellingCoffee />
       <InstantCoffee />
-      <Testimonial />
+      {/* <Testimonial /> */}
     </div>
   );
 }

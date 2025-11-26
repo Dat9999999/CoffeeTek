@@ -45,7 +45,7 @@ export function PosShell({ children }: { children: React.ReactNode }) {
             <Header
                 style={{
                     background: colorBgBase,
-                    padding: "3px 16px",
+                    padding: "3px 4px",
                     borderBottom: `1px solid ${colorBorderSecondary}`,
                     display: "flex",
                     alignItems: "center",

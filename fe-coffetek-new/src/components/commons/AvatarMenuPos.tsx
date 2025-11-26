@@ -9,10 +9,12 @@ import {
     ProfileOutlined,
     DashboardOutlined,
     HomeOutlined,
+    CaretDownOutlined,
 } from '@ant-design/icons';
 import { AdminDarkModeToggleMini } from './AdminDarkModeSwitch';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { authService } from '@/services';
+import { NotificationBellAndBadge } from './notification';
 
 const { Text } = Typography;
 
@@ -55,20 +57,20 @@ export const AvatarMenuPos: React.FC = () => {
             icon: <HomeOutlined />,
         },
         { type: 'divider' as const },
-        {
-            key: 'theme',
-            label: (
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                    }}
-                >
-                    <AdminDarkModeToggleMini />
-                </div>
-            ),
-        },
+        // {
+        //     key: 'theme',
+        //     label: (
+        //         <div
+        //             style={{
+        //                 display: 'flex',
+        //                 justifyContent: 'space-between',
+        //                 alignItems: 'center',
+        //             }}
+        //         >
+        //             <AdminDarkModeToggleMini />
+        //         </div>
+        //     ),
+        // },
         { type: 'divider' as const },
         {
             key: 'logout',
@@ -87,21 +89,54 @@ export const AvatarMenuPos: React.FC = () => {
     ];
 
     return (
-        <Dropdown
-            menu={{ items: menuItems }}
-            trigger={['click']}
-            placement="bottomRight"
+
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'center',   // 💥 fix lệch dọc
+                gap: '8px',            // thay Space
+            }}
         >
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <span>{user?.first_name} {user?.last_name}</span>
-                <Badge dot={true} color="green" offset={[-1, 38]}>
+            {/* User Name */}
+            <span
+                style={{
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '30px',       // đảm bảo chiều cao đều nhau
+                }}
+            >
+                {user?.first_name} {user?.last_name}
+            </span>
+
+            {/* Notification Badge */}
+            <div style={{ height: "30px", display: 'flex', alignItems: 'center', marginRight: '8px' }}>
+                <NotificationBellAndBadge />
+            </div>
+
+            {/* Avatar Dropdown */}
+            <Dropdown
+                menu={{ items: menuItems }}
+                trigger={['click']}
+                placement="bottomRight"
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "30px",
+                        cursor: 'pointer',
+                    }}
+                >
                     <Avatar
-                        style={{ cursor: 'pointer' }}
-                        size="default"
+                        className='mr-1'
+                        size={32}
                         icon={<UserOutlined />}
                     />
-                </Badge>
-            </div>
-        </Dropdown>
+                    <CaretDownOutlined style={{ color: "#bfbfbf" }} />
+                </div>
+            </Dropdown>
+        </div>
     );
 };

@@ -11,7 +11,7 @@ interface SuspenseWrapperProps {
 
 export const SuspenseWrapper: React.FC<SuspenseWrapperProps> = ({
     children,
-    size = 'large',
+    size = 'default',
 }) => {
     return (
         <Suspense

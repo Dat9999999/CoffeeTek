@@ -1,10 +1,14 @@
-import { ArrayMinSize } from "class-validator";
-import { RemainRealityDto } from "./RemainRealityDto.dto";
+import { ArrayMinSize, IsNumber, IsOptional, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 export class CreateMaterialRemainDto {
     @Type(() => Date)
     date: Date;
-    @ArrayMinSize(1)
-    remainReality: RemainRealityDto[]
+
+    @IsNumber()
+    materialId: number;
+
+    @IsOptional()
+    @IsNumber()
+    actualConsumed: number;
 }

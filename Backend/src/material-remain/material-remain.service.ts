@@ -117,22 +117,62 @@ export class MaterialRemainService {
 
 
   async create(createMaterialRemainDto: CreateMaterialRemainDto) {
-
-    for (const material of createMaterialRemainDto.remainReality) {
-      await this.prisma.materialRemain.create({
-        data: {
-          remain: material.remain,
-          date: createMaterialRemainDto.date,
-          Material: {
-            connect: { id: material.materialId }
-          }
-
+    const inputDate = new Date(createMaterialRemainDto.date);
+    inputDate.setUTCHours(0, 0, 0, 0);
+    const lastMaterialRemain = await this.prisma.materialRemain.findFirst({
+      where: {
+        materialId: createMaterialRemainDto.materialId,
+        date: {
+          lte: inputDate
         }
-      })
+      },
+      orderBy: {
+        date: 'desc'
+      },
+    });
+
+    if (lastMaterialRemain?.date ) {
+      const lastDate = new Date(lastMaterialRemain.date);
+      lastDate.setUTCHours(0, 0, 0, 0);
+      if (lastDate.getTime() === inputDate.getTime()) {
+        throw new BadRequestException('Material remain record for this date already exists. If you want to update it, please use the update method.');
+      }
     }
 
-    // Đã bỏ qua sửa lỗi forEach/async để tập trung vào vấn đề ngày tháng.
-    return createMaterialRemainDto;
+    if (!lastMaterialRemain) throw new BadRequestException('No previous material remain record found.');
+    const contracting = await this.prisma.contracting.findFirst({
+      where: {
+        materialId: createMaterialRemainDto.materialId,
+        created_at: {
+          lt: inputDate
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    const importation = await this.prisma.materialImportation.findFirst({
+      where: {
+        materialId: createMaterialRemainDto.materialId,
+        importDate: {
+          lt: inputDate
+        }
+      },
+      orderBy: {
+        importDate: 'desc'
+      }
+    });
+    const actualConsumed = createMaterialRemainDto.actualConsumed || (contracting?.quantity || 0);
+
+    let toDayRemain = lastMaterialRemain?.remain + (importation?.importQuantity || 0) - actualConsumed;
+    return await this.prisma.materialRemain.create({
+      data: {
+        materialId: createMaterialRemainDto.materialId,
+        date: createMaterialRemainDto.date,
+        remain: toDayRemain
+      }
+    });
   }
 
   async findAll() {
@@ -145,18 +185,18 @@ export class MaterialRemainService {
   }
 
   async update(id: number, updateMaterialRemainDto: UpdateMaterialRemainDto) {
-    await this.prisma.materialRemain.update({
-      where: { id },
-      data: {
-        remain: updateMaterialRemainDto.remain,
-        date: updateMaterialRemainDto.date,
-        Material: {
-          connect: { id: updateMaterialRemainDto.materialId }
-        }
+    // await this.prisma.materialRemain.update({
+    //   where: { id },
+    //   data: {
+    //     remain: updateMaterialRemainDto.remain,
+    //     date: updateMaterialRemainDto.date,
+    //     Material: {
+    //       connect: { id: updateMaterialRemainDto.materialId }
+    //     }
 
-      }
-    })
-    return updateMaterialRemainDto;
+    //   }
+    // })
+    // return updateMaterialRemainDto;
   }
 
   remove(id: number) {

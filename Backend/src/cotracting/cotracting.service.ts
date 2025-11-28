@@ -4,6 +4,7 @@ import { UpdateCotractingDto } from './dto/update-cotracting.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { getContractingsByDateDto } from './dto/get-contractings-by-date.dto';
 import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
+import { find } from 'rxjs';
 
 @Injectable()
 export class CotractingService {
@@ -93,8 +94,16 @@ export class CotractingService {
     return contracting;
   }
 
-  update(id: number, updateCotractingDto: UpdateCotractingDto) {
-    return `This action updates a #${id} cotracting`;
+  async update(id: number, updateCotractingDto: UpdateCotractingDto) {
+    return await this.prisma.contracting.update({
+      where: {
+        id: id,
+      },
+      data: {
+        quantity: updateCotractingDto.quantity,
+        created_at: updateCotractingDto.date,
+      }
+    });
   }
 
   async remove(id: number) {

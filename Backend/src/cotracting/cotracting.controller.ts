@@ -24,7 +24,7 @@ export class CotractingController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCotractingDto: UpdateCotractingDto) {
+  update(@Param('id', ParseIntPipe) id: string, @Body() updateCotractingDto: UpdateCotractingDto) {
     return this.cotractingService.update(+id, updateCotractingDto);
   }
 

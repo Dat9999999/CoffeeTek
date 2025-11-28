@@ -57,7 +57,11 @@ export class CotractingService {
     return `This action updates a #${id} cotracting`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} cotracting`;
+  async remove(id: number) {
+    return await this.prisma.contracting.delete({
+      where: {
+        id: id
+      }
+    });
   }
 }

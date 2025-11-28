@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CotractingService } from './cotracting.service';
 import { CreateCotractingDto } from './dto/create-cotracting.dto';
 import { UpdateCotractingDto } from './dto/update-cotracting.dto';
+import { getContractingsByDateDto } from './dto/get-contractings-by-date.dto';
 
 @Controller('cotracting')
 export class CotractingController {
-  constructor(private readonly cotractingService: CotractingService) {}
+  constructor(private readonly cotractingService: CotractingService) { }
 
   @Post()
   create(@Body() createCotractingDto: CreateCotractingDto) {
@@ -13,8 +14,8 @@ export class CotractingController {
   }
 
   @Get()
-  findAll() {
-    return this.cotractingService.findAll();
+  findAll(@Body() getContractingsByDateDto: getContractingsByDateDto) {
+    return this.cotractingService.findAll(getContractingsByDateDto);
   }
 
   @Get(':id')

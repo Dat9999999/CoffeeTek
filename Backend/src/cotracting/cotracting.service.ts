@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCotractingDto } from './dto/create-cotracting.dto';
 import { UpdateCotractingDto } from './dto/update-cotracting.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { getContractingsByDateDto } from './dto/get-contractings-by-date.dto';
+import { ResponseGetAllDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class CotractingService {
@@ -45,8 +47,38 @@ export class CotractingService {
       }
     });
   }
-  findAll() {
-    return `This action returns all cotracting`;
+  async findAll(getContractingsByDateDto: getContractingsByDateDto) {
+
+    const contractings = await this.prisma.contracting.findMany({
+      where: {
+        created_at: {
+          gte: new Date(new Date(getContractingsByDateDto.date).setHours(0, 0, 0, 0)),
+          lt: new Date(new Date(getContractingsByDateDto.date).setHours(23, 59, 59, 999)),
+        }
+      },
+      skip: getContractingsByDateDto.size * (getContractingsByDateDto.page - 1),
+      take: getContractingsByDateDto.size,
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+    const response = new ResponseGetAllDto();
+    response.data = contractings;
+    const total = await this.prisma.contracting.count({
+      where: {
+        created_at: {
+          gte: new Date(new Date(getContractingsByDateDto.date).setHours(0, 0, 0, 0)),
+          lt: new Date(new Date(getContractingsByDateDto.date).setHours(23, 59, 59, 999)),
+        }
+      }
+    });
+    response.meta = {
+      total: total,
+      page: getContractingsByDateDto.page,
+      size: getContractingsByDateDto.size,
+      totalPages: Math.ceil(total / getContractingsByDateDto.size)
+    }
+    return response;
   }
 
   findOne(id: number) {

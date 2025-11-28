@@ -9,13 +9,13 @@ import { find } from 'rxjs';
 @Injectable()
 export class CotractingService {
   constructor(private readonly prisma: PrismaService) { }
-  async create(createCotractingDto: CreateCotractingDto) {
+  async checkAvailability(materialId: number, contractingDate: Date, contarctingQuantity: number) {
     const remains = await this.prisma.materialRemain.findFirst({
       where: {
-        materialId: createCotractingDto.materialId,
+        materialId: materialId,
       }
     })
-    const startOfDay = new Date(createCotractingDto.date);
+    const startOfDay = new Date(contractingDate);
     startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00.000
 
     // 2. Get the start of the next day
@@ -25,7 +25,7 @@ export class CotractingService {
     // 3. Construct the Prisma query
     const importation = await this.prisma.materialImportation.findFirst({
       where: {
-        materialId: createCotractingDto.materialId,
+        materialId: materialId,
         importDate: {
           // Must be on or after the very beginning of the target day
           gte: startOfDay,
@@ -37,7 +37,10 @@ export class CotractingService {
     const remainsQuantity = remains ? remains.remain : 0;
     const importationQuantity = importation ? importation.importQuantity : 0;
     const totalAvailable = remainsQuantity + importationQuantity;
-    if (totalAvailable < createCotractingDto.quantity)
+    return totalAvailable > contarctingQuantity;
+  }
+  async create(createCotractingDto: CreateCotractingDto) {
+    if (! await this.checkAvailability(createCotractingDto.materialId, createCotractingDto.date, createCotractingDto.quantity))
       throw new BadRequestException('Not enough material remains');
 
     return this.prisma.contracting.create({
@@ -95,13 +98,26 @@ export class CotractingService {
   }
 
   async update(id: number, updateCotractingDto: UpdateCotractingDto) {
+    const contracting = await this.prisma.contracting.findUnique({
+      where: {
+        id: id
+      }
+    });
+    if (!contracting) {
+      throw new BadRequestException('Contracting not found');
+    }
+    const dateToCheck = updateCotractingDto.date ?? contracting.created_at;
+    if (updateCotractingDto.quantity === undefined) throw new BadRequestException('Quantity is required');
+    if (await this.checkAvailability(contracting.materialId, dateToCheck, updateCotractingDto.quantity) == false) {
+      throw new BadRequestException('Not enough material remains');
+    }
     return await this.prisma.contracting.update({
       where: {
         id: id,
       },
       data: {
-        quantity: updateCotractingDto.quantity,
-        created_at: updateCotractingDto.date,
+        quantity: updateCotractingDto.quantity ?? contracting.quantity,
+        created_at: updateCotractingDto.date ?? contracting.created_at,
       }
     });
   }

@@ -81,8 +81,16 @@ export class CotractingService {
     return response;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} cotracting`;
+  async findOne(id: number) {
+    const contracting = await this.prisma.contracting.findUnique({
+      where: {
+        id: id
+      }
+    });
+    if (!contracting) {
+      throw new BadRequestException('Contracting not found');
+    }
+    return contracting;
   }
 
   update(id: number, updateCotractingDto: UpdateCotractingDto) {

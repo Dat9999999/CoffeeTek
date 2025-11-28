@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { CotractingService } from './cotracting.service';
 import { CreateCotractingDto } from './dto/create-cotracting.dto';
 import { UpdateCotractingDto } from './dto/update-cotracting.dto';
@@ -19,7 +19,7 @@ export class CotractingController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: string) {
     return this.cotractingService.findOne(+id);
   }
 

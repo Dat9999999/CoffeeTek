@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateMaterialRemainDto } from './dto/create-material-remain.dto';
 import { UpdateMaterialRemainDto } from './dto/update-material-remain.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { error } from 'console';
 
 @Injectable()
 export class MaterialRemainService {
@@ -25,90 +24,22 @@ export class MaterialRemainService {
 
 
     const materials = await this.prisma.material.findMany({ include: { Unit: true }, });
-    let res: { record: number; materialId: number, materialName: string, materialUnit: string, lastRemainQuantity: number }[] = []
+    let res: { materialId: number, materialName: string, materialUnit: string, lastRemainQuantity: number }[] = []
 
     for (const materialRemain of materials) {
       const materialId = materialRemain.id;
 
       // TÌM KHO CUỐI KỲ TRƯỚC: Phải nằm trong phạm vi của ngày hôm trước
-      const lastRemain = await this.prisma.materialRemain.findFirst({
-        where: {
-          materialId: materialId,
-          date: {
-            gte: lastDateStart, // Lớn hơn hoặc bằng 00:00:00 ngày hôm trước
-            lt: lastDateEnd     // Nhỏ hơn 00:00:00 ngày hiện tại (hay 1 ngày sau)
-          }
-        },
-        orderBy: { date: 'desc' } // Đảm bảo lấy bản ghi mới nhất trong ngày
-      });
-
-      // TÌM NHẬP HÀNG: Phải nằm trong phạm vi của ngày hiện tại
-      const importMaterial = await this.prisma.materialImportation.findFirst({
-        where: {
-          materialId: materialId,
-          importDate: {
-            gte: date, // Lớn hơn hoặc bằng 00:00:00 ngày hiện tại
-            lt: nextDate                       // Nhỏ hơn 00:00:00 ngày tiếp theo
-          }
-        },
-        orderBy: { importDate: 'desc' } // Lấy bản ghi mới nhất nếu có nhiều lần nhập trong ngày
-      });
-
-
-      // TÍNH TỔNG HỎNG/THẢI (Loss): Phải nằm trong phạm vi của ngày hiện tại
-      const loss = await this.prisma.watseLog
-        .findMany({
-          where: {
-            materialId: materialId,
-            date: {
-              gte: date,
-              lt: nextDate
-            }
-          }
-        })
-        .then(e => e.reduce((sum, i) => sum + i.quantity, 0));
+      const lastRemain = await this.getLastRemain(lastDateEnd, materialId);
 
       // Kiểm tra logic và tính toán
-      if (!lastRemain || !importMaterial) {
-        // Cần điều chỉnh logic kiểm tra: nếu không có tồn kho cuối kỳ trước, coi là 0.
-        // Nếu không có nhập hàng, coi là 0.
-        const lastRemainQuantity = lastRemain ? lastRemain.remain : 0;
-        const importQuantity = importMaterial ? importMaterial.importQuantity : 0;
 
-        // Nếu bạn muốn giữ lại lỗi khi không tìm thấy TỒN KHO HOẶC NHẬP HÀNG:
-        // throw new BadRequestException(`Can not find last remain or importation for material ${materialId}`); 
-
-        // Nếu cho phép tồn kho/nhập hàng = 0, bạn dùng logic sau:
-        const systemrecord = {
-
-          record: lastRemainQuantity + importQuantity - (loss),
-          materialId: materialId
-        }
-        // res.push(systemrecord)
-
-        res.push({
-          record: lastRemainQuantity + importQuantity - (loss),
-          materialId: materialId,
-          materialName: materialRemain.name,
-          materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
-          lastRemainQuantity: lastRemainQuantity,
-        });
-
-      } else {
-        const systemrecord = {
-          record: lastRemain.remain + importMaterial.importQuantity - (loss),
-          materialId: materialId
-        }
-        // res.push(systemrecord)
-
-        res.push({
-          record: lastRemain.remain + importMaterial.importQuantity - (loss),
-          materialId: materialId,
-          materialName: materialRemain.name,
-          materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
-          lastRemainQuantity: lastRemain.remain,
-        });
-      }
+      res.push({
+        materialId: materialId,
+        materialName: materialRemain.name,
+        materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
+        lastRemainQuantity: !lastRemain ? 0 : lastRemain.remain,
+      });
     }
 
     return res;

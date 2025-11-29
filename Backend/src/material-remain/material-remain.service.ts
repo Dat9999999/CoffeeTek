@@ -114,14 +114,11 @@ export class MaterialRemainService {
     return res;
   }
 
-
-
-  async create(createMaterialRemainDto: CreateMaterialRemainDto) {
-    const inputDate = new Date(createMaterialRemainDto.date);
+  async getLastRemain(inputDate: Date, materialId: number) {
     inputDate.setUTCHours(0, 0, 0, 0);
     const lastMaterialRemain = await this.prisma.materialRemain.findFirst({
       where: {
-        materialId: createMaterialRemainDto.materialId,
+        materialId: materialId,
         date: {
           lte: inputDate
         }
@@ -130,8 +127,30 @@ export class MaterialRemainService {
         date: 'desc'
       },
     });
+    return lastMaterialRemain;
+  }
+  async getLastImport(inputDate: Date, materialId: number) {
+    const importation = await this.prisma.materialImportation.findFirst({
+      where: {
+        materialId: materialId,
+        importDate: {
+          lt: inputDate
+        }
+      },
+      orderBy: {
+        importDate: 'desc'
+      }
+    });
+    return importation;
+  }
 
-    if (lastMaterialRemain?.date ) {
+
+
+  async create(createMaterialRemainDto: CreateMaterialRemainDto) {
+    const inputDate = new Date(createMaterialRemainDto.date);
+    const lastMaterialRemain = await this.getLastRemain(inputDate, createMaterialRemainDto.materialId);
+
+    if (lastMaterialRemain?.date) {
       const lastDate = new Date(lastMaterialRemain.date);
       lastDate.setUTCHours(0, 0, 0, 0);
       if (lastDate.getTime() === inputDate.getTime()) {
@@ -152,17 +171,8 @@ export class MaterialRemainService {
       }
     });
 
-    const importation = await this.prisma.materialImportation.findFirst({
-      where: {
-        materialId: createMaterialRemainDto.materialId,
-        importDate: {
-          lt: inputDate
-        }
-      },
-      orderBy: {
-        importDate: 'desc'
-      }
-    });
+    const importation = await this.getLastImport(inputDate, createMaterialRemainDto.materialId);
+    if (contracting && contracting?.quantity < createMaterialRemainDto.actualConsumed) throw new BadRequestException('Actual consumed exceeds contracted quantity.');
     const actualConsumed = createMaterialRemainDto.actualConsumed || (contracting?.quantity || 0);
 
     let toDayRemain = lastMaterialRemain?.remain + (importation?.importQuantity || 0) - actualConsumed;
@@ -185,18 +195,29 @@ export class MaterialRemainService {
   }
 
   async update(id: number, updateMaterialRemainDto: UpdateMaterialRemainDto) {
-    // await this.prisma.materialRemain.update({
-    //   where: { id },
-    //   data: {
-    //     remain: updateMaterialRemainDto.remain,
-    //     date: updateMaterialRemainDto.date,
-    //     Material: {
-    //       connect: { id: updateMaterialRemainDto.materialId }
-    //     }
+    //case actual remain greater than last remain + import
+    if (!updateMaterialRemainDto.date) throw new BadRequestException("Date input is required!");
+    const materialRemain = await this.prisma.materialRemain.findUnique({
+      where: {
+        id: id
+      }
+    });
+    if (!materialRemain) throw new BadRequestException(`there is no record of materialRemain with ${id}`);
 
-    //   }
-    // })
-    // return updateMaterialRemainDto;
+    const lastRemain = await this.getLastRemain(updateMaterialRemainDto.date, materialRemain.materialId);
+    //get today import 
+    const lastImport = await this.getLastImport(updateMaterialRemainDto.date, materialRemain.materialId);
+
+    if (!lastRemain || !lastImport) {
+      throw new BadRequestException('There no record of last remain or importation');
+    }
+    if (updateMaterialRemainDto.actualRemain > lastRemain.remain + lastImport.importQuantity) throw new BadRequestException(`actual remains cannot greater than sum of last remain and import`);
+    return await this.prisma.materialRemain.update({
+      where: { id },
+      data: {
+        remain: updateMaterialRemainDto.actualRemain
+      }
+    });
   }
 
   remove(id: number) {

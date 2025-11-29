@@ -89,7 +89,6 @@ export class MaterialRemainService {
       }
     }
 
-    if (!lastMaterialRemain) throw new BadRequestException('No previous material remain record found.');
     const contracting = await this.prisma.contracting.findFirst({
       where: {
         materialId: createMaterialRemainDto.materialId,
@@ -104,9 +103,12 @@ export class MaterialRemainService {
 
     const importation = await this.getLastImport(inputDate, createMaterialRemainDto.materialId);
     if (contracting && contracting?.quantity < createMaterialRemainDto.actualConsumed) throw new BadRequestException('Actual consumed exceeds contracted quantity.');
-    const actualConsumed = createMaterialRemainDto.actualConsumed || (contracting?.quantity || 0);
+    const actualConsumed = createMaterialRemainDto.actualConsumed | (contracting?.quantity ? contracting?.quantity : 0);
 
-    let toDayRemain = lastMaterialRemain?.remain + (importation?.importQuantity || 0) - actualConsumed;
+    let toDayRemain = (lastMaterialRemain?.remain ? lastMaterialRemain.remain : 0 )+ (importation?.importQuantity || 0) - actualConsumed;
+    if (toDayRemain < 0) {
+      throw new BadRequestException('Today remain cannot be negative.');
+    }
     return await this.prisma.materialRemain.create({
       data: {
         materialId: createMaterialRemainDto.materialId,

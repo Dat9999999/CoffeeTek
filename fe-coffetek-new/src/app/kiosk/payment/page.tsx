@@ -2,10 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Banknote, QrCode, CheckCircle, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Banknote, QrCode, CheckCircle, ChevronLeft, Loader2, AlertCircle, Tag, X } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react'; // Import thư viện QR
 import api from '@/lib/api';
 import { CartItem, CreateOrderPayload, OrderDetailItemDTO } from '../types';
+
+interface Voucher {
+  id: number;
+  code: string;
+  voucher_name: string;
+  discount_percentage: number;
+  minAmountOrder: number;
+  valid_from: string;
+  valid_to: string;
+  is_active: boolean;
+}
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -13,13 +24,39 @@ export default function PaymentPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderId, setOrderId] = useState<number | null>(null);
   const [qrUrl, setQrUrl] = useState<string>('');
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+  const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [cartTotal, setCartTotal] = useState(0);
+  const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   // Ref để quản lý interval polling
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Set client-side flag and initialize data
   useEffect(() => {
+    setIsClient(true);
+    
     const savedCart = localStorage.getItem('kiosk_cart');
-    if (savedCart) setCart(JSON.parse(savedCart));
+    if (savedCart) {
+      const cartData = JSON.parse(savedCart);
+      setCart(cartData);
+      
+      // Calculate total
+      const total = cartData.reduce((sum: number, item: CartItem) => sum + item.totalPrice, 0);
+      setCartTotal(total);
+    }
+    
+    // Check if customer is logged in and fetch vouchers immediately
+    const customerPhone = localStorage.getItem('kiosk_phone');
+    const loggedIn = !!customerPhone;
+    setIsCustomerLoggedIn(loggedIn);
+    
+    // Fetch vouchers immediately if customer is logged in
+    if (loggedIn && customerPhone) {
+      fetchVouchers(customerPhone);
+    }
     
     // Cleanup khi component unmount
     return () => {
@@ -27,9 +64,77 @@ export default function PaymentPage() {
     };
   }, []);
 
+  // Refetch vouchers when cart total changes (to update applicability)
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const customerPhone = localStorage.getItem('kiosk_phone');
+    if (customerPhone && isCustomerLoggedIn) {
+      fetchVouchers(customerPhone);
+    }
+  }, [cartTotal, isClient, isCustomerLoggedIn]);
+
+  const fetchVouchers = async (phone: string) => {
+    setLoadingVouchers(true);
+    try {
+      const res = await api.get('/voucher/my-active', {
+        params: { customerPhone: phone }
+      });
+      const activeVouchers = res.data || [];
+      console.log("Active Vouchers:", activeVouchers);
+      
+      // Show ALL active vouchers (filter only by active status and valid date)
+      const now = new Date();
+      const validVouchers = activeVouchers.filter((v: Voucher) => {
+        const validFrom = new Date(v.valid_from);
+        const validTo = new Date(v.valid_to);
+        return v.is_active && 
+               now >= validFrom && 
+               now <= validTo;
+      });
+      
+      setVouchers(validVouchers);
+      
+      // Clear selected voucher if it's no longer valid
+      if (selectedVoucher && !validVouchers.find((v: Voucher) => v.code === selectedVoucher.code)) {
+        setSelectedVoucher(null);
+      }
+    } catch (error) {
+      console.error('Error fetching vouchers:', error);
+      setVouchers([]);
+    } finally {
+      setLoadingVouchers(false);
+    }
+  };
+
+  // Check if voucher is applicable (meets minimum order amount)
+  const isVoucherApplicable = (voucher: Voucher): boolean => {
+    return cartTotal >= voucher.minAmountOrder;
+  };
+
+  // Calculate discount amount
+  const calculateDiscount = (): number => {
+    if (!selectedVoucher) return 0;
+    // Only apply discount if voucher is applicable
+    if (!isVoucherApplicable(selectedVoucher)) return 0;
+    return (cartTotal * selectedVoucher.discount_percentage) / 100;
+  };
+
+  // Calculate final total after discount
+  const finalTotal = (): number => {
+    return Math.max(0, cartTotal - calculateDiscount());
+  };
+
   // --- HÀM 1: TẠO ĐƠN HÀNG ---
   const handleCreateOrder = async (method: 'CASH' | 'VNPAY') => {
     if (cart.length === 0) return;
+    
+    // Validate selected voucher before proceeding
+    if (selectedVoucher && !isVoucherApplicable(selectedVoucher)) {
+      alert(`Voucher "${selectedVoucher.voucher_name}" yêu cầu đơn hàng tối thiểu ${selectedVoucher.minAmountOrder.toLocaleString('vi-VN')}₫. Vui lòng chọn voucher khác hoặc bỏ chọn.`);
+      return;
+    }
+    
     setStep('PROCESSING');
     
     try {
@@ -68,8 +173,13 @@ export default function PaymentPage() {
 
       // 3. Phân nhánh xử lý
       if (method === 'CASH') {
-        setStep('SUCCESS');
-        localStorage.removeItem('kiosk_cart'); // Xóa giỏ
+        // For cash payment, apply voucher if selected
+        if (selectedVoucher?.code) {
+          await handleCashPayment(newOrder.id, newOrder.final_price || cartTotal);
+        } else {
+          setStep('SUCCESS');
+          localStorage.removeItem('kiosk_cart'); // Xóa giỏ
+        }
       } else {
         // VNPay Flow
         await handleVNPay(newOrder.id, newOrder.final_price || 0); // Dùng final_price từ response cho chuẩn
@@ -82,14 +192,43 @@ export default function PaymentPage() {
     }
   };
 
-  // --- HÀM 2: LẤY LINK VNPAY & POLLING ---
+  // --- HÀM 2: THANH TOÁN TIỀN MẶT VỚI VOUCHER ---
+  const handleCashPayment = async (orderId: number, amount: number) => {
+    try {
+      // Only send voucher code if it's applicable
+      const voucherCode = selectedVoucher && isVoucherApplicable(selectedVoucher) 
+        ? selectedVoucher.code 
+        : undefined;
+      
+      await api.patch('/order/paid/cash', {
+        orderId: orderId,
+        amount: amount,
+        ...(voucherCode && { voucherCode }),
+      });
+      
+      setStep('SUCCESS');
+      localStorage.removeItem('kiosk_cart');
+    } catch (error: any) {
+      console.error("Cash Payment Error:", error);
+      alert("Lỗi thanh toán: " + (error.response?.data?.message || "Vui lòng thử lại"));
+      setStep('METHOD');
+    }
+  };
+
+  // --- HÀM 3: LẤY LINK VNPAY & POLLING ---
   const handleVNPay = async (orderId: number, amount: number) => {
     try {
       // Gọi API lấy link thanh toán
       // Lưu ý: Backend trả về text url trực tiếp (dựa theo code service bạn gửi)
+      // Only send voucher code if it's applicable
+      const voucherCode = selectedVoucher && isVoucherApplicable(selectedVoucher) 
+        ? selectedVoucher.code 
+        : undefined;
+      
       const payRes = await api.post('/order/paid/online', {
         orderId: orderId,
-        amount: amount, 
+        amount: amount,
+        ...(voucherCode && { voucherCode }),
         // Backend có thể tự tính amount từ DB, nhưng DTO có field này nên cứ gửi
       });
 
@@ -112,7 +251,7 @@ export default function PaymentPage() {
     }
   };
 
-  // --- HÀM 3: POLLING CHECK TRẠNG THÁI ---
+  // --- HÀM 4: POLLING CHECK TRẠNG THÁI ---
   const startPolling = (orderId: number) => {
     // Check mỗi 3 giây
     pollIntervalRef.current = setInterval(async () => {
@@ -147,7 +286,124 @@ export default function PaymentPage() {
         
         {/* VIEW 1: CHỌN PHƯƠNG THỨC */}
         {step === 'METHOD' && (
-          <div className="w-full max-w-4xl grid grid-cols-2 gap-8">
+          <div className="w-full max-w-4xl space-y-6">
+            {/* Voucher Selection Section */}
+            {isClient && isCustomerLoggedIn && (
+              <div className="bg-white rounded-2xl shadow-sm border-2 border-orange-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Tag className="text-orange-600" size={24} />
+                    <h3 className="text-xl font-bold text-gray-900">Mã giảm giá</h3>
+                  </div>
+                  {selectedVoucher && (
+                    <button
+                      onClick={() => setSelectedVoucher(null)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  )}
+                </div>
+
+                {loadingVouchers ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="animate-spin text-orange-600" size={24} />
+                    <span className="ml-2 text-gray-600">Đang tải voucher...</span>
+                  </div>
+                ) : vouchers.length > 0 ? (
+                  <div className="space-y-3">
+                    <select
+                      value={selectedVoucher?.code || ''}
+                      onChange={(e) => {
+                        const voucher = vouchers.find((v: Voucher) => v.code === e.target.value);
+                        setSelectedVoucher(voucher || null);
+                      }}
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg font-medium focus:border-orange-500 focus:outline-none transition-colors"
+                    >
+                      <option value="">-- Chọn voucher --</option>
+                      {vouchers.map((voucher) => {
+                        const applicable = isVoucherApplicable(voucher);
+                        return (
+                          <option 
+                            key={voucher.id} 
+                            value={voucher.code}
+                            disabled={!applicable}
+                            style={{ color: applicable ? 'inherit' : '#9ca3af' }}
+                          >
+                            {voucher.voucher_name} - Giảm {voucher.discount_percentage}% 
+                            {voucher.minAmountOrder > 0 && ` (Tối thiểu ${voucher.minAmountOrder.toLocaleString('vi-VN')}₫)`}
+                            {!applicable && ' ⚠️ Không đủ điều kiện'}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    {selectedVoucher && (
+                      <div className={`rounded-xl p-4 space-y-2 border-2 ${
+                        isVoucherApplicable(selectedVoucher) 
+                          ? 'bg-orange-50 border-orange-200' 
+                          : 'bg-yellow-50 border-yellow-300'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700 font-medium">Mã:</span>
+                          <span className="text-orange-600 font-bold">{selectedVoucher.code}</span>
+                        </div>
+                        {!isVoucherApplicable(selectedVoucher) && (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-yellow-800 text-sm font-medium">
+                            ⚠️ Voucher này yêu cầu đơn hàng tối thiểu {selectedVoucher.minAmountOrder.toLocaleString('vi-VN')}₫. 
+                            Hiện tại giỏ hàng của bạn: {cartTotal.toLocaleString('vi-VN')}₫
+                          </div>
+                        )}
+                        {isVoucherApplicable(selectedVoucher) && (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700 font-medium">Giảm giá:</span>
+                              <span className="text-green-600 font-bold">
+                                -{calculateDiscount().toLocaleString('vi-VN')}₫ ({selectedVoucher.discount_percentage}%)
+                              </span>
+                            </div>
+                            <div className="pt-2 border-t border-orange-200 flex items-center justify-between">
+                              <span className="text-gray-900 font-bold text-lg">Tổng thanh toán:</span>
+                              <span className="text-orange-600 font-bold text-xl">
+                                {finalTotal().toLocaleString('vi-VN')}₫
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Bạn chưa có voucher nào khả dụng
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Order Summary */}
+            <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Tóm tắt đơn hàng</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-gray-700">
+                  <span>Tạm tính:</span>
+                  <span>{cartTotal.toLocaleString('vi-VN')}₫</span>
+                </div>
+                {selectedVoucher && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Giảm giá ({selectedVoucher.discount_percentage}%):</span>
+                    <span>-{calculateDiscount().toLocaleString('vi-VN')}₫</span>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-gray-200 flex justify-between text-lg font-bold text-gray-900">
+                  <span>Tổng cộng:</span>
+                  <span className="text-orange-600">{finalTotal().toLocaleString('vi-VN')}₫</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="grid grid-cols-2 gap-8">
             <button 
               onClick={() => handleCreateOrder('VNPAY')}
               className="group bg-white p-10 rounded-3xl shadow-sm border-2 border-transparent hover:border-blue-500 hover:shadow-blue-100 transition-all flex flex-col items-center gap-6"
@@ -173,6 +429,7 @@ export default function PaymentPage() {
                 <p className="text-gray-500 mt-2">Nhận hóa đơn và thanh toán cho thu ngân</p>
               </div>
             </button>
+            </div>
           </div>
         )}
 

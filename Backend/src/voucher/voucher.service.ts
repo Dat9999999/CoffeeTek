@@ -323,13 +323,14 @@ export class VoucherService {
 
   // --- Lấy voucher active của người dùng ---
   async findActiveVouchersByCustomer(customerPhone: string) {
-    return this.prisma.voucher.findMany({
+    return  await this.prisma.voucher.findMany({
       where: {
         customerPhone,
         is_active: true,
       },
       orderBy: { valid_from: 'desc' },
     });
+    // return "test";
   }
 
   // --- Xóa voucher theo group ---

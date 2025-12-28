@@ -203,7 +203,7 @@ model Order {
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
 
   staffId         Int
-  Staff           User           @relation("StaffOrders", fields: [staffId], references: [id])
+  Staff           User?           @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
   invoiceUrl      String?

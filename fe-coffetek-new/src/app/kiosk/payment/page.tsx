@@ -48,11 +48,11 @@ export default function PaymentPage() {
         optionValue: Object.values(item.selectedOptions).map(id => id.toString())
       }));
 
-      const customerPhone = localStorage.getItem('kiosk_phone') || '0000000000'; // Fallback nếu lỗi
+      const customerPhone = localStorage.getItem('kiosk_phone') || undefined; // Fallback nếu lỗi
 
       const payload: CreateOrderPayload = {
         order_details: orderDetails,
-        customerPhone: customerPhone,
+        customerPhone: customerPhone ,
         staffId: '1', 
         note: `Kiosk Order - ${method}`
       };

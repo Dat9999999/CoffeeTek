@@ -130,65 +130,97 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
 
     return (
         <Drawer
-            title="Order Benefits"
+            title={
+                <Text style={{ fontSize: 24, fontWeight: 700 }}>
+                    Thông tin đơn hàng
+                </Text>
+            }
             open={open}
             onClose={onClose}
-            width={380}
-            bodyStyle={{ padding: 20 }}
+            width={600}
+            bodyStyle={{ padding: 24, fontSize: 18 }}
         >
             {/* Customer */}
-            <div style={{ marginBottom: 24 }}>
-                <Title level={4}><UserOutlined /> Customer</Title>
+            <div style={{ marginBottom: 32 }}>
+                <Title level={3} style={{ fontSize: 22, marginBottom: 16 }}>
+                    <UserOutlined style={{ fontSize: 22, marginRight: 8 }} /> Khách hàng
+                </Title>
 
                 <UserSearchSelector
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", height: 56, fontSize: 18 }}
                     onSelect={onSelectCustomer}
                 />
 
                 {selectedCustomer && (
                     <Flex align="center" justify="space-between" style={{
-                        marginTop: 12, padding: 10, borderRadius: 8, backgroundColor: "#fafafa", border: "1px solid #eee",
+                        marginTop: 16, 
+                        padding: 16, 
+                        borderRadius: 12, 
+                        backgroundColor: "#fafafa", 
+                        border: "2px solid #eee",
                     }}>
-                        <Flex align="center" gap={12}>
-                            <Avatar src={selectedCustomer.detail?.avatar_url} icon={<UserOutlined />} size={40} />
+                        <Flex align="center" gap={16}>
+                            <Avatar src={selectedCustomer.detail?.avatar_url} icon={<UserOutlined />} size={56} />
                             <div>
-                                <Text strong>
+                                <Text strong style={{ fontSize: 18, display: "block", marginBottom: 4 }}>
                                     {selectedCustomer.first_name} {selectedCustomer.last_name}
-                                </Text><br />
-                                <Text type="secondary">{selectedCustomer.phone_number}</Text><br />
-                                <Text type="secondary">Email: {selectedCustomer.email || "N/A"}</Text>
+                                </Text>
+                                <Text type="secondary" style={{ fontSize: 16, display: "block", marginBottom: 4 }}>
+                                    {selectedCustomer.phone_number}
+                                </Text>
+                                <Text type="secondary" style={{ fontSize: 16 }}>
+                                    Email: {selectedCustomer.email || "N/A"}
+                                </Text>
                             </div>
                         </Flex>
-                        <Button type="text" icon={<CloseOutlined />} onClick={handleDeleteCustomer} danger />
+                        <Button 
+                            type="text" 
+                            icon={<CloseOutlined style={{ fontSize: 20 }} />} 
+                            onClick={handleDeleteCustomer} 
+                            danger
+                            size="large"
+                        />
                     </Flex>
                 )}
             </div>
 
-            <Divider />
+            <Divider style={{ margin: "24px 0" }} />
 
             {/* Voucher Section */}
             <div>
-                <Flex justify="space-between" align="center" style={{ marginBottom: 8 }}>
-                    <Title level={4}><IdcardOutlined /> Voucher</Title>
-                    <Button type="dashed" size="small" icon={<ReloadOutlined />} onClick={handleResetVouchers} />
+                <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+                    <Title level={3} style={{ fontSize: 22 }}>
+                        <IdcardOutlined style={{ fontSize: 22, marginRight: 8 }} /> Voucher
+                    </Title>
+                    <Button 
+                        type="dashed" 
+                        size="large" 
+                        icon={<ReloadOutlined style={{ fontSize: 18 }} />} 
+                        onClick={handleResetVouchers}
+                        style={{ fontSize: 16 }}
+                    />
                 </Flex>
 
                 <Input.Search
-                    style={{ width: "100%", height: 40 }}
-                    placeholder="Input voucher code"
+                    style={{ width: "100%", height: 56, fontSize: 18 }}
+                    placeholder="Nhập mã voucher"
                     value={discountInput}
                     onChange={(e) => setDiscountInput(e.target.value)}
-                    enterButton="Apply"
+                    enterButton={<span style={{ fontSize: 18 }}>Áp dụng</span>}
                     onSearch={handleApplyVoucher}
+                    size="large"
                 />
 
                 {selectedVoucher && (
                     <div style={{
-                        marginTop: 12, padding: 8, borderRadius: 6,
-                        backgroundColor: "#f6ffed", border: "1px solid #b7eb8f"
+                        marginTop: 16, 
+                        padding: 16, 
+                        borderRadius: 12,
+                        backgroundColor: "#f6ffed", 
+                        border: "2px solid #b7eb8f"
                     }}>
-                        <Text type="success">
-                            Voucher applied: <strong>{selectedVoucher.code}</strong> ({selectedVoucher.discount_percentage}% off)
+                        <Text type="success" style={{ fontSize: 18 }}>
+                            Voucher đã áp dụng: <strong>{selectedVoucher.code}</strong> (Giảm {selectedVoucher.discount_percentage}%)
                         </Text>
                     </div>
                 )}
@@ -196,43 +228,52 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
 
             {selectedCustomer && (
                 <>
-                    <Divider plain  >
-                        <span className="text-center mb-4 font-semibold" >Available Vouchers</span>
+                    <Divider plain style={{ margin: "24px 0" }}>
+                        <Text style={{ fontSize: 20, fontWeight: 600 }}>
+                            Voucher khả dụng
+                        </Text>
                     </Divider>
 
 
                     {selectedCustomer.Voucher?.length ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                             {selectedCustomer.Voucher.map((voucher: VoucherWithStatus) => {
                                 const isSelected = selectedVoucher?.id === voucher.id;
                                 const card = (
                                     <Card
                                         key={voucher.id}
-                                        size="small"
                                         hoverable={!voucher.disabled}
                                         onClick={() => handleSelectVoucherClick(voucher)}
                                         style={{
                                             borderColor: isSelected ? "#52c41a" : "rgba(0,0,0,0.06)",
+                                            borderWidth: isSelected ? 2 : 1,
                                             backgroundColor: voucher.disabled ? "#f5f5f5"
                                                 : isSelected ? "#f6ffed" : "#fff",
                                             opacity: voucher.disabled ? 0.6 : 1,
                                             cursor: voucher.disabled ? "not-allowed" : "pointer",
+                                            padding: 16,
                                         }}
                                     >
                                         <Flex justify="space-between" align="center">
                                             <div>
-                                                <Text strong>{voucher.code}</Text><br />
-                                                <Text type="secondary">
-                                                    Discount: {voucher.discount_percentage}%
-                                                </Text><br />
-                                                <Text type="secondary">
-                                                    Min Order: {voucher.minAmountOrder.toLocaleString()}đ
+                                                <Text strong style={{ fontSize: 18, display: "block", marginBottom: 8 }}>
+                                                    {voucher.code}
+                                                </Text>
+                                                <Text type="secondary" style={{ fontSize: 16, display: "block", marginBottom: 4 }}>
+                                                    Giảm: {voucher.discount_percentage}%
+                                                </Text>
+                                                <Text type="secondary" style={{ fontSize: 16 }}>
+                                                    Đơn tối thiểu: {voucher.minAmountOrder.toLocaleString()}đ
                                                 </Text>
                                             </div>
                                             {voucher.disabled ? (
-                                                <Tag color="red">Unavailable</Tag>
+                                                <Tag color="red" style={{ fontSize: 16, padding: "4px 12px" }}>
+                                                    Không khả dụng
+                                                </Tag>
                                             ) : (
-                                                isSelected && <Tag color="green">Selected</Tag>
+                                                isSelected && <Tag color="green" style={{ fontSize: 16, padding: "4px 12px" }}>
+                                                    Đã chọn
+                                                </Tag>
                                             )}
                                         </Flex>
                                     </Card>

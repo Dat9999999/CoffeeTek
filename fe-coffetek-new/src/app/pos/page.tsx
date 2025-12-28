@@ -194,15 +194,20 @@ export default function PosPageTest() {
         <>
             <div
                 style={{
-                    margin: "0 auto",
+                    margin: 0,
                     minHeight: "100vh",
-                    overflow: "hidden",
-                    padding: token.paddingXS,
+                    width: "100%",
+                    overflow: "auto",
+                    padding: token.paddingMD,
+                    backgroundColor: token.colorBgBase,
+                    display: "flex",
+                    flexDirection: "column",
+                    boxSizing: "border-box",
                 }}
             >
                 {isMobile ? (
                     // ===== MOBILE: Stack layout =====
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-6" style={{ height: "100%", overflow: "hidden" }}>
 
                         <OrderSummary
                             posItems={posItems}
@@ -226,12 +231,12 @@ export default function PosPageTest() {
                                 overflow: "visible",
                             }}
                         />
-                        <ProductSearchSelector style={{ height: 40 }} />
+                        <ProductSearchSelector style={{ height: 56, fontSize: 18 }} />
                         <CategoryMenuSelector
                             showUncategorized
                             onSelect={(id) => setSelectedCategoryId(id)}
                         />
-                        <div style={{ flex: 1, overflowY: "auto" }}>
+                        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
                             <ProductCardList
                                 categoryId={selectedCategoryId}
                                 onSelect={handleAddPosItem}
@@ -242,27 +247,33 @@ export default function PosPageTest() {
                     // ===== DESKTOP: Splitter layout =====
                     <Splitter
                         style={{
-                            minHeight: "100vh",
+                            minHeight: "calc(100vh - 32px)",
                             boxSizing: "border-box",
-                            // overflow: "hidden",
+                            flex: 1,
                         }}
                     >
-                        {/* === LEFT PANEL === */}
+                        {/* === LEFT PANEL - SẢN PHẨM (70%) === */}
                         <Splitter.Panel
-                            defaultSize="60%"
-                            min="35%"
+                            defaultSize="70%"
+                            min="50%"
                             style={{
-                                padding: token.paddingXS,
+                                padding: token.paddingMD,
                                 display: "flex",
                                 flexDirection: "column",
-                                height: "100%",
+                                minHeight: "calc(100vh - 32px)",
+                                backgroundColor: token.colorBgContainer,
+                                borderRadius: token.borderRadiusLG,
+                                marginRight: token.marginSM,
+                                overflow: "visible",
                             }}
                         >
                             <ProductSearchSelector
                                 style={{
                                     width: "100%",
-                                    height: 40,
-                                    marginBottom: token.marginSM,
+                                    height: 56,
+                                    fontSize: 18,
+                                    marginBottom: token.marginXS,
+                                    flexShrink: 0,
                                 }}
                             />
                             <CategoryMenuSelector
@@ -270,7 +281,9 @@ export default function PosPageTest() {
                                 onSelect={(id) => setSelectedCategoryId(id)}
                                 style={{
                                     width: "100%",
-                                    marginBottom: token.marginSM,
+                                    marginBottom: token.marginXS,
+                                    fontSize: 16,
+                                    flexShrink: 0,
                                 }}
                             />
                             <div
@@ -278,23 +291,26 @@ export default function PosPageTest() {
                                     flex: 1,
                                     overflowY: "auto",
                                     overflowX: "hidden",
+                                    minHeight: 0,
+                                    maxHeight: "calc(100vh - 200px)",
                                 }}
                             >
                                 <ProductCardList
-                                    pageSize={18}
+                                    pageSize={12}
                                     categoryId={selectedCategoryId}
                                     onSelect={handleAddPosItem}
                                 />
                             </div>
                         </Splitter.Panel>
-                        {/* === RIGHT PANEL === */}
+                        {/* === RIGHT PANEL - ĐƠN HÀNG (30%) === */}
                         <Splitter.Panel
-                            defaultSize="40%"
-                            min="30%"
+                            defaultSize="30%"
+                            min="25%"
                             style={{
-                                // padding: token.paddingXS,
-                                overflow: "visible", // ✅ cho phép nội dung nở tự nhiên
-                                height: "auto"
+                                overflow: "visible",
+                                minHeight: "calc(100vh - 32px)",
+                                display: "flex",
+                                flexDirection: "column",
                             }}
                         >
                             <OrderSummary
@@ -315,8 +331,9 @@ export default function PosPageTest() {
                                 onPay={handlePay}
                                 style={{
                                     width: "100%",
-                                    height: "auto",
-                                    overflow: "visible",
+                                    minHeight: "calc(100vh - 32px)",
+                                    overflowY: "auto",
+                                    overflowX: "hidden",
                                 }}
                             />
                         </Splitter.Panel>

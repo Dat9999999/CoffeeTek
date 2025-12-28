@@ -15,7 +15,7 @@ export function GoogleLoginComponent() {
 
     const handleSuccess = async (credentialResponse: CredentialResponse) => {
         if (!credentialResponse.credential) {
-            toast.error('Google login failed');
+            toast.error('Đăng nhập Google thất bại');
             return;
         }
 
@@ -23,36 +23,53 @@ export function GoogleLoginComponent() {
             // Gọi backend với token Google
             const data = await authService.loginGoogle({ token: credentialResponse.credential });
 
-
             if (data.access_token) {
-                localStorage.setItem('ACCESS_TOKEN', data.access_token);
+                // ✅ Sử dụng STORAGE_KEYS.ACCESS_TOKEN thay vì hardcode
+                localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
 
                 try {
                     const userInfo = await authService.getUserLoginInfo();
                     localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
                     setUser(userInfo);
                     setIsAuthenticated(true);
-                } catch {
-                    console.log("Fetch user login failed");
+                } catch (error) {
+                    console.error("Fetch user login failed:", error);
+                    toast.error('Không thể lấy thông tin người dùng');
                 }
 
-                toast.success('Login success');
+                toast.success('Đăng nhập thành công');
                 router.push('/');
             } else {
-                toast.error(data.message || 'Login failed');
+                toast.error(data.message || 'Đăng nhập thất bại');
             }
-        } catch (error) {
-            console.error(error);
-            toast.error('Something went wrong');
+        } catch (error: any) {
+            console.error('Google login error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Đã xảy ra lỗi';
+            toast.error(errorMessage);
         }
     };
 
     const handleError = () => {
-        console.log('Login Failed');
-        toast.error('Google login failed');
+        console.error('Google login failed');
+        toast.error('Đăng nhập Google thất bại');
     };
 
-    if (!CLIENT_ID) throw new Error("Missing GOOGLE_WEB_CLIENT_ID");
+    // ✅ Xử lý trường hợp không có CLIENT_ID một cách an toàn
+    if (!CLIENT_ID) {
+        console.error('Missing NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID environment variable');
+        return (
+            <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#fff3cd', 
+                border: '1px solid #ffc107',
+                borderRadius: '4px',
+                color: '#856404',
+                textAlign: 'center'
+            }}>
+                Google Login không khả dụng. Vui lòng cấu hình GOOGLE_CLIENT_ID.
+            </div>
+        );
+    }
 
     return (
         <GoogleOAuthProvider clientId={CLIENT_ID}>
@@ -60,7 +77,7 @@ export function GoogleLoginComponent() {
                 onSuccess={handleSuccess}
                 onError={handleError}
                 text="signin_with"
-                locale="en-US"
+                locale="vi"
             />
         </GoogleOAuthProvider>
     );

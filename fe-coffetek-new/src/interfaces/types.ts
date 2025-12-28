@@ -171,6 +171,30 @@ export interface Material {
     Unit: Unit;
 }
 
+export interface Contracting {
+    id: number;
+    quantity: number;
+    materialId: number;
+    Material?: {
+        id: number;
+        name: string;
+        code: string;
+        unit?: {
+            id: number;
+            name: string;
+            symbol: string;
+        };
+    };
+    empoloyeeId?: number;
+    User?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+    };
+    created_at: string | Date;
+}
+
 export interface Topping {
     id: number;
     name: string;

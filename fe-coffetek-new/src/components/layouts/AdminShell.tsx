@@ -117,6 +117,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     icon: <AuditOutlined />,
                     label: <Link href="/admin/inventory-checking">Inventory Checking</Link>,
                 },
+                {
+                    key: "/admin/contracting",
+                    icon: <SolutionOutlined />,
+                    label: <Link href="/admin/contracting">Quản lý thầu khoáng</Link>,
+                },
             ],
         },
     ];

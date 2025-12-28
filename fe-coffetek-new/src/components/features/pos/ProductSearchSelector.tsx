@@ -97,8 +97,12 @@ export const ProductSearchSelector = ({
             showSearch
             labelInValue
             value={null}
-            placeholder="Search..."
-            style={style}
+            placeholder="Tìm kiếm sản phẩm..."
+            style={{
+                fontSize: 18,
+                ...style
+            }}
+            size="large"
             filterOption={false}
             onSearch={(val) => {
                 searchTextRef.current = val;
@@ -115,10 +119,10 @@ export const ProductSearchSelector = ({
                 fetching ? (
                     <Spin style={{ margin: "8px auto", display: "block" }} size="small" />
                 ) : searchTextRef.current.trim() && !fetching && isEmptyRef.current ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Not Found" />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không tìm thấy" />
                 ) : null
             }
-            suffixIcon={<SearchOutlined />}
+            suffixIcon={<SearchOutlined style={{ fontSize: 20 }} />}
             options={options.map((option) => ({
                 label: option.label,
                 value: option.value,

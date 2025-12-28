@@ -1,3 +1,4 @@
+// src/components/commons/table/TableToolbar.tsx
 'use client';
 
 import Link from "next/link";
@@ -15,6 +16,8 @@ interface TableToolbarProps {
     onDeleteMany?: () => void;
     onAdd?: () => void;
     deleteManyLabel?: string;
+    // ✅ Đã có trong code bạn gửi
+    renderFilter?: React.ReactNode;
 }
 
 export function TableToolbar({
@@ -28,33 +31,19 @@ export function TableToolbar({
     deleteManyLabel = "Delete Selected",
     searchLabel = "Search...",
     onAdd,
+    // ✅ Đã có trong code bạn gửi
+    renderFilter,
 }: TableToolbarProps) {
     const { token } = theme.useToken();
     const screens = Grid.useBreakpoint();
     const isMobile = !screens.md;
 
     return (
-        <div
-            style={{
-                marginBottom: 16,
-                padding: "8px 0",
-                borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            }}
-        >
-            <Row
-                gutter={[8, 8]}
-                align="middle"
-                justify={isMobile ? "start" : "space-between"}
-                wrap
-            >
+        <div style={{ marginBottom: 16, padding: "8px 0", borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+            <Row gutter={[8, 8]} align="middle" justify={isMobile ? "start" : "space-between"} wrap>
                 {/* 🔍 Bên trái: Search + Filters */}
                 <Col flex="auto">
-                    <Space
-                        wrap
-                        style={{
-                            width: "100%",
-                        }}
-                    >
+                    <Space wrap style={{ width: "100%" }}>
                         {onSearchChange && (
                             <Input
                                 allowClear
@@ -62,63 +51,34 @@ export function TableToolbar({
                                 placeholder={searchLabel}
                                 value={search}
                                 onChange={(e) => onSearchChange?.(e.target.value)}
-                                style={{
-                                    width: isMobile ? "100%" : 220,
-                                    maxWidth: "100%",
-                                }}
+                                style={{ width: isMobile ? "100%" : 220, maxWidth: "100%" }}
                             />
                         )}
                         {filters}
+                        
+                        {/* ✅ THÊM DÒNG NÀY: Để hiển thị DatePicker */}
+                        {renderFilter}
                     </Space>
                 </Col>
 
                 {/* ➕ Bên phải: Add + Delete */}
                 <Col flex={isMobile ? "100%" : "none"}>
-                    <Space
-                        wrap
-                        style={{
-                            width: "100%",
-                            justifyContent: isMobile ? "flex-end" : "flex-end",
-                        }}
-                    >
+                    <Space wrap style={{ width: "100%", justifyContent: "flex-end" }}>
                         {onDeleteMany && (
-                            <Button
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={onDeleteMany}
-                                style={{
-                                    width: isMobile ? "100%" : "auto",
-                                }}
-                            >
+                            <Button danger icon={<DeleteOutlined />} onClick={onDeleteMany} style={{ width: isMobile ? "100%" : "auto" }}>
                                 {deleteManyLabel}
                             </Button>
                         )}
-
                         {buttonRights}
-
                         {addHref && (
                             <Link href={addHref} passHref>
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    style={{
-                                        width: isMobile ? "100%" : "auto",
-                                    }}
-                                >
+                                <Button type="primary" icon={<PlusOutlined />} style={{ width: isMobile ? "100%" : "auto" }}>
                                     {addLabel}
                                 </Button>
                             </Link>
                         )}
-
                         {onAdd && (
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                style={{
-                                    width: isMobile ? "100%" : "auto",
-                                }}
-                                onClick={onAdd}
-                            >
+                            <Button type="primary" icon={<PlusOutlined />} style={{ width: isMobile ? "100%" : "auto" }} onClick={onAdd}>
                                 {addLabel}
                             </Button>
                         )}

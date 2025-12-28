@@ -53,7 +53,7 @@ const CategoryMenuSelector = ({
         // 🟢 Item "All"
         items.push({
             key: "all",
-            label: "All",
+            label: "Tất cả",
         });
 
         // 🟢 Category cha + con
@@ -80,7 +80,7 @@ const CategoryMenuSelector = ({
         if (showUncategorized) {
             items.push({
                 key: "-1",
-                label: "Others",
+                label: "Khác",
             });
         }
 
@@ -101,10 +101,16 @@ const CategoryMenuSelector = ({
     return (
         <div>
             {loading ? (
-                <Skeleton.Input active block style={{ height: "32px", ...style }} />
+                <Skeleton.Input active block style={{ height: "48px", ...style }} />
             ) : (
                 <Menu
-                    style={style}
+                    style={{
+                        fontSize: 16,
+                        fontWeight: 500,
+                        height: 48,
+                        lineHeight: "48px",
+                        ...style
+                    }}
                     mode="horizontal"
                     items={buildMenuItems()}
                     onClick={onClick}

@@ -13,4 +13,5 @@ export * from "./loyalLevelService";
 export * from "./reportService";
 export * from "./wastageLogService";
 export * from "./notificationService";
+export * from "./contractingService";
 

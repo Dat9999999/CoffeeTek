@@ -68,55 +68,146 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
     };
 
     return (
-        <>
-            <Divider plain style={{ margin: 4 }}>
-            </Divider>
-            <Flex align="center" gap={12} style={{}}>
+        <div
+            style={{
+                padding: token.paddingSM,
+                backgroundColor: token.colorBgContainer,
+                borderRadius: token.borderRadius,
+                border: `1px solid ${token.colorBorderSecondary}`,
+                boxShadow: token.boxShadowTertiary,
+            }}
+        >
+            <Flex align="flex-start" gap={12}>
                 {/* Ảnh sản phẩm */}
-                <Flex align="center" justify="center" style={{ height: 75, width: 75 }}>
+                <Flex 
+                    align="center" 
+                    justify="center" 
+                    style={{ 
+                        height: 70, 
+                        width: 70,
+                        borderRadius: token.borderRadiusSM,
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        border: `1px solid ${token.colorBorderSecondary}`,
+                    }}
+                >
                     <AppImage
                         alt={item.product.name}
                         src={item.product.images?.[0]?.image_name || ""}
-                        style={{ width: 75, height: 75 }}
+                        style={{ width: 70, height: 70, objectFit: "cover" }}
                     />
                 </Flex>
 
                 {/* Nội dung */}
-                <Flex justify="space-between" vertical={true} style={{ padding: "5px 0px", minHeight: 75 }} flex={1} >
-                    <Flex justify="space-between" align="center">
-                        <span style={{ color: token.colorPrimary, fontWeight: 500 }}>{item.product.name}</span>
-                        <Flex gap={8}>
-                            <EditOutlined
-                                style={{ cursor: "pointer", color: token.colorPrimary }}
+                <Flex 
+                    justify="space-between" 
+                    vertical={true} 
+                    style={{ 
+                        padding: token.paddingXXS,
+                        minHeight: 70,
+                        flex: 1,
+                    }} 
+                >
+                    <Flex justify="space-between" align="flex-start" style={{ marginBottom: token.marginXXS }}>
+                        <div style={{ flex: 1 }}>
+                            <Typography.Text 
+                                style={{ 
+                                    color: token.colorPrimary, 
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    display: "block",
+                                    marginBottom: token.marginXXS,
+                                }}
+                            >
+                                {item.product.name}
+                            </Typography.Text>
+                            {getDescription() && (
+                                <Typography.Text 
+                                    type="secondary" 
+                                    style={{ 
+                                        fontSize: 12,
+                                        display: "block",
+                                    }}
+                                >
+                                    {getDescription()}
+                                </Typography.Text>
+                            )}
+                        </div>
+                        <Flex gap={8} style={{ marginLeft: token.marginXS }}>
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<EditOutlined style={{ fontSize: 14 }} />}
                                 onClick={onEdit}
+                                style={{
+                                    color: token.colorPrimary,
+                                    width: 32,
+                                    height: 32,
+                                    padding: 0,
+                                }}
                             />
-                            <DeleteOutlined
-
-                                style={{ cursor: "pointer", color: token.colorError }}
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<DeleteOutlined style={{ fontSize: 14 }} />}
                                 onClick={onDelete}
+                                style={{
+                                    color: token.colorError,
+                                    width: 32,
+                                    height: 32,
+                                    padding: 0,
+                                }}
                             />
                         </Flex>
                     </Flex>
-                    <div><Typography.Text type="secondary" style={{ marginTop: 4 }}>{getDescription()}</Typography.Text></div>
-                    <Flex justify="space-between" align="center" style={{ marginTop: 4 }}>
-                        <div style={{ color: token.colorPrimary, fontWeight: 600 }}>
-                            {formatPrice(unitPrice, { includeSymbol: true })}{" "}
-                            <span style={{ fontSize: "0.9em", fontWeight: 400 }}>
+                    <Flex justify="space-between" align="center" style={{ marginTop: "auto" }}>
+                        <div>
+                            <Typography.Text 
+                                style={{ 
+                                    color: token.colorPrimary, 
+                                    fontWeight: 700,
+                                    fontSize: 16,
+                                }}
+                            >
+                                {formatPrice(unitPrice, { includeSymbol: true })}
+                            </Typography.Text>
+                            <Typography.Text 
+                                style={{ 
+                                    fontSize: 12,
+                                    color: token.colorTextSecondary,
+                                    marginLeft: token.marginXXS,
+                                }}
+                            >
                                 / 1
-                            </span>
+                            </Typography.Text>
                         </div>
                         {/* Nút tăng giảm */}
-                        <Flex align="center" justify="space-between" gap={4} >
+                        <Flex align="center" gap={8} style={{
+                            backgroundColor: token.colorFillQuaternary,
+                            padding: token.paddingXXS,
+                            borderRadius: token.borderRadiusSM,
+                        }}>
                             <Button
                                 size="small"
                                 shape="circle"
                                 onClick={handleDecrease}
                                 type="primary"
-                                icon={<MinusOutlined />}
-                            >
-                            </Button>
+                                icon={<MinusOutlined style={{ fontSize: 12 }} />}
+                                disabled={item.quantity <= 1}
+                                style={{
+                                    width: 32,
+                                    height: 32,
+                                    minWidth: 32,
+                                }}
+                            />
                             <span
-                                style={{ width: 20, textAlign: "center", color: token.colorPrimary, fontWeight: 400 }}
+                                style={{ 
+                                    minWidth: 32,
+                                    textAlign: "center", 
+                                    color: token.colorPrimary, 
+                                    fontWeight: 700,
+                                    fontSize: 16,
+                                }}
                             >
                                 {item.quantity}
                             </span>
@@ -125,14 +216,17 @@ export const OrderItemCard: React.FC<OrderItemCardProps> = ({
                                 shape="circle"
                                 onClick={handleIncrease}
                                 type="primary"
-                                icon={<PlusOutlined />}
-                            >
-                            </Button>
+                                icon={<PlusOutlined style={{ fontSize: 12 }} />}
+                                style={{
+                                    width: 32,
+                                    height: 32,
+                                    minWidth: 32,
+                                }}
+                            />
                         </Flex>
                     </Flex>
                 </Flex>
             </Flex>
-
-        </>
+        </div>
     );
 };

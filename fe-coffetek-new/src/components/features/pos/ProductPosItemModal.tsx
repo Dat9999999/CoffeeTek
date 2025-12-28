@@ -250,19 +250,19 @@ export const ProductPosItemModal = ({
                 open={open}
                 onCancel={onClose}
                 footer={null}
-                width={800}
+                width={1000}
                 title={
                     mode === "add" ? (
-                        <div style={{ color: token.colorPrimary }}>
+                        <div style={{ color: token.colorPrimary, fontSize: 24, fontWeight: 700 }}>
                             {" "}
-                            <ShoppingCartOutlined className="mr-1" />
-                            Add item
+                            <ShoppingCartOutlined className="mr-1" style={{ fontSize: 24 }} />
+                            Thêm sản phẩm
                         </div>
                     ) : (
-                        <div style={{ color: token.colorPrimary }}>
+                        <div style={{ color: token.colorPrimary, fontSize: 24, fontWeight: 700 }}>
                             {" "}
-                            <EditOutlined className="mr-1" />
-                            Edit item
+                            <EditOutlined className="mr-1" style={{ fontSize: 24 }} />
+                            Chỉnh sửa sản phẩm
                         </div>
                     )
                 }
@@ -291,8 +291,8 @@ export const ProductPosItemModal = ({
                             }}
                         >
                             <AppImageSize
-                                height={220}
-                                width={220}
+                                height={300}
+                                width={300}
                                 src={productPosItem.product.images?.[0]?.image_name}
                                 alt={productPosItem.product.name}
                                 style={{
@@ -305,7 +305,7 @@ export const ProductPosItemModal = ({
 
                     {/* RIGHT COLUMN - Product Info & Options */}
                     <Col xs={{ span: 24, order: 1 }} lg={{ span: 12, order: 2 }}>
-                        <Typography.Title level={4}>
+                        <Typography.Title level={3} style={{ fontSize: 28, marginBottom: token.marginMD }}>
                             {productPosItem.product.name}
                         </Typography.Title>
 
@@ -313,15 +313,16 @@ export const ProductPosItemModal = ({
                             {/* ✅ 5. Cập nhật khu vực giá chính */}
                             <Flex align="center" gap={token.marginXS}>
                                 <Typography.Title
-                                    level={4}
+                                    level={3}
                                     style={{
                                         color: token.colorPrimary,
                                         marginTop: 0,
-                                        marginBottom: 0, // Chỉnh margin
+                                        marginBottom: 0,
+                                        fontSize: 32,
                                     }}
                                 >
                                     {formatPrice(totalPrice, { includeSymbol: true })}{" "}
-                                    <span style={{ fontSize: "0.7em", fontWeight: 400 }}>
+                                    <span style={{ fontSize: "0.6em", fontWeight: 400 }}>
                                         / 1
                                     </span>
                                 </Typography.Title>
@@ -334,21 +335,23 @@ export const ProductPosItemModal = ({
                             <Flex align="center" gap={8}>
                                 {/* ... (Quantity buttons) ... */}
                                 <Button
-                                    size="small"
+                                    size="large"
                                     shape="circle"
                                     type="primary"
-                                    icon={<MinusOutlined />}
+                                    icon={<MinusOutlined style={{ fontSize: 20 }} />}
                                     onClick={() => handleQuantityChange(-1)}
+                                    style={{ width: 48, height: 48 }}
                                 />
-                                <span style={{ width: 20, textAlign: "center" }}>
+                                <span style={{ minWidth: 40, textAlign: "center", fontSize: 24, fontWeight: 700 }}>
                                     {quantity}
                                 </span>
                                 <Button
-                                    size="small"
+                                    size="large"
                                     shape="circle"
                                     type="primary"
-                                    icon={<PlusOutlined />}
+                                    icon={<PlusOutlined style={{ fontSize: 20 }} />}
                                     onClick={() => handleQuantityChange(1)}
+                                    style={{ width: 48, height: 48 }}
                                 />
                             </Flex>
                         </Flex>
@@ -616,18 +619,19 @@ export const ProductPosItemModal = ({
                             type="primary"
                             size="large"
                             icon={
-                                mode === "add" ? <ShoppingCartOutlined /> : <CheckOutlined />
+                                mode === "add" ? <ShoppingCartOutlined style={{ fontSize: 24 }} /> : <CheckOutlined style={{ fontSize: 24 }} />
                             }
                             block
                             style={{
                                 background: token.colorPrimary,
                                 borderColor: token.colorPrimary,
-                                height: 48,
-                                fontWeight: 500,
+                                height: 64,
+                                fontSize: 22,
+                                fontWeight: 700,
                             }}
                             onClick={handleSave}
                         >
-                            {mode === "add" ? "Add to order items" : "Update order item"}:{" "}
+                            {mode === "add" ? "Thêm vào đơn hàng" : "Cập nhật"}:{" "}
                             {formatPrice(totalPrice * quantity, { includeSymbol: true })}
                         </Button>
                     </Col>

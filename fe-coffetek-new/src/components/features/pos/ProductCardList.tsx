@@ -121,7 +121,7 @@ export function ProductCardList({
                 {loading ? (
                     <Spin size="small" style={{ display: "block", margin: "40px auto" }} />
                 ) : products.length !== 0 ? (
-                    <Row gutter={[8, 8]} style={{ overflowX: "hidden" }}>
+                    <Row gutter={[20, 20]} style={{ overflowX: "hidden" }}>
                         {products.map((product) => {
                             // 1. Lấy % giảm giá (dạng số)
                             const bestDiscount = getBestDiscountPercent(product);
@@ -135,16 +135,18 @@ export function ProductCardList({
                                     xs={12}
                                     sm={8}
                                     md={6}
-                                    lg={4}
-                                    xl={{ flex: "0 0 20%" }}
+                                    lg={6}
+                                    xl={6}
                                     onClick={() => onSelect?.(product)}
-                                    style={{ overflow: "hidden" }}
+                                    style={{ overflow: "hidden", padding: token.paddingSM }}
                                 >
                                     <div
-                                        className="relative border border-solid rounded-md shadow-sm cursor-pointer overflow-hidden hover:shadow-lg hover:scale-[1.03] transition-all duration-300 ease-out"
+                                        className="relative border-2 border-solid rounded-lg shadow-md cursor-pointer overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all duration-200 ease-out"
                                         style={{
                                             aspectRatio: "1 / 1",
                                             padding: 0,
+                                            borderColor: token.colorBorderSecondary,
+                                            backgroundColor: token.colorBgContainer,
                                         }}
                                     >
                                         <AppImageSize
@@ -160,9 +162,9 @@ export function ProductCardList({
 
                                         {/* ✅ Giá góc trên phải */}
                                         <div
-                                            className="absolute top-0 right-0 text-white text-xs font-semibold px-2 py-1 rounded-bl-md overflow-hidden"
+                                            className="absolute top-0 right-0 text-white font-bold px-4 py-3 rounded-bl-lg overflow-hidden"
                                             style={{
-                                                minWidth: "40%",
+                                                minWidth: "50%",
                                                 position: "absolute",
                                                 top: 0,
                                                 right: 0,
@@ -175,9 +177,9 @@ export function ProductCardList({
                                                     position: "absolute",
                                                     inset: 0,
                                                     backgroundColor: token.colorPrimary,
-                                                    opacity: 0.75,
-                                                    backdropFilter: "blur(8px)",
-                                                    WebkitBackdropFilter: "blur(8px)",
+                                                    opacity: 0.85,
+                                                    backdropFilter: "blur(10px)",
+                                                    WebkitBackdropFilter: "blur(10px)",
                                                     zIndex: 0,
                                                 }}
                                             />
@@ -186,12 +188,13 @@ export function ProductCardList({
                                                 style={{
                                                     position: "relative",
                                                     zIndex: 1,
-                                                    fontSize: 13
+                                                    fontSize: 20,
+                                                    fontWeight: 700,
                                                 }}
                                             >
                                                 {/* ✅ 3. Sử dụng HÀM MỚI để hiển thị */}
                                                 {bestDiscount > 0 && (
-                                                    <span style={{ fontWeight: "bold", color: "#fff566" }}>
+                                                    <span style={{ fontWeight: "bold", color: "#fff566", fontSize: 22 }}>
                                                         -{formattedDiscount}% |{" "}
                                                     </span>
                                                 )}
@@ -206,12 +209,12 @@ export function ProductCardList({
                                         <div
                                             className="absolute bottom-0 left-0 w-full"
                                             style={{
-                                                background: `linear-gradient(to top, ${token.colorPrimary}, transparent)`,
-                                                padding: "4px",
+                                                background: `linear-gradient(to top, ${token.colorPrimary}dd, ${token.colorPrimary}88, transparent)`,
+                                                padding: token.paddingMD,
                                             }}
                                         >
                                             <div
-                                                className="text-white text-sm font-medium"
+                                                className="text-white font-semibold"
                                                 style={{
                                                     display: "-webkit-box",
                                                     WebkitLineClamp: 2,
@@ -219,9 +222,11 @@ export function ProductCardList({
                                                     overflow: "hidden",
                                                     textOverflow: "ellipsis",
                                                     wordBreak: "break-word",
-                                                    lineHeight: "1.3em",
-                                                    maxHeight: "2.5em",
+                                                    lineHeight: "1.4em",
+                                                    maxHeight: "3em",
                                                     textAlign: "center",
+                                                    fontSize: 18,
+                                                    textShadow: "0 2px 4px rgba(0,0,0,0.3)",
                                                 }}
                                             >
                                                 {product.name}
@@ -233,7 +238,14 @@ export function ProductCardList({
                         })}
                     </Row>
                 ) : (
-                    <Empty description="No data" style={{ marginTop: 50 }} />
+                    <Empty 
+                        description={
+                            <span style={{ fontSize: 16, color: token.colorTextSecondary }}>
+                                Không có dữ liệu
+                            </span>
+                        } 
+                        style={{ marginTop: 50 }} 
+                    />
                 )}
             </div>
 

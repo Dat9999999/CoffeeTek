@@ -95,6 +95,7 @@ export function DataTable<T extends object>({
 
     return (
         <Table<T>
+            size="middle"
             bordered
             rowKey={rowKey}
             rowSelection={

@@ -9,6 +9,8 @@ import { useTableState } from "@/hooks/useTableState";
 import { UserTableActions, UserLockModal, UserDetailModal, UserRoleModal } from "@/components/features/users";
 import { Tag, Avatar, Typography, Badge } from "antd";
 import dayjs from "dayjs";
+import { PageHeader } from "@/components/layouts";
+import { UserOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -45,8 +47,7 @@ export default function UserPage() {
 
     return (
         <>
-            <h1>User Management</h1>
-
+            <PageHeader icon={<UserOutlined />} title="User Management" />
             <TableToolbar
                 search={tableState.searchName}
                 onSearchChange={(value: string) =>

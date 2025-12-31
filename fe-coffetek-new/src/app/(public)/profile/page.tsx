@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useProfileStore } from "@/store/useProfileStore";
 import EditProfileForm from "@/components/features/profile/EditProfileForm";
+import FaceIDRegistration from "@/components/features/profile/FaceIDRegistration";
 import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng nhập
 
 export default function ProfilePage() {
@@ -75,60 +76,67 @@ export default function ProfilePage() {
           <section className="flex-1 p-8">
             {/* PROFILE TAB */}
             {activeTab === "profile" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* INFO */}
-                <div className="space-y-5">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    Thông tin cá nhân
-                  </h3>
-                  {user ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={user.avatar}
-                          alt="avatar"
-                          className="w-20 h-20 rounded-full object-cover border"
-                        />
-                        <div>
-                          <p className="text-lg font-semibold">
-                            {user.last_name} {user.first_name}
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* INFO */}
+                  <div className="space-y-5">
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      Thông tin cá nhân
+                    </h3>
+                    {user ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={user.avatar}
+                            alt="avatar"
+                            className="w-20 h-20 rounded-full object-cover border"
+                          />
+                          <div>
+                            <p className="text-lg font-semibold">
+                              {user.last_name} {user.first_name}
+                            </p>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <p className="text-sm text-gray-600">{user.phone_number}</p>
+                          </div>
+                        </div>
+                        <div className="text-base text-gray-700 space-y-5">
+                          <p>
+                            <span className="font-medium">Ngày sinh:</span>{" "}
+                            {user.birthday
+                              ? new Date(user.birthday).toLocaleDateString("vi-VN")
+                              : "Chưa cập nhật"}
                           </p>
-                          <p className="text-sm text-gray-600">{user.email}</p>
-                          <p className="text-sm text-gray-600">{user.phone_number}</p>
+                          <p>
+                            <span className="font-medium">Giới tính:</span>{" "}
+                            {user.sex || "Chưa cập nhật"}
+                          </p>
+                          <p>
+                            <span className="font-medium">Địa chỉ:</span>{" "}
+                            {user.address || "Chưa có"}
+                          </p>
+                          <p>
+                            <span className="font-medium">Vai trò:</span>{" "}
+                            {user.roles?.join(", ")}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-base text-gray-700 space-y-5">
-                        <p>
-                          <span className="font-medium">Ngày sinh:</span>{" "}
-                          {user.birthday
-                            ? new Date(user.birthday).toLocaleDateString("vi-VN")
-                            : "Chưa cập nhật"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Giới tính:</span>{" "}
-                          {user.sex || "Chưa cập nhật"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Địa chỉ:</span>{" "}
-                          {user.address || "Chưa có"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Vai trò:</span>{" "}
-                          {user.roles?.join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p>Không tìm thấy thông tin người dùng.</p>
-                  )}
+                    ) : (
+                      <p>Không tìm thấy thông tin người dùng.</p>
+                    )}
+                  </div>
+
+                  {/* FORM CHỈNH SỬA */}
+                  <div className="border-l pl-6">
+                    <h3 className="text-xl font-semibold mb-4">
+                      Cập nhật thông tin
+                    </h3>
+                    <EditProfileForm />
+                  </div>
                 </div>
 
-                {/* FORM CHỈNH SỬA */}
-                <div className="border-l pl-6">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Cập nhật thông tin
-                  </h3>
-                  <EditProfileForm />
+                {/* FACE ID REGISTRATION */}
+                <div className="border-t pt-8">
+                  <FaceIDRegistration />
                 </div>
               </div>
             )}

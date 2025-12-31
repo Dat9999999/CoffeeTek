@@ -1,6 +1,6 @@
 import { Body, Controller, Get, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto } from './dto';
+import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto, FaceIDStatusResponseDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorator';
 import * as client from '@prisma/client';
@@ -61,4 +61,21 @@ export class AuthController {
     ) {
         return this.authservice.updateSecurity(user.id, dto);
     }
+
+    @Post('face-id/register')
+    // @UseGuards(AuthGuard('jwt'))
+    registerFaceID() {
+        return "calling register face id";
+    }
+
+    @Get('face-id/status')
+    // @UseGuards(AuthGuard('jwt'))
+    getFaceIDStatus(): FaceIDStatusResponseDto {
+        return { hasFaceID: false };
+    }
+    // @Put('face-id/update')
+    // @UseGuards(AuthGuard('jwt'))
+    // updateFaceID(@GetUser() user: client.User, @Body() dto: authUpdateFaceIDDto) {
+    //     return this.authservice.updateFaceID(user.id, dto);
+    // }
 }

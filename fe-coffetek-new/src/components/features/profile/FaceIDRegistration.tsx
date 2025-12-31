@@ -3,80 +3,88 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Camera, CheckCircle, X, Scan, AlertCircle, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
 import api from "@/lib/api";
 
-// FaceIO types (will be available after installing @faceio/fiojs)
-declare global {
-  interface Window {
-    faceIO?: any;
-  }
-}
-
-type FaceIDStatus = "idle" | "registering" | "registered" | "error" | "updating";
+type FaceIDStatus = "idle" | "registering" | "registered" | "error" | "updating" | "checking";
 
 export default function FaceIDRegistration() {
   const { user } = useProfileStore();
-  const [status, setStatus] = useState<FaceIDStatus>("idle");
-  const [faceIO, setFaceIO] = useState<any>(null);
+  const [status, setStatus] = useState<FaceIDStatus>("checking");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const actionTypeRef = useRef<"register" | "update">("register");
 
-  // Initialize FaceIO
+  // Check if user has Face ID registered
   useEffect(() => {
-    const initFaceIO = async () => {
+    const checkFaceIDStatus = async () => {
+      if (!user?.id) return;
+      
       try {
-        // Check if FaceIO is loaded
-        if (typeof window !== "undefined" && window.faceIO) {
-          // Replace with your FaceIO Public ID from dashboard
-          const faceioInstance = new window.faceIO(process.env.NEXT_PUBLIC_FACEIO_PUBLIC_ID || "");
-          setFaceIO(faceioInstance);
-          
-          // Check if user already has Face ID registered
-          // You can call your backend API to check this
-          // For now, we'll assume not registered
-          setIsRegistered(false);
-        } else {
-          // Load FaceIO script dynamically
-          const script = document.createElement("script");
-          script.src = "https://cdn.faceio.net/fio.js";
-          script.async = true;
-          script.onload = () => {
-            if (window.faceIO) {
-              const faceioInstance = new window.faceIO(process.env.NEXT_PUBLIC_FACEIO_PUBLIC_ID || "");
-              setFaceIO(faceioInstance);
-            }
-          };
-          document.head.appendChild(script);
-        }
+        setStatus("checking");
+        const response = await api.get("/auth/face-id/status");
+        setIsRegistered(response.data?.hasFaceID || false);
+        setStatus("idle");
       } catch (err) {
-        console.error("FaceIO initialization error:", err);
-        setError("Không thể khởi tạo FaceIO. Vui lòng thử lại sau.");
+        console.error("Error checking Face ID status:", err);
+        // If endpoint doesn't exist yet, assume not registered
+        setIsRegistered(false);
+        setStatus("idle");
       }
     };
 
-    initFaceIO();
-  }, []);
-
-  // Register or Update Face ID
-  const handleRegisterFaceID = async () => {
-    if (!faceIO) {
-      setError("FaceIO chưa sẵn sàng. Vui lòng tải lại trang.");
-      return;
+    if (user) {
+      checkFaceIDStatus();
     }
+  }, [user]);
 
+  // Capture image from video stream
+  const captureImage = (): string | null => {
+    if (!videoRef.current || !canvasRef.current) return null;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return null;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert to base64
+    return canvas.toDataURL("image/jpeg", 0.8);
+  };
+
+  // Open dialog and start camera
+  const openCameraDialog = async (action: "register" | "update") => {
     if (!user?.phone_number) {
       setError("Vui lòng cập nhật số điện thoại trước khi đăng ký Face ID.");
       return;
     }
 
-    setStatus("registering");
+    actionTypeRef.current = action;
     setError("");
     setSuccess("");
+    setIsDialogOpen(true);
 
     try {
       // Start camera preview
@@ -93,16 +101,28 @@ export default function FaceIDRegistration() {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
+    } catch (err: any) {
+      console.error("Camera Error:", err);
+      setIsDialogOpen(false);
+      setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera.");
+    }
+  };
 
-      // Register face with FaceIO
-      // Use phone number as the user ID
-      const faceId = await faceIO.enroll({
-        locale: "vi",
-        payload: {
-          phone: user.phone_number,
-          userId: user.id?.toString() || "",
-        },
-      });
+  // Capture and process image
+  const handleCapture = async () => {
+    if (!videoRef.current) return;
+
+    setIsCapturing(true);
+    
+    try {
+      // Wait a bit for better image quality
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Capture image
+      const imageData = captureImage();
+      if (!imageData) {
+        throw new Error("Không thể chụp ảnh từ camera.");
+      }
 
       // Stop camera
       if (streamRef.current) {
@@ -113,45 +133,54 @@ export default function FaceIDRegistration() {
         videoRef.current.srcObject = null;
       }
 
-      // Save Face ID to backend
-      // You'll need to create this API endpoint in your NestJS backend
-      try {
-        await api.post("/auth/face-id/register", {
-          faceId: faceId.facialId,
-          phone: user.phone_number,
-        });
+      setIsCapturing(false);
+      setIsProcessing(true);
 
-        setStatus("registered");
-        setIsRegistered(true);
-        setSuccess("Đăng ký Face ID thành công!");
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          setSuccess("");
-          setStatus("idle");
-        }, 3000);
-      } catch (apiError) {
-        console.error("API Error:", apiError);
-        setError("Đăng ký Face ID thành công nhưng không thể lưu vào hệ thống. Vui lòng thử lại.");
-        setStatus("error");
-      }
+      // Send to backend for AWS Rekognition processing
+      const endpoint = actionTypeRef.current === "register" 
+        ? "/auth/face-id/register" 
+        : "/auth/face-id/update";
+      
+      const method = actionTypeRef.current === "register" ? "post" : "put";
+      
+      await api[method](endpoint, {
+        image: imageData, // base64 image
+        phone: user?.phone_number,
+        userId: user?.id?.toString() || "",
+      });
+
+      setIsDialogOpen(false);
+      setIsProcessing(false);
+      setStatus("registered");
+      setIsRegistered(true);
+      setSuccess(
+        actionTypeRef.current === "register" 
+          ? "Đăng ký Face ID thành công!" 
+          : "Cập nhật Face ID thành công!"
+      );
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess("");
+        setStatus("idle");
+      }, 3000);
     } catch (err: any) {
-      console.error("Face ID Registration Error:", err);
+      console.error("Face ID Error:", err);
+      setIsProcessing(false);
+      setIsCapturing(false);
+
+      // Handle errors
+      let errorMessage = `Không thể ${actionTypeRef.current === "register" ? "đăng ký" : "cập nhật"} Face ID. Vui lòng thử lại.`;
       
-      // Stop camera on error
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
 
-      // Handle FaceIO specific errors
-      let errorMessage = "Không thể đăng ký Face ID. Vui lòng thử lại.";
-      
-      if (err.name === "fiojs_error") {
-        switch (err.errorCode) {
+      // Handle specific AWS Rekognition errors
+      if (err.response?.data?.errorCode) {
+        switch (err.response.data.errorCode) {
           case "PERMISSION_REFUSED":
             errorMessage = "Bạn đã từ chối quyền truy cập camera.";
             break;
@@ -164,113 +193,34 @@ export default function FaceIDRegistration() {
           case "FACE_DUPLICATE":
             errorMessage = "Khuôn mặt này đã được đăng ký trong hệ thống.";
             break;
-          default:
-            errorMessage = `Lỗi: ${err.message || "Vui lòng thử lại."}`;
+          case "INVALID_IMAGE":
+            errorMessage = "Ảnh không hợp lệ. Vui lòng thử lại.";
+            break;
         }
       }
 
       setError(errorMessage);
       setStatus("error");
+      // Keep dialog open on error so user can retry
     }
   };
 
-  // Update/Re-register Face ID
-  const handleUpdateFaceID = async () => {
-    if (!faceIO) {
-      setError("FaceIO chưa sẵn sàng. Vui lòng tải lại trang.");
-      return;
+  // Close dialog and cleanup
+  const closeDialog = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
-
-    setStatus("updating");
-    setError("");
-    setSuccess("");
-
-    try {
-      // Start camera preview
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      });
-      
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-
-      // Re-enroll face (FaceIO will update existing enrollment)
-      const faceId = await faceIO.enroll({
-        locale: "vi",
-        payload: {
-          phone: user?.phone_number,
-          userId: user?.id?.toString() || "",
-        },
-      });
-
-      // Stop camera
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-
-      // Update Face ID in backend
-      try {
-        await api.put("/auth/face-id/update", {
-          faceId: faceId.facialId,
-          phone: user?.phone_number,
-        });
-
-        setStatus("registered");
-        setSuccess("Cập nhật Face ID thành công!");
-        
-        setTimeout(() => {
-          setSuccess("");
-          setStatus("idle");
-        }, 3000);
-      } catch (apiError) {
-        console.error("API Error:", apiError);
-        setError("Cập nhật Face ID thành công nhưng không thể lưu vào hệ thống. Vui lòng thử lại.");
-        setStatus("error");
-      }
-    } catch (err: any) {
-      console.error("Face ID Update Error:", err);
-      
-      // Stop camera on error
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-
-      let errorMessage = "Không thể cập nhật Face ID. Vui lòng thử lại.";
-      
-      if (err.name === "fiojs_error") {
-        switch (err.errorCode) {
-          case "PERMISSION_REFUSED":
-            errorMessage = "Bạn đã từ chối quyền truy cập camera.";
-            break;
-          case "NO_FACE_DETECTED":
-            errorMessage = "Không phát hiện khuôn mặt. Vui lòng đảm bảo ánh sáng đủ và nhìn thẳng vào camera.";
-            break;
-          default:
-            errorMessage = `Lỗi: ${err.message || "Vui lòng thử lại."}`;
-        }
-      }
-
-      setError(errorMessage);
-      setStatus("error");
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
+    setIsDialogOpen(false);
+    setIsCapturing(false);
+    setIsProcessing(false);
   };
 
-  // Cleanup camera on unmount
+
+  // Cleanup camera on unmount or dialog close
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -280,6 +230,32 @@ export default function FaceIDRegistration() {
     };
   }, []);
 
+  // Cleanup when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+  }, [isDialogOpen]);
+
+  if (status === "checking") {
+    return (
+      <Card className="rounded-2xl shadow-md">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="animate-spin text-blue-600" size={24} />
+            <span className="text-gray-600">Đang kiểm tra trạng thái Face ID...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="rounded-2xl shadow-md">
       <CardHeader>
@@ -288,7 +264,7 @@ export default function FaceIDRegistration() {
             <Scan className="text-blue-600" size={20} />
           </div>
           <div>
-            <CardTitle className="text-lg font-semibold">Face ID</CardTitle>
+            <CardTitle className="text-lg font-semibold">Face ID (AWS Rekognition)</CardTitle>
             <CardDescription>
               Đăng ký hoặc cập nhật Face ID để đăng nhập nhanh tại kiosk
             </CardDescription>
@@ -324,68 +300,29 @@ export default function FaceIDRegistration() {
           </div>
         </div>
 
-        {/* Camera Preview (shown during registration) */}
-        {(status === "registering" || status === "updating") && (
-          <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="border-4 border-blue-500 rounded-full w-64 h-64 animate-pulse" />
-            </div>
-            <div className="absolute bottom-4 left-0 right-0 text-center">
-              <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
-                <Loader2 className="animate-spin" size={20} />
-                <span className="font-medium">
-                  {status === "registering" ? "Đang đăng ký..." : "Đang cập nhật..."}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Hidden canvas for image capture */}
+        <canvas ref={canvasRef} className="hidden" />
 
         {/* Action Buttons */}
         <div className="flex gap-3">
           {!isRegistered ? (
             <Button
-              onClick={handleRegisterFaceID}
-              disabled={status === "registering" || !faceIO}
+              onClick={() => openCameraDialog("register")}
+              disabled={isDialogOpen || isProcessing}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              {status === "registering" ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" size={18} />
-                  Đang đăng ký...
-                </>
-              ) : (
-                <>
-                  <Camera className="mr-2" size={18} />
-                  Đăng ký Face ID
-                </>
-              )}
+              <Camera className="mr-2" size={18} />
+              Đăng ký Face ID
             </Button>
           ) : (
             <Button
-              onClick={handleUpdateFaceID}
-              disabled={status === "updating" || !faceIO}
+              onClick={() => openCameraDialog("update")}
+              disabled={isDialogOpen || isProcessing}
               variant="outline"
               className="flex-1"
             >
-              {status === "updating" ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" size={18} />
-                  Đang cập nhật...
-                </>
-              ) : (
-                <>
-                  <Camera className="mr-2" size={18} />
-                  Cập nhật Face ID
-                </>
-              )}
+              <Camera className="mr-2" size={18} />
+              Cập nhật Face ID
             </Button>
           )}
         </div>
@@ -409,12 +346,93 @@ export default function FaceIDRegistration() {
         {/* Info Note */}
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-700">
-            <strong>Lưu ý:</strong> Face ID sẽ được sử dụng để đăng nhập tại kiosk. 
-            Đảm bảo ánh sáng đủ và nhìn thẳng vào camera khi đăng ký.
+            <strong>Lưu ý:</strong> Face ID sử dụng AWS Rekognition để nhận diện khuôn mặt. 
+            Đảm bảo ánh sáng đủ và nhìn thẳng vào camera khi đăng ký. 
+            Ảnh sẽ được xử lý an toàn và chỉ lưu thông tin nhận diện.
           </p>
         </div>
       </CardContent>
+
+      {/* Camera Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+        <DialogContent className="sm:max-w-2xl" showCloseButton={!isProcessing}>
+          <DialogHeader>
+            <DialogTitle>
+              {actionTypeRef.current === "register" ? "Đăng ký Face ID" : "Cập nhật Face ID"}
+            </DialogTitle>
+            <DialogDescription>
+              Nhìn thẳng vào camera và đảm bảo ánh sáng đủ. Nhấn nút chụp ảnh khi sẵn sàng.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Camera Preview */}
+            <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              {!isProcessing && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="border-4 border-blue-500 rounded-full w-64 h-64" />
+                </div>
+              )}
+              {isProcessing && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="animate-spin text-white mx-auto mb-4" size={48} />
+                    <p className="text-white font-medium text-lg">
+                      Đang xử lý ảnh...
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Error in Dialog */}
+            {error && isDialogOpen && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <X className="text-red-600" size={20} />
+                <p className="text-sm text-red-700 font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            {!isProcessing && (
+              <div className="flex gap-3">
+                <Button
+                  onClick={closeDialog}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={isCapturing}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleCapture}
+                  disabled={isCapturing || !videoRef.current}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {isCapturing ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={18} />
+                      Đang chụp...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="mr-2" size={18} />
+                      Chụp ảnh
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
-

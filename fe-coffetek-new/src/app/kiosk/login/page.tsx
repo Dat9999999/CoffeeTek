@@ -2,10 +2,29 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Delete, User, ArrowRight, Scan, Phone, Camera, X, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Delete, User, ArrowRight, Scan, Phone, Camera, X, CheckCircle, Loader2, Gift, Star } from 'lucide-react';
 import api from '@/lib/api';
 
-type LoginMethod = 'SELECT' | 'PHONE' | 'FACEID';
+type LoginMethod = 'SELECT' | 'PHONE' | 'FACEID' | 'CUSTOMER_INFO';
+
+interface CustomerInfo {
+  phone: string;
+  userId: number;
+  name?: string;
+  email?: string;
+  points?: number;
+}
+
+interface Voucher {
+  id: number;
+  code: string;
+  voucher_name: string;
+  discount_percentage: number;
+  minAmountOrder: number;
+  valid_from: string;
+  valid_to: string;
+  is_active: boolean;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,8 +33,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [faceIdStatus, setFaceIdStatus] = useState<'IDLE' | 'SCANNING' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [loadingCustomerInfo, setLoadingCustomerInfo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isCameraReadyRef = useRef<boolean>(false);
 
   // Xử lý nhập phím số
   const handleType = (num: string) => {
@@ -38,29 +62,31 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // 1. Kiểm tra khách hàng có tồn tại không?
-      // (Giả sử bạn có API GET /users/phone/{phone} hoặc GET /customers?phone=...)
-      // Nếu chưa có API này, bạn có thể gọi API tạo mới luôn (nếu backend cho phép duplicate check)
-      
-      // Cách an toàn nhất: Gọi thử API tạo khách hàng mới. 
-      // Nếu đã tồn tại -> Backend thường trả về lỗi hoặc user cũ -> Ta vẫn lấy được user đó.
-      // Dưới đây là ví dụ gọi API tạo Customer (Bạn cần check lại Controller User/Customer của bạn)
-      
+      // 1. Try to find user by phone
+      let userId: number | null = null;
       try {
-         await api.post('/customers', { // Hoặc endpoint /users/register tùy backend
-           phone: phone,
-           name: 'Khách Kiosk', // Tên mặc định
-         });
+        const userRes = await api.get('/user/search-pos', {
+          params: { searchName: phone, page: 1, size: 1 }
+        });
+        
+        if (userRes.data?.data && userRes.data.data.length > 0) {
+          userId = userRes.data.data[0].id;
+        }
       } catch (err) {
-         // Nếu lỗi 409 (Conflict/Exist) nghĩa là đã có -> Tốt, bỏ qua
-         console.log("Khách đã tồn tại hoặc lỗi tạo:", err);
+        console.log("Could not find user:", err);
       }
 
       // 2. Lưu SĐT vào LocalStorage để trang Payment dùng
       localStorage.setItem('kiosk_phone', phone);
       
-      // 3. Chuyển sang thanh toán
-      router.push('/kiosk/payment');
+      // 3. Fetch customer info and vouchers
+      if (userId) {
+        await fetchCustomerInfo(phone, userId);
+        setLoginMethod('CUSTOMER_INFO');
+      } else {
+        // If user not found, just go to payment
+        router.push('/kiosk/payment');
+      }
 
     } catch (err) {
       console.error(err);
@@ -77,9 +103,80 @@ export default function LoginPage() {
     router.push('/kiosk/payment');
   };
 
+  // Capture image from video stream
+  const captureImage = (): string | null => {
+    if (!videoRef.current || !canvasRef.current) return null;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return null;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert to base64
+    return canvas.toDataURL('image/jpeg', 0.8);
+  };
+
+  // Fetch customer info and vouchers
+  const fetchCustomerInfo = async (phone: string, userId: number) => {
+    setLoadingCustomerInfo(true);
+    try {
+      // Fetch vouchers
+      const vouchersRes = await api.get('/voucher/my-active', {
+        params: { customerPhone: phone }
+      });
+      
+      const now = new Date();
+      const validVouchers = (vouchersRes.data || []).filter((v: Voucher) => {
+        const validFrom = new Date(v.valid_from);
+        const validTo = new Date(v.valid_to);
+        return v.is_active && now >= validFrom && now <= validTo;
+      });
+      setVouchers(validVouchers);
+
+      // Try to get customer details from user search
+      try {
+        const userRes = await api.get('/user/search-pos', {
+          params: { searchName: phone, page: 1, size: 1 }
+        });
+        
+        if (userRes.data?.data && userRes.data.data.length > 0) {
+          const user = userRes.data.data[0];
+          setCustomerInfo({
+            phone,
+            userId,
+            name: `${user.first_name} ${user.last_name}`,
+            email: user.email,
+            points: user.CustomerPoint?.points || 0,
+          });
+        } else {
+          setCustomerInfo({ phone, userId });
+        }
+      } catch (err) {
+        console.log('Could not fetch user details:', err);
+        setCustomerInfo({ phone, userId });
+      }
+    } catch (err) {
+      console.error('Error fetching customer info:', err);
+      setCustomerInfo({ phone, userId });
+    } finally {
+      setLoadingCustomerInfo(false);
+    }
+  };
+
   // Face ID Functions
   const startFaceId = async () => {
     setFaceIdStatus('SCANNING');
+    setError('');
+    isCameraReadyRef.current = false;
+    
     try {
       // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -93,38 +190,91 @@ export default function LoginPage() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
+        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            const onLoadedMetadata = () => {
+              isCameraReadyRef.current = true;
+              videoRef.current?.removeEventListener('loadedmetadata', onLoadedMetadata);
+              resolve(true);
+            };
+            videoRef.current.addEventListener('loadedmetadata', onLoadedMetadata);
+            
+            // Fallback timeout
+            setTimeout(() => {
+              if (!isCameraReadyRef.current) {
+                isCameraReadyRef.current = true;
+                resolve(true);
+              }
+            }, 1000);
+          } else {
+            resolve(true);
+          }
+        });
       }
 
-      // Simulate face recognition (Replace with actual face recognition API)
-      // In production, you would:
-      // 1. Capture frame from video
-      // 2. Send to backend face recognition API
-      // 3. Match with registered faces
-      // 4. Return user phone number or user ID
-      
-      setTimeout(async () => {
-        // Simulate face recognition process
-        // TODO: Replace with actual face recognition API call
-        // const faceData = await captureAndRecognize();
-        // if (faceData && faceData.phone) {
-        //   localStorage.setItem('kiosk_phone', faceData.phone);
-        //   router.push('/kiosk/payment');
-        // }
-        
-        // For now, simulate success after 2 seconds
-        setFaceIdStatus('SUCCESS');
-        setTimeout(() => {
-          // In production, use the recognized phone number
-          // localStorage.setItem('kiosk_phone', recognizedPhone);
-          router.push('/kiosk/payment');
-        }, 1000);
-      }, 2000);
+      // Wait a bit for better face detection, then capture
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    } catch (err) {
+      // Capture image
+      const imageData = captureImage();
+      if (!imageData) {
+        throw new Error('Không thể chụp ảnh từ camera.');
+      }
+
+      // Stop camera
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+
+      // Send to backend for face recognition
+      const response = await api.post('/auth/face-id/login', {
+        image: imageData,
+      });
+
+      const { phone: recognizedPhone, userId } = response.data;
+
+      if (!recognizedPhone) {
+        throw new Error('Không nhận diện được khuôn mặt. Vui lòng thử lại.');
+      }
+
+      // Save phone to localStorage
+      localStorage.setItem('kiosk_phone', recognizedPhone);
+
+      // Fetch customer info and vouchers
+      await fetchCustomerInfo(recognizedPhone, userId);
+
+      setFaceIdStatus('SUCCESS');
+      setLoginMethod('CUSTOMER_INFO');
+
+    } catch (err: any) {
       console.error('Face ID Error:', err);
       setFaceIdStatus('ERROR');
-      setError('Không thể truy cập camera. Vui lòng thử lại hoặc dùng số điện thoại.');
+      
+      // Stop camera on error
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+
+      let errorMessage = 'Không thể nhận diện khuôn mặt. Vui lòng thử lại hoặc dùng số điện thoại.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     }
   };
 
@@ -137,6 +287,11 @@ export default function LoginPage() {
       videoRef.current.srcObject = null;
     }
     setFaceIdStatus('IDLE');
+    isCameraReadyRef.current = false;
+  };
+
+  const handleContinueToPayment = () => {
+    router.push('/kiosk/payment');
   };
 
   const handleBackToSelect = () => {
@@ -367,6 +522,112 @@ export default function LoginPage() {
     </div>
   );
 
+  // Render Customer Info Screen
+  const renderCustomerInfo = () => (
+    <div className="w-full max-w-2xl space-y-6 animate-in slide-in-from-bottom-10 fade-in">
+      <div className="text-center space-y-2">
+        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle size={48} />
+        </div>
+        <h1 className="text-4xl font-bold text-gray-900">Đăng nhập thành công!</h1>
+        <p className="text-gray-500 text-lg">Thông tin khách hàng</p>
+      </div>
+
+      {loadingCustomerInfo ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="animate-spin text-orange-600" size={32} />
+          <span className="ml-3 text-gray-600">Đang tải thông tin...</span>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Customer Info Card */}
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-orange-100 p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <User size={24} className="text-orange-600" />
+              Thông tin khách hàng
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Số điện thoại:</span>
+                <span className="font-semibold text-gray-900">{customerInfo?.phone}</span>
+              </div>
+              {customerInfo?.name && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Họ tên:</span>
+                  <span className="font-semibold text-gray-900">{customerInfo.name}</span>
+                </div>
+              )}
+              {customerInfo?.email && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Email:</span>
+                  <span className="font-semibold text-gray-900">{customerInfo.email}</span>
+                </div>
+              )}
+              {customerInfo?.points !== undefined && (
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                  <span className="text-gray-600 flex items-center gap-2">
+                    <Star className="text-amber-500" size={20} />
+                    Điểm tích lũy:
+                  </span>
+                  <span className="font-bold text-amber-600 text-lg">{customerInfo.points.toLocaleString('vi-VN')} điểm</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Vouchers Card */}
+          {vouchers.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-orange-100 p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Gift size={24} className="text-orange-600" />
+                Voucher khả dụng ({vouchers.length})
+              </h3>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {vouchers.map((voucher) => (
+                  <div
+                    key={voucher.id}
+                    className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-bold text-gray-900">{voucher.voucher_name}</p>
+                        <p className="text-sm text-gray-600">Mã: {voucher.code}</p>
+                      </div>
+                      <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
+                        -{voucher.discount_percentage}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Áp dụng cho đơn hàng từ {voucher.minAmountOrder.toLocaleString('vi-VN')}₫
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      HSD: {new Date(voucher.valid_to).toLocaleDateString('vi-VN')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {vouchers.length === 0 && (
+            <div className="bg-gray-50 rounded-2xl p-6 text-center">
+              <Gift className="text-gray-400 mx-auto mb-2" size={32} />
+              <p className="text-gray-500">Bạn chưa có voucher nào</p>
+            </div>
+          )}
+
+          {/* Continue Button */}
+          <button
+            onClick={handleContinueToPayment}
+            className="w-full h-16 bg-orange-600 text-white rounded-2xl font-bold text-xl hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
+          >
+            Tiếp tục mua hàng <ArrowRight size={24} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="h-screen w-screen bg-gray-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
       
@@ -378,10 +639,14 @@ export default function LoginPage() {
         <ChevronLeft size={24} />
       </button>
 
+      {/* Hidden canvas for image capture */}
+      <canvas ref={canvasRef} className="hidden" />
+
       {/* Render based on login method */}
       {loginMethod === 'SELECT' && renderMethodSelection()}
       {loginMethod === 'PHONE' && renderPhoneLogin()}
       {loginMethod === 'FACEID' && renderFaceIdLogin()}
+      {loginMethod === 'CUSTOMER_INFO' && renderCustomerInfo()}
     </div>
   );
 }

@@ -25,6 +25,7 @@ export default function FaceIDRegistration() {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
+  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -85,28 +86,121 @@ export default function FaceIDRegistration() {
     setError("");
     setSuccess("");
     setIsDialogOpen(true);
-
-    try {
-      // Start camera preview
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      });
-      
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err: any) {
-      console.error("Camera Error:", err);
-      setIsDialogOpen(false);
-      setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera.");
-    }
   };
+
+  // Start camera when dialog opens
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setIsCameraReady(false);
+      return;
+    }
+
+    let stream: MediaStream | null = null;
+    let isMounted = true;
+
+    const startCamera = async () => {
+      try {
+        setIsCameraReady(false);
+        
+        // Wait a bit for dialog to fully render
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        if (!isMounted) return;
+
+        // Start camera preview
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        });
+        
+        if (!isMounted) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        
+        streamRef.current = stream;
+        
+        // Wait for video element to be ready
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          
+          // Wait for video to be ready
+          await new Promise((resolve) => {
+            if (videoRef.current) {
+              const video = videoRef.current;
+              const onLoadedMetadata = () => {
+                video.play()
+                  .then(() => {
+                    if (isMounted) {
+                      setIsCameraReady(true);
+                    }
+                    resolve(true);
+                  })
+                  .catch((err) => {
+                    console.error("Video play error:", err);
+                    if (isMounted) {
+                      setIsCameraReady(true); // Still allow capture even if play fails
+                    }
+                    resolve(true);
+                  });
+                video.removeEventListener('loadedmetadata', onLoadedMetadata);
+              };
+              video.addEventListener('loadedmetadata', onLoadedMetadata);
+              
+              // Fallback if loadedmetadata doesn't fire
+              setTimeout(() => {
+                if (isMounted && !isCameraReady) {
+                  video.play().then(() => {
+                    setIsCameraReady(true);
+                  }).catch(() => {
+                    setIsCameraReady(true);
+                  });
+                  resolve(true);
+                }
+              }, 1000);
+            } else {
+              resolve(true);
+            }
+          });
+        } else {
+          // Video element not ready, try again
+          setTimeout(() => {
+            if (videoRef.current && stream) {
+              videoRef.current.srcObject = stream;
+              videoRef.current.play().then(() => {
+                if (isMounted) setIsCameraReady(true);
+              }).catch(() => {
+                if (isMounted) setIsCameraReady(true);
+              });
+            }
+          }, 200);
+        }
+      } catch (err: any) {
+        console.error("Camera Error:", err);
+        if (isMounted) {
+          setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera.");
+          setIsDialogOpen(false);
+        }
+      }
+    };
+
+    startCamera();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [isDialogOpen]);
 
   // Capture and process image
   const handleCapture = async () => {
@@ -207,20 +301,25 @@ export default function FaceIDRegistration() {
 
   // Close dialog and cleanup
   const closeDialog = () => {
+    // Stop camera stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    // Clear video element
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    // Reset states
     setIsDialogOpen(false);
     setIsCapturing(false);
     setIsProcessing(false);
+    setIsCameraReady(false);
+    setError(""); // Clear error when closing
   };
 
 
-  // Cleanup camera on unmount or dialog close
+  // Cleanup camera on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -229,19 +328,6 @@ export default function FaceIDRegistration() {
       }
     };
   }, []);
-
-  // Cleanup when dialog closes
-  useEffect(() => {
-    if (!isDialogOpen) {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    }
-  }, [isDialogOpen]);
 
   if (status === "checking") {
     return (
@@ -368,20 +454,31 @@ export default function FaceIDRegistration() {
           <div className="space-y-4">
             {/* Camera Preview */}
             <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+              {!isCameraReady && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="text-center">
+                    <Loader2 className="animate-spin text-white mx-auto mb-4" size={48} />
+                    <p className="text-white font-medium text-lg">
+                      Đang khởi động camera...
+                    </p>
+                  </div>
+                </div>
+              )}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
                 className="w-full h-full object-cover"
+                style={{ display: isCameraReady ? 'block' : 'none' }}
               />
-              {!isProcessing && (
+              {isCameraReady && !isProcessing && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="border-4 border-blue-500 rounded-full w-64 h-64" />
                 </div>
               )}
               {isProcessing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                   <div className="text-center">
                     <Loader2 className="animate-spin text-white mx-auto mb-4" size={48} />
                     <p className="text-white font-medium text-lg">
@@ -413,7 +510,7 @@ export default function FaceIDRegistration() {
                 </Button>
                 <Button
                   onClick={handleCapture}
-                  disabled={isCapturing || !videoRef.current}
+                  disabled={isCapturing || !isCameraReady || !videoRef.current || !streamRef.current}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   {isCapturing ? (

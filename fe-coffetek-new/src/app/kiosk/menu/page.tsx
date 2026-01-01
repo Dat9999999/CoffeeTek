@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { Category, Product, CartItem } from '../types';
 import ProductModal from '../components/ProductModal';
 import { getImageUrl } from "@/utils/image";
+import CartDialog from '../components/CartDialog';
 
 export default function KioskMenuPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function KioskMenuPage() {
   // State Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCartDialogOpen, setIsCartDialogOpen] = useState(false);
 
   // --- 1. LẤY DANH MỤC LÚC ĐẦU ---
   useEffect(() => {
@@ -95,9 +97,11 @@ export default function KioskMenuPage() {
     setCart(updatedCart);
     // Lưu ngay vào LocalStorage để trang Payment đọc được
     localStorage.setItem('kiosk_cart', JSON.stringify(updatedCart));
+    // Dispatch event để các trang khác cập nhật
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
-  // Chuyển sang trang thanh toán
+  // Chuyển sang trang thanh toán (fallback, but CartDialog handles payment now)
   const goToPayment = () => {
     router.push('/kiosk/login');
   };
@@ -128,6 +132,7 @@ export default function KioskMenuPage() {
 
     return 'Chưa có giá';
   };
+
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -224,26 +229,31 @@ export default function KioskMenuPage() {
       {cart.length > 0 && (
         <div className="absolute bottom-6 left-6 right-6 z-30 animate-in slide-in-from-bottom-10 fade-in duration-300">
            <div className="bg-gray-900 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between border border-gray-700/50 backdrop-blur-xl">
-              <div className="flex items-center gap-5 px-4">
+              <button 
+                onClick={() => setIsCartDialogOpen(true)}
+                className="flex items-center gap-5 px-4 hover:opacity-80 transition-opacity"
+              >
                 <div className="bg-orange-500 p-4 rounded-full relative shadow-lg shadow-orange-900/50">
                   <ShoppingCart size={28} />
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full font-bold border-2 border-gray-900">
                     {totalItems}
                   </span>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col text-left">
                   <span className="text-gray-400 text-sm font-medium">Tạm tính</span>
                   <span className="text-2xl font-bold tracking-tight">{totalAmount.toLocaleString()}đ</span>
                 </div>
-              </div>
-
-              <button 
-                onClick={goToPayment}
-                className="bg-white text-gray-900 px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 active:scale-95 transition-all flex items-center gap-2"
-              >
-                Thanh toán
-                <ChevronLeft className="rotate-180" size={20} />
               </button>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setIsCartDialogOpen(true)}
+                  className="bg-gray-700 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-gray-600 active:scale-95 transition-all"
+                >
+                  Xem giỏ hàng
+                </button>
+                 
+              </div>
            </div>
         </div>
       )}
@@ -254,6 +264,13 @@ export default function KioskMenuPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddToCart={handleAddToCartFromModal}
+      />
+
+      {/* CART DIALOG */}
+      <CartDialog
+        isOpen={isCartDialogOpen}
+        onClose={() => setIsCartDialogOpen(false)}
+        onCheckout={goToPayment}
       />
     </div>
   );

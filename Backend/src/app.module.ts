@@ -27,6 +27,8 @@ import { MaterialLossModule } from './material-loss/material-loss.module';
 import { MaterialRemainModule } from './material-remain/material-remain.module';
 import { NotificationModule } from './notification/notification.module';
 import { CotractingModule } from './cotracting/cotracting.module';
+import { SModule } from './face-recognition/s/s.module';
+import { FaceRecognitionModule } from './face-recognition/face-recognition.module';
 
 
 @Module({
@@ -64,6 +66,8 @@ import { CotractingModule } from './cotracting/cotracting.module';
     NotificationModule,
     EventsModule,
     CotractingModule,
+    SModule,
+    FaceRecognitionModule,
   ],
 })
 export class AppModule { }

@@ -12,8 +12,7 @@ import { SizesModule } from './sizes/sizes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './product/product.module';
 import { UploadModule } from './upload-file/upload.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+
 import { InvoiceModule } from './invoice/invoice.module';
 import { MaterialModule } from './material/material.module';
 import { RecipeModule } from './recipe/recipe.module';
@@ -27,7 +26,7 @@ import { MaterialLossModule } from './material-loss/material-loss.module';
 import { MaterialRemainModule } from './material-remain/material-remain.module';
 import { NotificationModule } from './notification/notification.module';
 import { CotractingModule } from './cotracting/cotracting.module';
-import { SModule } from './face-recognition/s/s.module';
+;
 import { FaceRecognitionModule } from './face-recognition/face-recognition.module';
 
 
@@ -66,7 +65,6 @@ import { FaceRecognitionModule } from './face-recognition/face-recognition.modul
     NotificationModule,
     EventsModule,
     CotractingModule,
-    SModule,
     FaceRecognitionModule,
   ],
 })

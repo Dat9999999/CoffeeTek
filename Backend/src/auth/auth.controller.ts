@@ -62,7 +62,7 @@ export class AuthController {
         return this.authservice.updateSecurity(user.id, dto);
     }
 
-    @Get('face-id/status')
+  @Get('face-id/status')
   @UseGuards(AuthGuard('jwt'))
   async getFaceIDStatus(@GetUser() user: client.User): Promise<FaceIDStatusResponseDto> {
     return this.authservice.checkFaceIDStatus(user.id);
@@ -78,7 +78,7 @@ export class AuthController {
   }
 
   @Put('face-id/update')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async updateFaceID(
     @GetUser() user: client.User,
     @Body() dto: UpdateFaceIDDto,

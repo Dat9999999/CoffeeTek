@@ -427,8 +427,5 @@ export class AuthService {
           phone: faceID.externalImageId,
           userId: faceID.userId,
         };
-      }
-    }
-
-
+        }
 }

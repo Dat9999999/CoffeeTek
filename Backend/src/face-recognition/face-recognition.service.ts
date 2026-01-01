@@ -1,5 +1,6 @@
 // src/face-recognition/face-recognition.service.ts
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   RekognitionClient,
   CreateCollectionCommand,
@@ -14,20 +15,47 @@ export class FaceRecognitionService implements OnModuleInit {
   private rekognitionClient: RekognitionClient;
   private collectionId: string;
 
-  constructor() {
-    this.collectionId = process.env.AWS_REKOGNITION_COLLECTION_ID|| 'coffetek-faces';
+  constructor(private configService: ConfigService) {
+    this.collectionId = this.configService.get<string>('AWS_REKOGNITION_COLLECTION_ID') || 'coffetek-faces';
+    
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const region = this.configService.get<string>('AWS_REGION') || 'ap-southeast-1';
+
+    // Validate credentials
+    if (!accessKeyId || !secretAccessKey) {
+      this.logger.warn('⚠️  AWS credentials not found. Face recognition features will not work.');
+      this.logger.warn('Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your .env file');
+      // Create a dummy client to prevent errors, but it won't work
+      this.rekognitionClient = new RekognitionClient({
+        region,
+        credentials: {
+          accessKeyId: 'dummy',
+          secretAccessKey: 'dummy',
+        },
+      });
+      return;
+    }
     
     this.rekognitionClient = new RekognitionClient({
-      region: process.env.AWS_REGION || 'ap-southeast-1',
+      region,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        accessKeyId,
+        secretAccessKey,
       },
     });
   }
 
   // Auto-create collection on module init
   async onModuleInit() {
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    
+    if (!accessKeyId || !secretAccessKey) {
+      this.logger.warn('⚠️  Skipping collection creation - AWS credentials not configured');
+      return;
+    }
+    
     await this.createCollection();
   }
 
@@ -41,6 +69,9 @@ export class FaceRecognitionService implements OnModuleInit {
     } catch (error: any) {
       if (error.name === 'ResourceAlreadyExistsException') {
         this.logger.log(`ℹ️  Collection "${this.collectionId}" already exists`);
+      } else if (error.message?.includes('credential') || error.message?.includes('Invalid')) {
+        this.logger.error(`❌ AWS Credentials Error: ${error.message}`);
+        this.logger.error('Please check your AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env file');
       } else {
         this.logger.error(`❌ Error creating collection: ${error.message}`);
       }

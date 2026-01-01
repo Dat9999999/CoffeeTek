@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from 'src/common/mail/mail.service';
 import { RedisService } from 'src/redis/redis.service';
 import { OAuth2Client } from 'google-auth-library';
+import { FaceRecognitionService } from 'src/face-recognition/face-recognition.service';
 @Injectable()
 export class AuthService {
     private client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
@@ -17,7 +18,8 @@ export class AuthService {
         private jwt: JwtService,
         private config: ConfigService,
         private mailService: MailService,
-        private redisService: RedisService
+        private redisService: RedisService,
+        private faceRecognitionService: FaceRecognitionService
     ) {
     }
     async login(dto: authLoginDto) {
@@ -335,6 +337,97 @@ export class AuthService {
                 detail: true
             }
         });
+    }
+
+    async checkFaceIDStatus(userId: number): Promise<{ hasFaceID: boolean }> {
+        const faceID = await this.prisma.faceID.findUnique({
+          where: { userId },
+        });
+        return { hasFaceID: !!faceID };
+      }
+    
+      async registerFaceID(
+        userId: number,
+        phone: string,
+        imageBase64: string,
+      ): Promise<{ faceId: string }> {
+        // Convert base64 to Buffer
+        const base64Data = imageBase64.includes(',') 
+          ? imageBase64.split(',')[1] 
+          : imageBase64;
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+    
+        // Check if user already has Face ID
+        const existingFaceID = await this.prisma.faceID.findUnique({
+          where: { userId },
+        });
+    
+        if (existingFaceID) {
+          // Delete old face from AWS
+          await this.faceRecognitionService.deleteFace(existingFaceID.faceId);
+        }
+    
+        // Register face in AWS Rekognition
+        const faceId = await this.faceRecognitionService.registerFace(imageBuffer, phone);
+    
+        // Save to database
+        if (existingFaceID) {
+          await this.prisma.faceID.update({
+            where: { userId },
+            data: {
+              faceId,
+              externalImageId: phone,
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          await this.prisma.faceID.create({
+            data: {
+              faceId,
+              collectionId: 'coffetek-faces',
+              externalImageId: phone,
+              userId,
+            },
+          });
+        }
+    
+        return { faceId };
+      }
+    
+      async updateFaceID(
+        userId: number,
+        phone: string,
+        imageBase64: string,
+      ): Promise<{ faceId: string }> {
+        return this.registerFaceID(userId, phone, imageBase64);
+      }
+    
+      async loginWithFaceID(imageBase64: string): Promise<{ phone: string; userId: number } | null> {
+        const base64Data = imageBase64.includes(',') 
+          ? imageBase64.split(',')[1] 
+          : imageBase64;
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+    
+        const match = await this.faceRecognitionService.searchFace(imageBuffer);
+    
+        if (!match || match.similarity < 70) {
+          return null;
+        }
+    
+        const faceID = await this.prisma.faceID.findUnique({
+          where: { faceId: match.faceId },
+          include: { user: true },
+        });
+    
+        if (!faceID) {
+          return null;
+        }
+    
+        return {
+          phone: faceID.externalImageId,
+          userId: faceID.userId,
+        };
+      }
     }
 
 

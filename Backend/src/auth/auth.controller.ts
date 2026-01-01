@@ -78,7 +78,7 @@ export class AuthController {
   }
 
   @Put('face-id/update')
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   async updateFaceID(
     @GetUser() user: client.User,
     @Body() dto: UpdateFaceIDDto,

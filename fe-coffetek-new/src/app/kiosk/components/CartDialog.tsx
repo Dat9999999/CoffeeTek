@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Trash2, Plus, Minus, Edit2, ShoppingCart } from 'lucide-react';
+import { X, Trash2, Plus, Minus, Edit2, ShoppingCart, Link } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CartItem, Product } from '../types';
 import { getImageUrl } from '@/utils/image';
@@ -148,8 +148,8 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
 
   // Go to payment page
   const goToPayment = () => {
-    onClose();
-    router.push('/kiosk/login');
+    console.log('goToPayment');
+    window.location.href = '/kiosk/login';
   };
 
   if (!isOpen) return null;
@@ -369,15 +369,12 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                   </p>
                 </div>
               </div>
-              <button
-                onClick={goToPayment}
-                className="w-full h-14 bg-orange-600 text-white rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
-              >
-                <ShoppingCart size={20} />
-                Thanh toán
-              </button>
             </div>
           )}
+          <button onClick = {goToPayment} className="w-full h-14 bg-orange-600 text-white rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200">
+            <ShoppingCart size={20} />
+            Thanh toán
+          </button>
         </motion.div>
       </div>
 

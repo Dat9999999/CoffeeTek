@@ -1,7 +1,8 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ShoppingCart } from "lucide-react";
 
 import Banner from "@/components/sections/Banner";
 import Explore from "@/components/sections/Explore";
@@ -12,6 +13,7 @@ import Testimonial from "@/components/sections/Testimonial";
 
 export default function Home() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const loginSuccess = searchParams.get("login");
   const [showBanner, setShowBanner] = useState(false);
 
@@ -35,6 +37,16 @@ export default function Home() {
       <SellingCoffee />
       <InstantCoffee />
       {/* <Testimonial /> */}
+      
+      {/* Floating Kiosk Button */}
+      <button
+        onClick={() => router.push("/kiosk")}
+        className="fixed bottom-8 right-8 z-50 bg-orange-600 hover:bg-orange-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold text-lg transition-all duration-300 hover:scale-110 active:scale-95 group"
+        aria-label="Go to Kiosk"
+      >
+        <ShoppingCart className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+        <span className="hidden sm:inline">Kiosk</span>
+      </button>
     </div>
   );
 }

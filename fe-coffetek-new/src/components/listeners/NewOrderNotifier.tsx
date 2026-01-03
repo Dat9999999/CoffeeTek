@@ -2,10 +2,8 @@
 
 import { useEffect } from 'react';
 import { notification } from 'antd';
-import { io, Socket } from 'socket.io-client';
 import { SoundOutlined } from '@ant-design/icons';
-
-const socket: Socket = io(process.env.NEXT_PUBLIC_BACKEND_URL as string);
+import { getSocketInstance } from '@/lib/socket';
 
 interface OrderPayload {
     id: number | string;
@@ -19,8 +17,9 @@ interface OrderPayload {
  * and triggers an Ant Design notification. It renders nothing.
  */
 export function NewOrderNotifier() {
-
     useEffect(() => {
+        const socket = getSocketInstance();
+        
         const onNewOrder = (order: OrderPayload) => {
             console.log('Socket: Received newOrder =', order);
             if (!order) return;
@@ -58,7 +57,7 @@ export function NewOrderNotifier() {
         socket.on("disconnect", onDisconnect);
         socket.on("newOrder", onNewOrder);
 
-        // Cleanup listeners on unmount
+        // Cleanup listeners on unmount (but don't disconnect the shared socket)
         return () => {
             socket.off("connect", onConnect);
             socket.off("disconnect", onDisconnect);

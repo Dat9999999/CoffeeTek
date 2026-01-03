@@ -66,16 +66,16 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   async getFaceIDStatus(@GetUser() user: client.User): Promise<FaceIDStatusResponseDto> {
     return this.authservice.checkFaceIDStatus(user.id);
-  }
-  
-  @Post('face-id/register')
+    }
+
+    @Post('face-id/register')
   @UseGuards(AuthGuard('jwt'))
   async registerFaceID(
     @GetUser() user: client.User,
     @Body() dto: RegisterFaceIDDto,
   ) {
     return this.authservice.registerFaceID(user.id, dto.phone, dto.image);
-  }
+    }
 
   @Put('face-id/update')
   @UseGuards(AuthGuard('jwt'))

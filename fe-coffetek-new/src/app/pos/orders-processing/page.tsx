@@ -5,10 +5,9 @@ import { Layout, theme, Card, Typography, Flex } from "antd";
 import { orderService } from "@/services/orderService";
 import type { Order } from "@/interfaces";
 import { OrderStatus } from "@/interfaces";
-import { NewOrderNotifier } from "@/components/listeners";
 import { KitchenOrderDisplay } from "@/components/features/orders/KitchenOrderDisplay";
 import { OrderQueue } from "@/components/features/orders/OrderQueue";
-import { io } from "socket.io-client";
+import { getSocketInstance } from "@/lib/socket";
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -35,19 +34,24 @@ export default function OrdersPage() {
     useEffect(() => {
         fetchOrders();
         
-        // Listen for new orders via socket
-        const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL as string);
+        // Use shared socket instance to prevent duplicate connections
+        const socket = getSocketInstance();
         
-        socket.on("newOrder", () => {
+        const handleNewOrder = () => {
             fetchOrders();
-        });
+        };
         
-        socket.on("processOrderCount", () => {
+        const handleProcessOrderCount = () => {
             fetchOrders();
-        });
+        };
+        
+        socket.on("newOrder", handleNewOrder);
+        socket.on("processOrderCount", handleProcessOrderCount);
         
         return () => {
-            socket.disconnect();
+            // Clean up listeners to prevent duplicates (but don't disconnect shared socket)
+            socket.off("newOrder", handleNewOrder);
+            socket.off("processOrderCount", handleProcessOrderCount);
         };
     }, []);
 
@@ -107,9 +111,7 @@ export default function OrdersPage() {
     };
 
     return (
-        <>
-            <NewOrderNotifier />
-            <Layout style={{ minHeight: "100vh", position: "relative" }}>
+        <Layout style={{ minHeight: "100vh", position: "relative" }}>
                 <Content
                     style={{
                         padding: isMobile ? 12 : 24,
@@ -166,7 +168,6 @@ export default function OrdersPage() {
                         </div>
                     </div>
                 </Content>
-            </Layout>
-        </>
+        </Layout>
     );
 }

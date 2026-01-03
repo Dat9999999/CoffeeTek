@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -116,6 +116,14 @@ export class ProductsService {
   async findAll(
     query: GetAllProductsDto,
   ): Promise<ResponseGetAllDto<ProductDetailResponse>> {
+
+    const cacheKey = this.generateCacheKey(query);
+    const cachedData = await this.redisService.get<ResponseGetAllDto<ProductDetailResponse>>(cacheKey);
+    if (cachedData) {
+      Logger.log('Cache HIT for:', cacheKey);
+      return cachedData;
+    }
+    Logger.log('Cache MISS for:', cacheKey);
     const {
       page,
       size,
@@ -243,10 +251,7 @@ export class ProductsService {
         optionGroups: Array.from(optionGroupsMap.values()),
       };
     });
-
-    // 🔹 Kết quả trả về
-
-    return {
+    const result = {
       data,
       meta: {
         total,
@@ -255,6 +260,14 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+
+    // 🔹 Kết quả trả về
+    // ✅ Step 4: Store in cache (TTL: 1 hour = 3600 seconds)
+    await this.redisService.set(cacheKey, result, 3600);
+
+    // 🔹 Kết quả trả về
+
+    return result;
   }
 
   async findAllPos(
@@ -430,10 +443,7 @@ export class ProductsService {
         optionGroups: Array.from(optionGroupsMap.values()),
       };
     });
-
-    // 🔹 Kết quả trả về
-
-    return {
+    const result = {
       data,
       meta: {
         total,
@@ -442,6 +452,11 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+
+    // 🔹 Kết quả trả về
+    // ✅ Step 4: Store in cache (TTL: 1 hour = 3600 seconds)
+    // await this.redisService.set(cacheKey, result, 3600);
+    return result;
   }
 
   async findOne(id: number): Promise<ProductDetailResponse> {

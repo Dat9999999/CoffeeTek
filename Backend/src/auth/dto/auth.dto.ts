@@ -82,3 +82,7 @@ export class UpdateProfileDto {
     @IsString()
     address: string;
 }
+
+export class FaceIDStatusResponseDto {
+    hasFaceID: boolean;
+}

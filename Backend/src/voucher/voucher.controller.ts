@@ -23,6 +23,10 @@ export class VoucherController {
   getVoucherGroups(@Query() query: GetVoucherGroupDto) {
     return this.voucherService.findVoucherGroups(query);
   }
+  @Get('my-active')
+  getMyActiveVouchers(@Query('customerPhone') customerPhone: string) {
+    return this.voucherService.findActiveVouchersByCustomer(customerPhone);
+  }
 
   @Post()
   create(@Body() createVoucherDto: CreateVoucherDto) {
@@ -55,10 +59,7 @@ export class VoucherController {
     return this.voucherService.exchangeVoucherByGroup(dto.groupName, dto.customerPhone);
   }
 
-  @Get('my-active')
-  getMyActiveVouchers(@Query('customerPhone') customerPhone: string) {
-    return this.voucherService.findActiveVouchersByCustomer(customerPhone);
-  }
+ 
 
   @Delete('group/:groupName')
   deleteByGroup(@Param('groupName') groupName: string) {

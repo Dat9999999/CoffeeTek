@@ -7,7 +7,7 @@ const logger = new Logger('PrismaSeed');
 
 // --- Config ---
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'datrootx@gmail.com';
-const OWNER_PHONE = process.env.OWNER_PHONE || '09875954408';
+const OWNER_PHONE = process.env.OWNER_PHONE || '09875954407';
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '123456';
 const OWNER_FIRSTNAME = process.env.OWNER_FISRTNAME || 'Dat';
 const OWNER_LASTNAME = process.env.OWNER_LASTNAME || 'Huynh';

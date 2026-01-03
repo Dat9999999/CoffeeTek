@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 localStorage.removeItem(STORAGE_KEYS.USER_INFO);
                 setUser(null);
                 setIsAuthenticated(false);
-                console.log("Auth context:Fetch user login failed")
+                console.log("Auth context:Fetch user login failed", err)
             } finally {
                 setLoading(false);
             }

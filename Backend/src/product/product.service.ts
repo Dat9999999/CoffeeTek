@@ -15,10 +15,15 @@ export class ProductsService {
               private redisService: RedisService) { }
 
   async toggleActiveStatus(id: number, isActive: boolean) {
-    return await this.prisma.product.update({
+    const result = await this.prisma.product.update({
       where: { id },
       data: { isActive },
     });
+    
+    // ✅ Fix Bug 2: Invalidate cache when product status changes
+    await this.invalidateProductCache();
+    
+    return result;
   }
   // helper generate cache key for product list
   private generateCacheKey(query: GetAllProductsDto, prefix: string = 'products'): string {
@@ -26,8 +31,8 @@ export class ProductsService {
       page,
       size,
       search,
-      orderBy,
-      orderDirection,
+      orderBy = 'id', // ✅ Fix Bug 1: Use same defaults as query methods
+      orderDirection = 'asc', // ✅ Fix Bug 1: Use same defaults as query methods
       categoryId,
       isTopping,
     } = query;
@@ -45,6 +50,17 @@ export class ProductsService {
     ];
 
     return keyParts.join(':');
+  }
+
+  // ✅ Helper method to invalidate all product caches
+  private async invalidateProductCache(): Promise<void> {
+    try {
+      await this.redisService.delPattern('products:*');
+      Logger.log('🗑️  Invalidated all product caches');
+    } catch (error) {
+      Logger.error('Failed to invalidate product cache', error);
+      // Don't throw - cache invalidation failure shouldn't break the operation
+    }
   }
   async create(dto: CreateProductDto) {
     const {
@@ -110,6 +126,10 @@ export class ProductsService {
     });
 
     const new_product_detail = await this.findOne(product.id);
+    
+    // ✅ Fix Bug 2: Invalidate cache after creating new product
+    await this.invalidateProductCache();
+    
     return new_product_detail;
   }
 
@@ -587,7 +607,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.update({
+    const result = await this.prisma.product.update({
       where: { id },
       data: {
         name,
@@ -630,6 +650,11 @@ export class ProductsService {
       },
       include: { sizes: true, optionValues: true, toppings: true },
     });
+    
+    // ✅ Fix Bug 2: Invalidate cache after updating product
+    await this.invalidateProductCache();
+    
+    return result;
   }
 
   async remove(id: number) {
@@ -646,7 +671,12 @@ export class ProductsService {
     await this.prisma.productTopping.deleteMany({ where: { product_id: id } });
     await this.prisma.productImage.deleteMany({ where: { product_id: id } });
 
-    return this.prisma.product.delete({ where: { id } });
+    const result = await this.prisma.product.delete({ where: { id } });
+    
+    // ✅ Fix Bug 2: Invalidate cache after deleting product
+    await this.invalidateProductCache();
+    
+    return result;
   }
 
   async removeMany(ids: number[]) {
@@ -688,6 +718,9 @@ export class ProductsService {
         where: { id: { in: existingIds } },
       });
     });
+
+    // Invalidate cache after deleting multiple products
+    await this.invalidateProductCache();
 
     return {
       message: `Deleted ${existingIds.length} product(s) successfully.`,

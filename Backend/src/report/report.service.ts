@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 import { ReportQueryDto, TimeUnit } from './dto/report-query.dto';
-import { OrderStatus, OrderStatus as orderStatus } from 'src/common/enums/orderStatus.enum';
+import { OrderStatus } from 'src/common/enums/orderStatus.enum';
 import { RevenueByMonthDto } from './dto/revenue-by-month.dto';
 import { RevenueByYearDto } from './dto/RevenueByYearDto';
 import { TopNRevenueDto } from './dto/TopNRevenueDto';
@@ -16,13 +17,45 @@ interface CategoryRevenue {
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) { }
+  private readonly logger = new Logger(ReportsService.name);
+  
+  constructor(
+    private prisma: PrismaService,
+    private redisService: RedisService,
+  ) { }
+
+  /**
+   * Generate cache key for report queries
+   */
+  private generateCacheKey(prefix: string, params: Record<string, any>): string {
+    const sortedParams = Object.keys(params)
+      .sort()
+      .map(key => `${key}:${params[key]}`)
+      .join(':');
+    return `reports:${prefix}:${sortedParams}`;
+  }
 
   /**
    * FC-10-01: Báo cáo doanh thu theo thời gian (ngày/tuần/tháng)
    */
   async getRevenueByTime(query: ReportQueryDto) {
     const { startDate, endDate, timeUnit } = query;
+
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-time', {
+      startDate,
+      endDate,
+      timeUnit: timeUnit || TimeUnit.DAY,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
 
     // Sử dụng $queryRawUnsafe để TRUNCATE date, cẩn thận với timeUnit
     // Đảm bảo timeUnit là một trong các giá trị 'day', 'week', 'month'
@@ -37,10 +70,13 @@ export class ReportsService {
       FROM "payment_details"
       WHERE payment_time >= ${new Date(startDate)}::timestamp
         AND payment_time <= ${new Date(endDate)}::timestamp
-        AND status = ${orderStatus.COMPLETED}
+        AND status = ${OrderStatus.COMPLETED}
       GROUP BY period
       ORDER BY period ASC;
     `;
+
+    // Store in cache (30 minutes TTL for time-based reports)
+    await this.redisService.set(cacheKey, result, 1800);
 
     return result;
   }
@@ -51,13 +87,28 @@ export class ReportsService {
   async getRevenueByPaymentMethod(query: ReportQueryDto) {
     const { startDate, endDate } = query;
 
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-payment-method', {
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     const results = await this.prisma.paymentDetail.groupBy({
       by: ['payment_method_id'],
       _sum: {
         amount: true,
       },
       where: {
-        status: 'completed',
+        status: OrderStatus.COMPLETED,
         payment_time: {
           gte: new Date(startDate),
           lte: new Date(endDate),
@@ -74,12 +125,17 @@ export class ReportsService {
       },
     });
 
-    return results.map((r) => ({
+    const result = results.map((r) => ({
       payment_method_name:
         paymentMethods.find((pm) => pm.id === r.payment_method_id)?.name ||
         'Unknown',
       total_revenue: r._sum.amount,
     }));
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
   /**
@@ -88,7 +144,22 @@ export class ReportsService {
   async getBestSellingProducts(query: ReportQueryDto) {
     const { startDate, endDate } = query;
 
-    return await this.prisma.orderDetail.groupBy({
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('best-selling-products', {
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
+    const result = await this.prisma.orderDetail.groupBy({
       by: ['product_id', 'product_name'],
       _sum: {
         quantity: true,
@@ -100,7 +171,7 @@ export class ReportsService {
             lte: new Date(endDate),
           },
           status: {
-            not: 'cancelled', // Không tính đơn đã hủy
+            not: OrderStatus.CANCELED, // Không tính đơn đã hủy
           },
         },
       },
@@ -111,6 +182,11 @@ export class ReportsService {
       },
       take: 10,
     });
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
   /**
@@ -119,6 +195,21 @@ export class ReportsService {
    */
   async getRevenueByProduct(query: ReportQueryDto) {
     const { startDate, endDate } = query;
+
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-product', {
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
 
     // 1. Doanh thu từ sản phẩm chính (OrderDetail)
     const productRevenue = await this.prisma.$queryRaw`
@@ -130,7 +221,7 @@ export class ReportsService {
       JOIN "orders" o ON od.order_id = o.id
       WHERE o.created_at >= ${new Date(startDate)}::timestamp
         AND o.created_at <= ${new Date(endDate)}::timestamp
-        AND o.status != 'cancelled'
+        AND o.status != ${OrderStatus.CANCELED}
       GROUP BY od.product_id, od.product_name;
     `;
 
@@ -147,25 +238,26 @@ export class ReportsService {
       JOIN "products" p ON tod.topping_id = p.id
       WHERE o.created_at >= ${new Date(startDate)}::timestamp
         AND o.created_at <= ${new Date(endDate)}::timestamp
-        AND o.status != 'cancelled'
+        AND o.status != ${OrderStatus.CANCELED}
       GROUP BY tod.topping_id, p.name;
     `;
 
     // Gộp 2 kết quả
     const revenueMap = new Map<number, { name: string; revenue: number }>();
 
-    // @ts-ignore
-    for (const item of productRevenue) {
+    // Type assertion for raw query results
+    type RevenueResult = { product_id: number; product_name: string; revenue: string | number };
+    
+    for (const item of productRevenue as RevenueResult[]) {
       revenueMap.set(item.product_id, {
         name: item.product_name,
-        revenue: parseFloat(item.revenue),
+        revenue: parseFloat(String(item.revenue)),
       });
     }
 
-    // @ts-ignore
-    for (const item of toppingRevenue) {
+    for (const item of toppingRevenue as RevenueResult[]) {
       const existing = revenueMap.get(item.product_id);
-      const revenue = parseFloat(item.revenue);
+      const revenue = parseFloat(String(item.revenue));
       if (existing) {
         existing.revenue += revenue;
       } else {
@@ -176,13 +268,18 @@ export class ReportsService {
       }
     }
 
-    return Array.from(revenueMap.entries())
+    const result = Array.from(revenueMap.entries())
       .map(([id, data]) => ({
         product_id: id,
         product_name: data.name,
         total_revenue: data.revenue,
       }))
       .sort((a, b) => b.total_revenue - a.total_revenue);
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
   /**
@@ -216,11 +313,26 @@ export class ReportsService {
   async getCustomerSegments(query: ReportQueryDto) {
     const { startDate, endDate } = query;
 
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('customer-segments', {
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 
     const orderStatusFilter = {
-      in: ['paid', 'completed'], // Giả định đơn hàng đã hoàn thành/thanh toán
+      in: [OrderStatus.PAID, OrderStatus.COMPLETED], // Giả định đơn hàng đã hoàn thành/thanh toán
     };
 
     // 1. Lấy danh sách SỐ ĐIỆN THOẠI DUY NHẤT đã mua hàng trong kỳ báo cáo
@@ -246,30 +358,31 @@ export class ReportsService {
     let newCustomersCount = 0;
     let returningCustomersCount = 0;
 
-    // 2. Lấy thông tin tổng hợp (số lượng đơn hàng và ngày đầu tiên) cho mỗi khách hàng
-    const classificationPromises = customersInPeriodPhones.map(phone =>
-      this.prisma.order.aggregate({
-        where: {
-          customerPhone: phone,
-          status: orderStatusFilter,
-        },
-        _count: {
-          id: true, // Tổng số đơn hàng trong lịch sử
-        },
-        _min: {
-          created_at: true, // Ngày tạo của đơn hàng đầu tiên (trong lịch sử)
-        }
-      })
-    );
-
-    const customerAggregations = await Promise.all(classificationPromises);
+    // 2. ✅ FIX N+1: Lấy thông tin tổng hợp cho TẤT CẢ khách hàng trong một query
+    // Sử dụng groupBy để tránh N+1 query problem
+    // Note: We get ALL orders for these phones (not just in period) to determine new vs returning
+    const customerAggregations = await this.prisma.order.groupBy({
+      by: ['customerPhone'],
+      where: {
+        customerPhone: { in: customersInPeriodPhones },
+        status: orderStatusFilter,
+        // Don't filter by date here - we need ALL historical orders to determine customer type
+      },
+      _count: {
+        id: true, // Tổng số đơn hàng trong lịch sử (all time)
+      },
+      _min: {
+        created_at: true, // Ngày tạo của đơn hàng đầu tiên (trong lịch sử - all time)
+      },
+    });
 
     // 3. Phân loại độc lập
     for (const aggregation of customerAggregations) {
       const firstOrderDate = aggregation._min.created_at;
       const totalOrders = aggregation._count.id;
+      const phone = aggregation.customerPhone;
 
-      if (!firstOrderDate || totalOrders === 0) {
+      if (!firstOrderDate || totalOrders === 0 || !phone) {
         continue;
       }
 
@@ -293,7 +406,7 @@ export class ReportsService {
         ? (returningCustomersCount / totalCustomers) * 100
         : 0;
 
-    return {
+    const result = {
       totalCustomers,
       newCustomers: newCustomersCount,
       returningCustomers: returningCustomersCount,
@@ -302,6 +415,11 @@ export class ReportsService {
       endDate: end.toISOString(),
       // Lưu ý: newCustomers + returningCustomers >= totalCustomers
     };
+
+    // Store in cache (1 hour TTL - customer segments change less frequently)
+    await this.redisService.set(cacheKey, result, 3600);
+
+    return result;
   }
 
   /**
@@ -311,7 +429,19 @@ export class ReportsService {
    * Do đó, chúng ta chỉ có thể báo cáo số điểm hiện tại của khách hàng.
    */
   async getCustomerPoints() {
-    return this.prisma.customerPoint.findMany({
+    // Generate cache key (no params for this endpoint)
+    const cacheKey = this.generateCacheKey('customer-points', {});
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
+    const result = await this.prisma.customerPoint.findMany({
       select: {
         customerPhone: true,
         points: true,
@@ -331,65 +461,99 @@ export class ReportsService {
         points: 'desc',
       },
     });
+
+    // Store in cache (15 minutes TTL - points change frequently)
+    await this.redisService.set(cacheKey, result, 900);
+
+    return result;
   }
 
   /**
-   * FC-10-02: Báo cáo lợi nhuận (Stub)
+   * FC-10-02: Báo cáo lợi nhuận
    *
-   * Việc tính toán lợi nhuận (Doanh thu - COGS) là CỰC KỲ phức tạp.
-   * Bạn cần:
-   * 1. Lấy tất cả OrderDetail đã bán.
-   * 2. Với mỗi OrderDetail, tìm Recipe tương ứng.
-   * 3. Với mỗi Recipe, tìm MaterialRecipe (nguyên vật liệu tiêu thụ).
-   * 4. Với mỗi Material, tìm chi phí vốn (pricePerUnit từ MaterialImportation).
-   * 5. Chi phí vốn có thể tính theo FIFO, LIFO hoặc Trung bình.
+   * ⚠️ WARNING: Current COGS calculation is INCORRECT.
+   * It only sums material importation costs, not actual Cost of Goods Sold.
    *
-   * Đây là một tác vụ nặng, thường được chạy như một batch job (tác vụ nền)
-   * chứ không phải là một API call trực tiếp.
+   * To properly calculate COGS, you need to:
+   * 1. Get all OrderDetails sold in the period
+   * 2. For each OrderDetail, find the Recipe
+   * 3. For each Recipe, find MaterialRecipe (materials consumed)
+   * 4. For each Material, find cost basis (pricePerUnit from MaterialImportation)
+   * 5. Cost basis can be calculated using FIFO, LIFO, or Average
    *
-   * Do đó, tôi sẽ không triển khai nó ở đây, nhưng bạn đã có Doanh thu (từ
-   * getRevenueByProduct), bạn chỉ cần tính COGS (Chi phí vốn) để hoàn thành.
+   * This is a heavy task, typically run as a batch job, not a direct API call.
+   *
+   * Current implementation is a placeholder that calculates:
+   * - Revenue: Sum of completed orders
+   * - COGS: Sum of material importation costs (INCORRECT - should be based on actual materials used)
+   * - Profit: Revenue - COGS
    */
   async getProfitReport(query: ReportQueryDto) {
-    // 1. Lấy doanh thu (đã có ở trên) và chuyển sang kiểu rõ ràng
-    const revenueRows = (await this.getRevenueByTime(query)) as Array<{
-      period?: Date;
-      total_revenue?: number | string;
-    }>;
+    try {
+      // Generate cache key
+      const cacheKey = this.generateCacheKey('profit-report', {
+        startDate: query.startDate,
+        endDate: query.endDate,
+      });
 
-    // Tổng doanh thu trong khoảng
-    const totalRevenue = revenueRows.reduce(
-      (sum, row) => sum + Number(row.total_revenue ?? 0),
-      0,
-    );
+      // Try to get from cache
+      const cachedData = await this.redisService.get<any>(cacheKey);
+      if (cachedData) {
+        this.logger.log(`Cache HIT for: ${cacheKey}`);
+        return cachedData;
+      }
 
-    // 2. Tính COGS (Rất phức tạp) - placeholder: cố gắng lấy một giá trị số nếu tồn tại
-    const cogsRecord = await this.prisma.materialImportation.findMany({
-      where: {
-        importDate: {
-          gte: query.startDate,
-          lt: query.endDate,
+      this.logger.log(`Cache MISS for: ${cacheKey}`);
+
+      // 1. Lấy doanh thu (đã có ở trên) và chuyển sang kiểu rõ ràng
+      const revenueRows = (await this.getRevenueByTime(query)) as Array<{
+        period?: Date;
+        total_revenue?: number | string;
+      }>;
+
+      // Tổng doanh thu trong khoảng
+      const totalRevenue = revenueRows.reduce(
+        (sum, row) => sum + Number(row.total_revenue ?? 0),
+        0,
+      );
+
+      // 2. ⚠️ PLACEHOLDER: Tính COGS (INCORRECT - chỉ tính chi phí nhập kho, không phải COGS thực tế)
+      // TODO: Implement proper COGS calculation based on recipes and materials actually used
+      const cogsRecord = await this.prisma.materialImportation.findMany({
+        where: {
+          importDate: {
+            gte: query.startDate,
+            lt: query.endDate,
+          },
         },
-      },
-      select: {
-        // chọn các trường khả dĩ; dùng cast tiếp nếu schema khác
-        pricePerUnit: true,
-        importQuantity: true
-      },
-    });
+        select: {
+          pricePerUnit: true,
+          importQuantity: true
+        },
+      });
 
-    const cogs = cogsRecord.reduce((sum, i) => sum + ((i.pricePerUnit ?? 0) * i.importQuantity), 0);
+      const cogs = cogsRecord.reduce((sum, i) => sum + ((i.pricePerUnit ?? 0) * i.importQuantity), 0);
 
-    // 3. Lợi nhuận = Doanh thu - COGS
-    const profit = totalRevenue - cogs;
+      // 3. Lợi nhuận = Doanh thu - COGS
+      const profit = totalRevenue - cogs;
 
-    return {
-      start_date: query.startDate,
-      end_date: query.endDate,
-      total_revenue: totalRevenue,
-      cogs,
-      profit,
-    };
+      const result = {
+        start_date: query.startDate,
+        end_date: query.endDate,
+        total_revenue: totalRevenue,
+        cogs,
+        profit,
+        warning: 'COGS calculation is a placeholder. Actual COGS should be based on materials consumed, not imported.',
+      };
+
+      // Store in cache (30 minutes TTL)
+      await this.redisService.set(cacheKey, result, 1800);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Error calculating profit report', error);
+      throw error;
+    }
   }
 
   private getTimeRanges() {
@@ -402,12 +566,26 @@ export class ReportsService {
   }
 
   async getDashboardStats() {
+    // Generate cache key (dashboard stats are time-sensitive, cache for 5 minutes)
+    const cacheKey = this.generateCacheKey('dashboard-stats', {
+      timestamp: Math.floor(Date.now() / 300000), // Round to 5-minute intervals
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     const {
       now, startOfToday, endOfToday,
       startOfYesterday, endOfYesterday,
     } = this.getTimeRanges(); // Assuming getTimeRanges() is available
 
-    const paidStatuses = ['paid', 'completed'];
+    const paidStatuses = [OrderStatus.PAID, OrderStatus.COMPLETED];
 
     // The destructuring array must match the $transaction array (10 items)
     const [
@@ -455,7 +633,7 @@ export class ReportsService {
       // Note: Removed redundant queries (e.g., completed, aov)
       this.prisma.order.count({
         where: {
-          status: 'cancelled',
+          status: OrderStatus.CANCELED,
           created_at: { gte: startOfToday, lt: endOfToday },
         },
       }),
@@ -517,7 +695,7 @@ export class ReportsService {
     ]);
 
     // Format the return object
-    return {
+    const result = {
       revenueToday: revenueTodayAgg._sum.final_price || 0,
       revenueYesterday: revenueYesterdayAgg._sum.final_price || 0,
       cancelledOrdersToday: cancelledOrdersToday,
@@ -533,10 +711,27 @@ export class ReportsService {
       // Today's top payment method
       topPaymentMethodToday: topPaymentMethodToday?.name || 'No Transactions', // 'N/A' or 'No Transactions'
     };
+
+    // Store in cache (5 minutes TTL - dashboard stats update frequently)
+    await this.redisService.set(cacheKey, result, 300);
+
+    return result;
   }
 
 
   async getRevenueLastNDays(days: number) {
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-last-n-days', { days });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     // 1. Tính toán ngày bắt đầu và ngày kết thúc
     const endDate = new Date();
     const startDate = new Date();
@@ -558,7 +753,7 @@ export class ReportsService {
     WHERE
       "created_at" >= ${startDate} AND
       "created_at" <= ${endDate} AND
-      "status" IN ('completed')
+      "status" = ${OrderStatus.COMPLETED}
     GROUP BY date
     ORDER BY date ASC;
   `;
@@ -597,11 +792,26 @@ export class ReportsService {
     }
     // --- 🔥 KẾT THÚC THAY ĐỔI ---
 
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, chartData, 1800);
+
     return chartData;
   }
 
   async getRevenueByMonth(query: RevenueByMonthDto) {
     const { year, month } = query;
+
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-month', { year, month });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
 
     // 1. Tính toán ngày bắt đầu và kết thúc của tháng
     // Lưu ý: tháng trong JS là 0-indexed (0=Tháng 1, 11=Tháng 12)
@@ -628,7 +838,7 @@ export class ReportsService {
       WHERE
         "created_at" >= ${startDate} AND
         "created_at" <= ${endDate} AND
-        "status" IN ('completed')
+        "status" = ${OrderStatus.COMPLETED}
       GROUP BY date
       ORDER BY date ASC;
     `;
@@ -665,11 +875,26 @@ export class ReportsService {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
+    // Store in cache (1 hour TTL - monthly data changes less frequently)
+    await this.redisService.set(cacheKey, chartData, 3600);
+
     return chartData;
   }
 
   async getRevenueByYear(query: RevenueByYearDto) {
     const { year } = query;
+
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-year', { year });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
 
     // 1. Tính toán ngày bắt đầu và kết thúc của năm
     const startDate = new Date(year, 0, 1); // Tháng 0 (Tháng 1), ngày 1
@@ -694,7 +919,7 @@ export class ReportsService {
       WHERE
         "created_at" >= ${startDate} AND
         "created_at" <= ${endDate} AND
-        "status" IN ('completed')
+        "status" = ${OrderStatus.COMPLETED}
       GROUP BY month
       ORDER BY month ASC;
     `;
@@ -729,12 +954,32 @@ export class ReportsService {
       });
     }
 
+    // Store in cache (2 hours TTL - yearly data changes very infrequently)
+    await this.redisService.set(cacheKey, chartData, 7200);
+
     return chartData;
   }
 
 
   async getTopNProductRevenue(query: TopNRevenueDto) {
     const { limit, startDate, endDate } = query;
+    
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('top-n-product-revenue', {
+      limit: limit || 10,
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -747,7 +992,7 @@ export class ReportsService {
             JOIN "orders" o ON od.order_id = o.id
             JOIN "products" p ON od.product_id = p.id
             WHERE 
-                o.status IN ('completed')
+                o.status = ${OrderStatus.COMPLETED}
                 AND o.created_at >= ${start}
                 AND o.created_at <= ${end}
             GROUP BY 
@@ -763,14 +1008,14 @@ export class ReportsService {
         final_price: true,
       },
       where: {
-        status: { in: ['completed'] },
+        status: { in: [OrderStatus.COMPLETED] },
         created_at: { gte: start, lte: end },
       },
     });
     const totalRevenue = totalRevenueResult._sum.final_price || 0;
 
     // 3. Định dạng kết quả cuối cùng
-    return {
+    const result = {
       totalRevenue: totalRevenue,
       data: topProducts.map(item => ({
         name: item.name,
@@ -778,6 +1023,11 @@ export class ReportsService {
         percentage: totalRevenue > 0 ? (item.revenue / totalRevenue) * 100 : 0
       }))
     };
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
   // Hàm cho API 'revenue-by-category'
@@ -785,6 +1035,21 @@ export class ReportsService {
 
   async getRevenueByCategory(query: ReportQueryDto) {
     const { startDate, endDate } = query;
+
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('revenue-by-category', {
+      startDate,
+      endDate,
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -797,7 +1062,7 @@ export class ReportsService {
           lte: end,
         },
         status: {
-          in: ['completed'], // chỉ lấy đơn đã thanh toán hoặc hoàn tất
+          in: [OrderStatus.COMPLETED], // chỉ lấy đơn đã thanh toán hoặc hoàn tất
         },
       },
       include: {
@@ -876,10 +1141,15 @@ export class ReportsService {
       });
     }
 
-    return {
+    const result = {
       totalRevenue,
       data,
     };
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
 
@@ -893,7 +1163,23 @@ export class ReportsService {
   async getTopNBestSellingProducts(query: TopNRevenueDto) {
     const { limit = 10, startDate, endDate } = query;
 
-    const where: Prisma.Sql[] = [Prisma.sql`o.status = 'completed'`];
+    // Generate cache key
+    const cacheKey = this.generateCacheKey('top-n-best-selling-products', {
+      limit,
+      startDate: startDate || 'all',
+      endDate: endDate || 'all',
+    });
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
+    const where: Prisma.Sql[] = [Prisma.sql`o.status = ${OrderStatus.COMPLETED}`];
 
     if (startDate) {
       where.push(Prisma.sql`o.created_at >= ${new Date(startDate)}`);
@@ -916,7 +1202,12 @@ export class ReportsService {
       LIMIT ${limit}
     `;
 
-    return this.prisma.$queryRaw(sql);
+    const result = await this.prisma.$queryRaw(sql);
+
+    // Store in cache (30 minutes TTL)
+    await this.redisService.set(cacheKey, result, 1800);
+
+    return result;
   }
 
   /**
@@ -924,6 +1215,18 @@ export class ReportsService {
    * Data: COUNT(products) grouped by category.name.
    */
   async getProductDistributionByCategory() {
+    // Generate cache key (no params for this endpoint)
+    const cacheKey = this.generateCacheKey('product-distribution-by-category', {});
+
+    // Try to get from cache
+    const cachedData = await this.redisService.get<any>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for: ${cacheKey}`);
+
     // 1️⃣ Lấy toàn bộ danh mục cha và danh mục con (kèm sản phẩm)
     const categories = await this.prisma.category.findMany({
       include: {
@@ -958,11 +1261,14 @@ export class ReportsService {
       where: { category_id: null },
     });
 
-    // 5️⃣ Thêm “Uncategorized” vào kết quả
+    // 5️⃣ Thêm "Uncategorized" vào kết quả
     result.push({
       name: "Uncategorized",
       count: uncategorizedCount,
     });
+
+    // Store in cache (1 hour TTL - product distribution changes infrequently)
+    await this.redisService.set(cacheKey, result, 3600);
 
     return result;
   }

@@ -100,7 +100,7 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
 
   // Clear all items
   const clearCart = () => {
-    if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
+    if (confirm('Are you sure you want to clear all items from your cart?')) {
       setCart([]);
       localStorage.removeItem('kiosk_cart');
     }
@@ -180,8 +180,8 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                 <ShoppingCart className="text-orange-600" size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Giỏ hàng</h2>
-                <p className="text-sm text-gray-500">{totalItems} sản phẩm</p>
+                <h2 className="text-2xl font-bold text-gray-900">Cart</h2>
+                <p className="text-sm text-gray-500">{totalItems} items</p>
               </div>
             </div>
             <button
@@ -200,8 +200,8 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                   <ShoppingCart className="text-gray-400" size={48} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h3>
-                  <p className="text-gray-500">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Empty Cart</h3>
+                  <p className="text-gray-500">Please add items to your cart</p>
                 </div>
               </div>
             ) : (
@@ -267,7 +267,7 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                           {/* Options */}
                           {Object.keys(item.selectedOptions).length > 0 && (
                             <div className="mb-2">
-                              <p className="text-xs text-gray-600 mb-1">Tùy chọn:</p>
+                              <p className="text-xs text-gray-600 mb-1">Options:</p>
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(item.selectedOptions).map(([groupId, valueId]) => {
                                   const group = item.optionGroups.find(g => g.id === Number(groupId));
@@ -288,7 +288,7 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                           {/* Note */}
                           {item.note && (
                             <div className="mb-2">
-                              <p className="text-xs text-gray-500 italic">Ghi chú: {item.note}</p>
+                              <p className="text-xs text-gray-500 italic">Note: {item.note}</p>
                             </div>
                           )}
 
@@ -321,14 +321,14 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                                 className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg font-medium hover:bg-orange-100 transition-colors text-sm"
                               >
                                 <Edit2 size={14} />
-                                Sửa
+                                Edit
                               </button>
                             </div>
 
                             {/* Total Price */}
                             <div className="text-right">
                               <p className="text-lg font-bold text-orange-600">
-                                {item.totalPrice.toLocaleString('vi-VN')}₫
+                                {item.totalPrice.toLocaleString('en-US')}₫
                               </p>
                             </div>
                           </div>
@@ -346,7 +346,7 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
                       className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors text-sm"
                     >
                       <Trash2 size={16} />
-                      Xóa tất cả
+                      Clear All
                     </button>
                   </div>
                 )}
@@ -359,13 +359,13 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
             <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-gray-600 text-sm">Tổng số lượng</p>
-                  <p className="text-xl font-bold text-gray-900">{totalItems} sản phẩm</p>
+                  <p className="text-gray-600 text-sm">Total Items</p>
+                  <p className="text-xl font-bold text-gray-900">{totalItems} items</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-gray-600 text-sm">Tổng thanh toán</p>
+                  <p className="text-gray-600 text-sm">Total Payment</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {totalAmount.toLocaleString('vi-VN')}₫
+                    {totalAmount.toLocaleString('en-US')}₫
                   </p>
                 </div>
               </div>
@@ -373,7 +373,7 @@ export default function CartDialog({ isOpen, onClose, onCheckout }: CartDialogPr
           )}
           <button onClick = {goToPayment} className="w-full h-14 bg-orange-600 text-white rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200">
             <ShoppingCart size={20} />
-            Thanh toán
+            Checkout
           </button>
         </motion.div>
       </div>

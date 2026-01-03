@@ -144,7 +144,7 @@ export default function KioskMenuPage() {
           className="flex items-center gap-2 text-gray-600 font-medium active:scale-95 transition-transform"
         >
           <div className="p-2 bg-gray-100 rounded-full"><ChevronLeft size={24} /></div>
-          <span>Trang chủ</span>
+          <span>Home</span>
         </button>
         <div className="font-bold text-xl text-orange-600">COFFEE TEK <span className="text-gray-400 font-normal">| Kiosk</span></div>
       </header>
@@ -175,7 +175,7 @@ export default function KioskMenuPage() {
           {loading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-orange-600 gap-3">
               <Loader2 className="animate-spin" size={48} />
-              <p className="font-medium">Đang tải thực đơn...</p>
+              <p className="font-medium">Loading menu...</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-6 pb-32">
@@ -217,7 +217,7 @@ export default function KioskMenuPage() {
               {/* Hiển thị khi không có món */}
               {!loading && products.length === 0 && (
                  <div className="col-span-3 text-center py-20 text-gray-400">
-                    <p>Chưa có món nào trong danh mục này.</p>
+                    <p>No items in this category.</p>
                  </div>
               )}
             </div>
@@ -240,7 +240,7 @@ export default function KioskMenuPage() {
                   </span>
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-gray-400 text-sm font-medium">Tạm tính</span>
+                  <span className="text-gray-400 text-sm font-medium">Subtotal</span>
                   <span className="text-2xl font-bold tracking-tight">{totalAmount.toLocaleString()}đ</span>
                 </div>
               </button>
@@ -250,7 +250,7 @@ export default function KioskMenuPage() {
                   onClick={() => setIsCartDialogOpen(true)}
                   className="bg-gray-700 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-gray-600 active:scale-95 transition-all"
                 >
-                  Xem giỏ hàng
+                  View Cart
                 </button>
                  
               </div>

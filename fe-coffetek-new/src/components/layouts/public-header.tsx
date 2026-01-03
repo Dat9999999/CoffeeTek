@@ -69,7 +69,7 @@ const PublicHeader = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {['Home', 'Menu', 'Promotions', 'About', 'Contact'].map((item) => (
+            {['Home', 'Promotions', 'About', 'Contact'].map((item) => (
               <Link
                 key={item}
                 href={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
@@ -175,7 +175,7 @@ const PublicHeader = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {['Home', 'Menu', 'About Us', 'Shop', 'Contact'].map((item, i) => (
+              {['Home', 'About Us', 'Shop', 'Contact'].map((item, i) => (
                 <Link
                   key={i}
                   href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(/\s/g, '')}`}

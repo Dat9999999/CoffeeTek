@@ -54,9 +54,9 @@ export default function LoginPage() {
 
   // HÀM QUAN TRỌNG: Kiểm tra và Đăng nhập
   const handleLogin = async () => {
-    // Validate cơ bản
+    // Basic validation
     if (phone.length < 10 || !phone.startsWith('0')) {
-      setError('Số điện thoại không hợp lệ');
+      setError('Invalid phone number');
       return;
     }
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
         console.log("Could not find user:", err);
       }
 
-      // 2. Lưu SĐT vào LocalStorage để trang Payment dùng
+      // 2. Save phone to LocalStorage for Payment page
       localStorage.setItem('kiosk_phone', phone);
       
       // 3. Fetch customer info and vouchers
@@ -90,15 +90,15 @@ export default function LoginPage() {
 
     } catch (err) {
       console.error(err);
-      setError('Có lỗi xảy ra, vui lòng thử lại');
+      setError('An error occurred, please try again');
     } finally {
       setLoading(false);
     }
   };
 
-  // Khách vãng lai (Guest) -> Không cần số điện thoại
+  // Guest -> No phone number needed
   const handleSkip = () => {
-    // Xóa phone number để backend xử lý như khách vãng lai (customerPhone là optional)
+    // Remove phone number so backend treats as guest (customerPhone is optional)
     localStorage.removeItem('kiosk_phone');
     router.push('/kiosk/payment');
   };
@@ -221,7 +221,7 @@ export default function LoginPage() {
       // Capture image
       const imageData = captureImage();
       if (!imageData) {
-        throw new Error('Không thể chụp ảnh từ camera.');
+        throw new Error('Unable to capture image from camera.');
       }
 
       // Stop camera
@@ -241,7 +241,7 @@ export default function LoginPage() {
       const { phone: recognizedPhone, userId } = response.data;
 
       if (!recognizedPhone) {
-        throw new Error('Không nhận diện được khuôn mặt. Vui lòng thử lại.');
+        throw new Error('Face not recognized. Please try again.');
       }
 
       // Save phone to localStorage
@@ -266,7 +266,7 @@ export default function LoginPage() {
         videoRef.current.srcObject = null;
       }
 
-      let errorMessage = 'Không thể nhận diện khuôn mặt. Vui lòng thử lại hoặc dùng số điện thoại.';
+      let errorMessage = 'Unable to recognize face. Please try again or use phone number.';
       
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -314,8 +314,8 @@ export default function LoginPage() {
         <div className="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <User size={48} />
         </div>
-        <h1 className="text-4xl font-bold text-gray-900">Đăng nhập</h1>
-        <p className="text-gray-500 text-lg">Chọn phương thức đăng nhập của bạn</p>
+        <h1 className="text-4xl font-bold text-gray-900">Login</h1>
+        <p className="text-gray-500 text-lg">Choose your login method</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -328,8 +328,8 @@ export default function LoginPage() {
             <Phone size={40} />
           </div>
           <div className="text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Số điện thoại</h3>
-            <p className="text-gray-500">Nhập số điện thoại để đăng nhập</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Phone Number</h3>
+            <p className="text-gray-500">Enter your phone number to login</p>
           </div>
         </button>
 
@@ -346,7 +346,7 @@ export default function LoginPage() {
           </div>
           <div className="text-center">
             <h3 className="text-2xl font-bold text-gray-800 mb-2">Face ID</h3>
-            <p className="text-gray-500">Nhận diện khuôn mặt để đăng nhập</p>
+            <p className="text-gray-500">Face recognition to login</p>
           </div>
         </button>
       </div>
@@ -356,7 +356,7 @@ export default function LoginPage() {
         onClick={handleSkip}
         className="w-full py-4 text-gray-500 font-medium hover:text-gray-700 transition-colors"
       >
-        Bỏ qua - Tiếp tục như khách
+        Skip - Continue as guest
       </button>
     </div>
   );
@@ -368,8 +368,8 @@ export default function LoginPage() {
         <div className="w-20 h-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <Phone size={40} />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Nhập số điện thoại</h1>
-        <p className="text-gray-500">Nhập số điện thoại để tích điểm & nhận ưu đãi</p>
+        <h1 className="text-3xl font-bold text-gray-900">Enter Phone Number</h1>
+        <p className="text-gray-500">Enter phone number to earn points & receive offers</p>
       </div>
 
       {/* Màn hình hiển thị số */}
@@ -395,7 +395,7 @@ export default function LoginPage() {
           onClick={handleBackToSelect}
           className="h-20 rounded-xl text-gray-400 font-medium text-lg active:scale-95 transition-all"
         >
-          Quay lại
+          Back
         </button>
         <button
           onClick={() => handleType('0')}
@@ -417,8 +417,8 @@ export default function LoginPage() {
         disabled={loading || phone.length < 10}
         className="w-full h-16 bg-orange-600 text-white rounded-2xl font-bold text-xl hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-200"
       >
-        {loading ? 'Đang kiểm tra...' : (
-           <>Tiếp tục <ArrowRight /></>
+        {loading ? 'Checking...' : (
+           <>Continue <ArrowRight /></>
         )}
       </button>
     </div>
@@ -445,16 +445,16 @@ export default function LoginPage() {
           )}
         </div>
         <h1 className="text-4xl font-bold text-gray-900">
-          {faceIdStatus === 'SCANNING' ? 'Đang nhận diện...' :
-           faceIdStatus === 'SUCCESS' ? 'Nhận diện thành công!' :
-           faceIdStatus === 'ERROR' ? 'Nhận diện thất bại' :
+          {faceIdStatus === 'SCANNING' ? 'Recognizing...' :
+           faceIdStatus === 'SUCCESS' ? 'Recognition successful!' :
+           faceIdStatus === 'ERROR' ? 'Recognition failed' :
            'Face ID'}
         </h1>
         <p className="text-gray-500 text-lg">
-          {faceIdStatus === 'SCANNING' ? 'Vui lòng nhìn thẳng vào camera' :
-           faceIdStatus === 'SUCCESS' ? 'Đang chuyển hướng...' :
-           faceIdStatus === 'ERROR' ? 'Không thể nhận diện. Vui lòng thử lại' :
-           'Nhấn để bắt đầu nhận diện khuôn mặt'}
+          {faceIdStatus === 'SCANNING' ? 'Please look straight at the camera' :
+           faceIdStatus === 'SUCCESS' ? 'Redirecting...' :
+           faceIdStatus === 'ERROR' ? 'Unable to recognize. Please try again' :
+           'Tap to start face recognition'}
         </p>
       </div>
 
@@ -500,7 +500,7 @@ export default function LoginPage() {
           className="flex-1 h-16 bg-gray-100 text-gray-700 rounded-2xl font-bold text-lg hover:bg-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           <ChevronLeft size={24} />
-          Quay lại
+          Back
         </button>
         
         {faceIdStatus === 'ERROR' && (
@@ -509,7 +509,7 @@ export default function LoginPage() {
             className="flex-1 h-16 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-500 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Camera size={24} />
-            Thử lại
+            Try Again
           </button>
         )}
       </div>
@@ -529,14 +529,14 @@ export default function LoginPage() {
         <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle size={48} />
         </div>
-        <h1 className="text-4xl font-bold text-gray-900">Đăng nhập thành công!</h1>
-        <p className="text-gray-500 text-lg">Thông tin khách hàng</p>
+        <h1 className="text-4xl font-bold text-gray-900">Login successful!</h1>
+        <p className="text-gray-500 text-lg">Customer information</p>
       </div>
 
       {loadingCustomerInfo ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-orange-600" size={32} />
-          <span className="ml-3 text-gray-600">Đang tải thông tin...</span>
+          <span className="ml-3 text-gray-600">Loading information...</span>
         </div>
       ) : (
         <div className="space-y-6">
@@ -544,16 +544,16 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl shadow-lg border-2 border-orange-100 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <User size={24} className="text-orange-600" />
-              Thông tin khách hàng
+              Customer Information
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Số điện thoại:</span>
+                <span className="text-gray-600">Phone:</span>
                 <span className="font-semibold text-gray-900">{customerInfo?.phone}</span>
               </div>
               {customerInfo?.name && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Họ tên:</span>
+                  <span className="text-gray-600">Name:</span>
                   <span className="font-semibold text-gray-900">{customerInfo.name}</span>
                 </div>
               )}
@@ -567,9 +567,9 @@ export default function LoginPage() {
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                   <span className="text-gray-600 flex items-center gap-2">
                     <Star className="text-amber-500" size={20} />
-                    Điểm tích lũy:
+                    Points:
                   </span>
-                  <span className="font-bold text-amber-600 text-lg">{customerInfo.points.toLocaleString('vi-VN')} điểm</span>
+                  <span className="font-bold text-amber-600 text-lg">{customerInfo.points.toLocaleString('en-US')} points</span>
                 </div>
               )}
             </div>
@@ -580,7 +580,7 @@ export default function LoginPage() {
             <div className="bg-white rounded-2xl shadow-lg border-2 border-orange-100 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Gift size={24} className="text-orange-600" />
-                Voucher khả dụng ({vouchers.length})
+                Available Vouchers ({vouchers.length})
               </h3>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {vouchers.map((voucher) => (
@@ -591,17 +591,17 @@ export default function LoginPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-bold text-gray-900">{voucher.voucher_name}</p>
-                        <p className="text-sm text-gray-600">Mã: {voucher.code}</p>
+                        <p className="text-sm text-gray-600">Code: {voucher.code}</p>
                       </div>
                       <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
                         -{voucher.discount_percentage}%
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Áp dụng cho đơn hàng từ {voucher.minAmountOrder.toLocaleString('vi-VN')}₫
+                      Apply for orders from {voucher.minAmountOrder.toLocaleString('en-US')}₫
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      HSD: {new Date(voucher.valid_to).toLocaleDateString('vi-VN')}
+                      Expires: {new Date(voucher.valid_to).toLocaleDateString('en-US')}
                     </p>
                   </div>
                 ))}
@@ -612,7 +612,7 @@ export default function LoginPage() {
           {vouchers.length === 0 && (
             <div className="bg-gray-50 rounded-2xl p-6 text-center">
               <Gift className="text-gray-400 mx-auto mb-2" size={32} />
-              <p className="text-gray-500">Bạn chưa có voucher nào</p>
+              <p className="text-gray-500">You don't have any vouchers</p>
             </div>
           )}
 
@@ -621,7 +621,7 @@ export default function LoginPage() {
             onClick={handleContinueToPayment}
             className="w-full h-16 bg-orange-600 text-white rounded-2xl font-bold text-xl hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
           >
-            Tiếp tục mua hàng <ArrowRight size={24} />
+            Continue Shopping <ArrowRight size={24} />
           </button>
         </div>
       )}

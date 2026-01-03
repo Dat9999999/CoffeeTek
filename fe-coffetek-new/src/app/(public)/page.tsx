@@ -3,13 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
-
-import Banner from "@/components/sections/Banner";
-import Explore from "@/components/sections/Explore";
-import OrderCoffee from "@/components/sections/OrderCoffee";
-import SellingCoffee from "@/components/sections/SellingCoffee";
-import InstantCoffee from "@/components/sections/InstantCoffee";
-import Testimonial from "@/components/sections/Testimonial";
+import Menu from "@/components/sections/Menu";
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -30,13 +24,8 @@ export default function Home() {
   }, [loginSuccess]);
 
   return (
-    <div className="relative">
-      <Banner />
-      <Explore />
-      <OrderCoffee />
-      <SellingCoffee />
-      <InstantCoffee />
-      {/* <Testimonial /> */}
+    <div className="relative min-h-screen">
+      <Menu />
       
       {/* Floating Kiosk Button */}
       <button

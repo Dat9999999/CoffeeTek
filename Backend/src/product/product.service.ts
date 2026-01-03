@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -10,7 +11,8 @@ import { PosProductDetailResponse, PosProductSizeResponse, ProductDetailResponse
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService,
+              private redisService: RedisService) { }
 
   async toggleActiveStatus(id: number, isActive: boolean) {
     return await this.prisma.product.update({
@@ -18,7 +20,32 @@ export class ProductsService {
       data: { isActive },
     });
   }
+  // helper generate cache key for product list
+  private generateCacheKey(query: GetAllProductsDto, prefix: string = 'products'): string {
+    const {
+      page,
+      size,
+      search,
+      orderBy,
+      orderDirection,
+      categoryId,
+      isTopping,
+    } = query;
 
+    // Create a unique key based on all query parameters
+    const keyParts = [
+      prefix,
+      `page:${page}`,
+      `size:${size}`,
+      search ? `search:${search.toLowerCase()}` : 'search:null',
+      `orderBy:${orderBy}`,
+      `orderDir:${orderDirection}`,
+      categoryId ? `cat:${categoryId}` : 'cat:null',
+      isTopping !== undefined ? `topping:${isTopping}` : 'topping:null',
+    ];
+
+    return keyParts.join(':');
+  }
   async create(dto: CreateProductDto) {
     const {
       name,

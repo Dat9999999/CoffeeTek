@@ -274,6 +274,14 @@ export class ProductsService {
     query: GetAllProductsDto,
     // ✅ 1. Thay đổi kiểu trả về sang Response Type mới
   ): Promise<ResponseGetAllDto<PosProductDetailResponse>> {
+    const cacheKey = this.generateCacheKey(query, 'products:pos');
+
+    const cachedData = await this.redisService.get<ResponseGetAllDto<PosProductDetailResponse>>(cacheKey);
+    if (cachedData) {
+      Logger.log('Cache HIT for:', cacheKey);
+      return cachedData;
+    }
+    Logger.log('Cache MISS for pos:', cacheKey);
     const {
       page,
       size,
@@ -455,7 +463,7 @@ export class ProductsService {
 
     // 🔹 Kết quả trả về
     // ✅ Step 4: Store in cache (TTL: 1 hour = 3600 seconds)
-    // await this.redisService.set(cacheKey, result, 3600);
+    await this.redisService.set(cacheKey, result, 3600);
     return result;
   }
 

@@ -13,7 +13,7 @@ import { MailModule } from 'src/common/mail/mail.module';
         name: 'PROMOTION_MAIL_SERVICE', // Define a name for the microservice
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://127.0.0.1:5672'], // IP and port of RabbitMQ server
+          urls: [process.env.RABBITMQ_URL || 'amqp://127.0.0.1:5672'], // IP and port of RabbitMQ server
           queue: 'promotion_emails_queue',
           queueOptions: {
             durable: true, // Queue will not lose data when RabbitMQ restarts

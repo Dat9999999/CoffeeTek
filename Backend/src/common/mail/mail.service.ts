@@ -11,6 +11,7 @@ export class MailService {
         this.apiKey = process.env.RESEND_API_KEY || '';
         this.resend = new Resend(this.apiKey);
         this.fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+        
     }
     async sendMail(toEmail: string, subject: string, htmlContent: string) {
         const msg = {

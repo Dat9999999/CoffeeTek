@@ -36,6 +36,7 @@ model User {
   watseLog            watseLog[]
   Notifications       Notification[]
   contractings        Contracting[]
+  FaceID              FaceID?             
 
   @@map("users")
 }
@@ -456,4 +457,17 @@ model Contracting {
   created_at  DateTime @default(now())
 
   @@map("contractings")
+}
+model FaceID {
+  id                Int      @id @default(autoincrement())
+  faceId            String   @unique // AWS Rekognition Face ID
+  collectionId      String   @default("coffetek-faces")
+  externalImageId   String   // User's phone number
+  registeredAt      DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  userId            Int      @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("face_ids")
 }

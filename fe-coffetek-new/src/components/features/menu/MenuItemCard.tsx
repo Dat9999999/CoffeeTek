@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AppImage } from "@/components/commons/AppImage";
 
@@ -21,11 +22,17 @@ export default function MenuItemCard({
   description,
 }: MenuItemCardProps) {
   return (
-    <div
+    <motion.div
       className="group bg-white p-5 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 
-                hover:-translate-y-1 border border-transparent hover:border-green-100"
+                border border-transparent hover:border-orange-200"
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
     >
-      <div className="relative aspect-square mb-3 overflow-hidden rounded-xl">
+      <motion.div 
+        className="relative aspect-square mb-3 overflow-hidden rounded-xl"
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.3 }}
+      >
         <AppImage
           src={image}
           alt={name}
@@ -38,17 +45,29 @@ export default function MenuItemCard({
           }}
         />
 
-        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-      </div>
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 rounded-xl"
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+      </motion.div>
 
       <div className="text-center">
-        <h3 className="text-lg font-semibold mb-1 text-gray-800 group-hover:text-green-700 transition-colors">
+        <motion.h3 
+          className="text-lg font-semibold mb-1 text-gray-800 group-hover:text-orange-600 transition-colors"
+          whileHover={{ scale: 1.05 }}
+        >
           {name}
-        </h3>
+        </motion.h3>
         {price && (
-          <p className="text-gray-500 font-medium mb-1">
+          <motion.p 
+            className="text-gray-500 font-medium mb-1"
+            initial={{ opacity: 0.8 }}
+            whileHover={{ opacity: 1, scale: 1.05 }}
+          >
             {price.toLocaleString()}₫
-          </p>
+          </motion.p>
         )}
         {description && (
           <p className="text-gray-500 text-sm line-clamp-2 mb-4">
@@ -57,15 +76,20 @@ export default function MenuItemCard({
         )}
 
         <Link href={`/menu/${id}`}>
-          <Button
-            className="w-full py-2 rounded-full bg-green-600 hover:bg-green-700 
-                      text-white font-medium transition-all duration-300 
-                      hover:scale-[1.02] shadow-sm hover:shadow-md"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            See details
-          </Button>
+            <Button
+              className="w-full py-2 rounded-full bg-orange-600 hover:bg-orange-700 
+                        text-white font-medium transition-all duration-300 
+                        shadow-sm hover:shadow-md"
+            >
+              See details
+            </Button>
+          </motion.div>
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }

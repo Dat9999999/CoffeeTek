@@ -11,9 +11,10 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart: (item: CartItem) => void;
+  editingItem?: CartItem | null;
 }
 
-export default function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductModalProps) {
+export default function ProductModal({ product, isOpen, onClose, onAddToCart, editingItem }: ProductModalProps) {
   // State quản lý lựa chọn của khách
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<Size | undefined>();
@@ -21,32 +22,41 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
   const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({}); // { GroupId: ValueId }
   const [note, setNote] = useState('');
 
-  // Reset state khi mở món mới
+  // Reset state khi mở món mới hoặc edit item
   useEffect(() => {
     if (product) {
-      setQuantity(1);
-      setSelectedToppings([]);
-      setSelectedOptions({});
-      setNote('');
-      
-      // Tự động chọn size đầu tiên nếu có nhiều size
-      if (product.is_multi_size && product.sizes.length > 0) {
-        // Sắp xếp size theo giá tăng dần hoặc sort_index backend
-        setSelectedSize(product.sizes[0]); 
+      // Nếu đang edit, load data từ editingItem
+      if (editingItem) {
+        setQuantity(editingItem.quantity);
+        setSelectedSize(editingItem.selectedSize);
+        setSelectedToppings(editingItem.selectedToppings);
+        setSelectedOptions(editingItem.selectedOptions);
+        setNote(editingItem.note || '');
       } else {
-        setSelectedSize(undefined);
-      }
-
-      // Tự động chọn option đầu tiên của mỗi group (VD: Mặc định 100% đường)
-      const defaultOptions: Record<number, number> = {};
-      product.optionGroups.forEach(group => {
-        if (group.values.length > 0) {
-          defaultOptions[group.id] = group.values[0].id;
+        // Nếu thêm mới, reset về mặc định
+        setQuantity(1);
+        setSelectedToppings([]);
+        setSelectedOptions({});
+        setNote('');
+        
+        // Tự động chọn size đầu tiên nếu có nhiều size
+        if (product.is_multi_size && product.sizes.length > 0) {
+          setSelectedSize(product.sizes[0]); 
+        } else {
+          setSelectedSize(undefined);
         }
-      });
-      setSelectedOptions(defaultOptions);
+
+        // Tự động chọn option đầu tiên của mỗi group
+        const defaultOptions: Record<number, number> = {};
+        product.optionGroups.forEach(group => {
+          if (group.values.length > 0) {
+            defaultOptions[group.id] = group.values[0].id;
+          }
+        });
+        setSelectedOptions(defaultOptions);
+      }
     }
-  }, [product]);
+  }, [product, editingItem]);
 
   if (!product || !isOpen) return null;
 
@@ -56,11 +66,11 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
   const unitPrice = basePrice + toppingsPrice;
   const totalPrice = unitPrice * quantity;
 
-  // Xử lý thêm vào giỏ
+  // Xử lý thêm vào giỏ hoặc cập nhật
   const handleAddToCart = () => {
     onAddToCart({
       ...product,
-      cartId: Math.random().toString(36).substr(2, 9),
+      cartId: editingItem?.cartId || Math.random().toString(36).substr(2, 9),
       quantity,
       selectedSize,
       selectedToppings,
@@ -82,7 +92,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
         {/* Backdrop mờ */}
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -128,7 +138,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
               {product.is_multi_size && product.sizes.length > 0 && (
                 <div>
                   <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    Chọn kích cỡ <span className="text-red-500">*</span>
+                    Select Size <span className="text-red-500">*</span>
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {product.sizes.map((size) => (
@@ -177,7 +187,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
               {/* 3. CHỌN TOPPING */}
               {product.toppings.length > 0 && (
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-3">Thêm Topping</h3>
+                  <h3 className="font-bold text-gray-900 mb-3">Add Topping</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {product.toppings.map((topping) => {
                       const isSelected = selectedToppings.some(t => t.id === topping.id);
@@ -210,11 +220,11 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
 
               {/* 4. GHI CHÚ */}
               <div>
-                <h3 className="font-bold text-gray-900 mb-2">Ghi chú cho quán</h3>
+                <h3 className="font-bold text-gray-900 mb-2">Note for store</h3>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ví dụ: Ít ngọt, nhiều đá..."
+                  placeholder="Example: Less sweet, more ice..."
                   className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm h-24 resize-none"
                 />
               </div>
@@ -240,13 +250,13 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }: 
                 </button>
               </div>
 
-              {/* Nút Thêm vào giỏ */}
+              {/* Nút Thêm vào giỏ hoặc Cập nhật */}
               <button 
                 onClick={handleAddToCart}
                 disabled={product.is_multi_size && !selectedSize}
                 className="flex-1 bg-orange-600 text-white h-14 rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between px-6"
               >
-                <span>Thêm vào giỏ</span>
+                <span>{editingItem ? 'Update' : 'Add to Cart'}</span>
                 <span>{totalPrice.toLocaleString()}đ</span>
               </button>
             </div>

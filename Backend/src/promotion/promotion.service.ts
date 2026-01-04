@@ -1,15 +1,23 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllDto } from '../common/dto/pagination.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { MailService } from 'src/common/mail/mail.service';
 
 @Injectable()
 export class PromotionService {
-  constructor(private readonly prisma: PrismaService) { }
+
+  constructor(private readonly prisma: PrismaService,
+    @Inject('PROMOTION_MAIL_SERVICE') private readonly client: ClientProxy,
+    private readonly mailService: MailService
+  ) {
+
+  }
 
   async create(createPromotionDto: CreatePromotionDto) {
-    return await this.prisma.$transaction(async (tx) => {
+    const newPromotion = await this.prisma.$transaction(async (tx) => {
       // check if any overlap promotion 
       const promotion = await tx.promotion.findMany({
         where: {
@@ -62,7 +70,17 @@ export class PromotionService {
         },
       });
 
-    })
+    });
+    //payload for sending email by MQ
+    const payload = {
+      id: newPromotion.id,
+      name: newPromotion.name,
+      startDate: newPromotion.start_date,
+      endDate: newPromotion.end_date,
+    };
+    // Send event to the MQ
+    this.client.emit('promotion_created_event', payload);
+    return newPromotion;
   }
 
   async findAll(paginationDto: GetAllDto) {
@@ -221,5 +239,104 @@ export class PromotionService {
       message: `Successfully deleted ${deleted.count} promotions`,
       count: deleted.count,
     };
+  }
+
+  async sendPromotionCreatedEvent(data: any, channel: any, originalMsg: any) {
+    try {
+      console.log(`🚀 Processing batch emails for Promotion: ${data.name} (ID: ${data.id})`);
+
+      // 2. Fetch customers from Database
+      const customers = await this.prisma.user.findMany({
+        // where: { roles: { has: 'customer' } },
+        select: { email: true, }
+      });
+
+      // 3. Loop and send emails
+      // Note: In real production, use a MailerService (like @nestjs-modules/mailer)
+
+      for (const customer of customers) {
+        Logger.log(`Sending email to ${customer.email}...`);
+        await this.mailService.sendMail(
+          customer.email,
+          `New Promotion: ${data.name}`,
+          `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>CoffeeTek Promotion</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding: 20px 0 30px 0;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                  <tr>
+                    <td align="center" style="padding: 40px 0 30px 0; background-color: #6F4E37;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">COFFEETEK</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px 30px 40px 30px;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="color: #333333; font-size: 24px; font-weight: bold; padding-bottom: 20px;">
+                            Chào bạn, Coffee mới đã sẵn sàng! ☕
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="color: #555555; font-size: 16px; line-height: 24px; padding-bottom: 30px;">
+                            Chúng tôi vô cùng hào hứng thông báo chương trình khuyến mãi: 
+                            <strong style="color: #6F4E37; font-size: 20px;">"${data.name}"</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff8f0; border-radius: 5px; border-left: 4px solid #6F4E37;">
+                              <tr>
+                                <td style="padding: 20px; color: #6F4E37; font-size: 15px;">
+                                  📅 <strong>Thời gian:</strong> ${new Date(data.startDate).toLocaleDateString()} - ${new Date(data.endDate).toLocaleDateString()}<br>
+                                  🎁 <strong>Ưu đãi:</strong> Đừng bỏ lỡ những phần quà đặc biệt dành riêng cho bạn.
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding: 40px 0 0 0;">
+                            <a href="${process.env.FRONTEND_URL}" style="background-color: #6F4E37; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">KHÁM PHÁ NGAY</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 30px; background-color: #f9f9f9; color: #888888; font-size: 12px; text-align: center;">
+                      &copy; 2026 CoffeeTek Team. All rights reserved.<br>
+                      Bạn nhận được email này vì đã đăng ký thành viên tại <a href="${process.env.FRONTEND_URL}" style="color: #6F4E37;">coffeetek.store</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        `,);
+      }
+
+      // 4. IMPORTANT: Acknowledge the message
+      // This tells RabbitMQ the job is done and it can delete the message.
+      channel.ack(originalMsg);
+
+      Logger.log('✅ Batch email job completed successfully');
+    } catch (error) {
+      Logger.error('❌ Error processing batch job:', error);
+
+      // 5. If it fails, we "Nack" it. 
+      // requeue: true means put it back in the queue to try again later.
+      channel.nack(originalMsg, false, true);
+    }
   }
 }

@@ -13,6 +13,7 @@ import { PromotionService } from './promotion.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { GetAllDto } from '../common/dto/pagination.dto';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 
 @Controller('promotion')
 export class PromotionController {
@@ -59,4 +60,16 @@ export class PromotionController {
   removeMany(@Body() body: { ids: number[] }) {
     return this.promotionService.removeMany(body.ids);
   }
+
+  @EventPattern('promotion_created_event') // 1. Must match exactly the string in .emit()
+  async handlePromotionCreated(@Payload() data: any, @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    return this.promotionService.sendPromotionCreatedEvent(data, channel, originalMsg);
+
+    
+
+
+  }
+
 }

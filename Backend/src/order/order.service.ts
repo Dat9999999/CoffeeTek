@@ -32,6 +32,8 @@ import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly vnpayService: VnpayService,
@@ -290,25 +292,32 @@ export class OrderService {
     });
 
     //  4. PHÁT SỰ KIỆN SAU KHI TRANSACTION THÀNH CÔNG
+    this.logger.log(`📡 Triggering order events for new order ID: ${newOrder.id}`);
 
     await this.broadcastNewOrder(newOrder);
     await this.broadcastProcessOrderCount();
+    
+    this.logger.log(`✅ Order events completed for order ID: ${newOrder.id}`);
     return newOrder;
   }
 
   async broadcastNewOrder(order: any) {
     try {
-
+      this.logger.log(`📢 Broadcasting new order event - Order ID: ${order?.id}, Status: ${order?.status}, Customer: ${order?.customerPhone || 'N/A'}`);
+      
       this.eventsGateway.sendToAll('newOrder', order);
-
-
+      
+      this.logger.log(`✅ Successfully broadcasted new order event - Order ID: ${order?.id}`);
     } catch (error) {
-      console.error("Failed to broadcast active order count:", error);
+      this.logger.error(`❌ Failed to broadcast new order event - Order ID: ${order?.id}`, error);
+      // Don't throw - event broadcasting failure shouldn't break the order creation
     }
   }
 
   async broadcastProcessOrderCount() {
     try {
+      this.logger.log('📊 Calculating process order count (pending + paid orders)...');
+      
       // 1. Đếm TỔNG SỐ LƯỢNG đơn hàng có trạng thái 'pending' HOẶC 'paid'
       const totalProcessOrderCount = await this.prisma.order.count({
         where: {
@@ -318,11 +327,15 @@ export class OrderService {
         },
       });
 
+      this.logger.log(`📢 Broadcasting process order count event - Count: ${totalProcessOrderCount}`);
+
       // 2. Phát sự kiện (ví dụ: 'activeOrderCount')
       this.eventsGateway.sendToAll('processOrderCount', totalProcessOrderCount);
 
+      this.logger.log(`✅ Successfully broadcasted process order count - Count: ${totalProcessOrderCount}`);
     } catch (error) {
-      console.error("Failed to broadcast active order count:", error);
+      this.logger.error('❌ Failed to broadcast process order count', error);
+      // Don't throw - event broadcasting failure shouldn't break the operation
     }
   }
 
@@ -544,6 +557,8 @@ export class OrderService {
       where: { id },
     });
     if (!deleteOrder) throw new NotFoundException(`Notfound order id = ${id}`);
+    
+    this.logger.log(`📡 Triggering process order count event after deleting order ID: ${id}`);
     await this.broadcastProcessOrderCount();
 
     return deleteOrder;
@@ -657,8 +672,10 @@ export class OrderService {
       });
     }
 
+    this.logger.log(`📡 Triggering process order count event after updating order ID: ${dto.orderId} to status: ${dto.status}`);
     await this.broadcastProcessOrderCount();
 
+    this.logger.log(`✅ Order status update completed for order ID: ${dto.orderId}, new status: ${dto.status}`);
     return order;
   }
 

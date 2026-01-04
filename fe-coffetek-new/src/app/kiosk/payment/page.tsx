@@ -131,7 +131,7 @@ export default function PaymentPage() {
     
     // Validate selected voucher before proceeding
     if (selectedVoucher && !isVoucherApplicable(selectedVoucher)) {
-      alert(`Voucher "${selectedVoucher.voucher_name}" yêu cầu đơn hàng tối thiểu ${selectedVoucher.minAmountOrder.toLocaleString('vi-VN')}₫. Vui lòng chọn voucher khác hoặc bỏ chọn.`);
+      alert(`Voucher "${selectedVoucher.voucher_name}" requires a minimum order of ${selectedVoucher.minAmountOrder.toLocaleString('en-US')}₫. Please select another voucher or deselect.`);
       return;
     }
     
@@ -187,7 +187,7 @@ export default function PaymentPage() {
 
     } catch (error: any) {
       console.error("Lỗi tạo đơn:", error.response?.data || error);
-      alert("Lỗi tạo đơn: " + (error.response?.data?.message || "Vui lòng thử lại"));
+      alert("Error creating order: " + (error.response?.data?.message || "Please try again"));
       setStep('METHOD');
     }
   };
@@ -210,7 +210,7 @@ export default function PaymentPage() {
       localStorage.removeItem('kiosk_cart');
     } catch (error: any) {
       console.error("Cash Payment Error:", error);
-      alert("Lỗi thanh toán: " + (error.response?.data?.message || "Vui lòng thử lại"));
+      alert("Payment error: " + (error.response?.data?.message || "Please try again"));
       setStep('METHOD');
     }
   };
@@ -240,13 +240,13 @@ export default function PaymentPage() {
          // Bắt đầu Polling kiểm tra trạng thái
          startPolling(orderId);
       } else {
-        alert("Không lấy được link thanh toán. Vui lòng chọn Tiền mặt.");
+        alert("Unable to get payment link. Please choose Cash.");
         setStep('METHOD');
       }
 
     } catch (error) {
        console.error("VNPay Error:", error);
-       alert("Lỗi kết nối VNPay");
+       alert("VNPay connection error");
        setStep('METHOD');
     }
   };
@@ -278,7 +278,7 @@ export default function PaymentPage() {
         <button onClick={() => router.back()} className="p-2 bg-gray-100 rounded-full mr-4 hover:bg-gray-200">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-xl font-bold">Thanh toán đơn hàng</h1>
+        <h1 className="text-xl font-bold">Order Payment</h1>
       </header>
 
       {/* BODY */}
@@ -293,7 +293,7 @@ export default function PaymentPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Tag className="text-orange-600" size={24} />
-                    <h3 className="text-xl font-bold text-gray-900">Mã giảm giá</h3>
+                    <h3 className="text-xl font-bold text-gray-900">Promo Code</h3>
                   </div>
                   {selectedVoucher && (
                     <button
@@ -308,7 +308,7 @@ export default function PaymentPage() {
                 {loadingVouchers ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="animate-spin text-orange-600" size={24} />
-                    <span className="ml-2 text-gray-600">Đang tải voucher...</span>
+                    <span className="ml-2 text-gray-600">Loading vouchers...</span>
                   </div>
                 ) : vouchers.length > 0 ? (
                   <div className="space-y-3">
@@ -320,7 +320,7 @@ export default function PaymentPage() {
                       }}
                       className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg font-medium focus:border-orange-500 focus:outline-none transition-colors"
                     >
-                      <option value="">-- Chọn voucher --</option>
+                      <option value="">-- Select voucher --</option>
                       {vouchers.map((voucher) => {
                         const applicable = isVoucherApplicable(voucher);
                         return (
@@ -330,9 +330,9 @@ export default function PaymentPage() {
                             disabled={!applicable}
                             style={{ color: applicable ? 'inherit' : '#9ca3af' }}
                           >
-                            {voucher.voucher_name} - Giảm {voucher.discount_percentage}% 
-                            {voucher.minAmountOrder > 0 && ` (Tối thiểu ${voucher.minAmountOrder.toLocaleString('vi-VN')}₫)`}
-                            {!applicable && ' ⚠️ Không đủ điều kiện'}
+                            {voucher.voucher_name} - {voucher.discount_percentage}% off 
+                            {voucher.minAmountOrder > 0 && ` (Min ${voucher.minAmountOrder.toLocaleString('en-US')}₫)`}
+                            {!applicable && ' ⚠️ Not eligible'}
                           </option>
                         );
                       })}
@@ -345,27 +345,27 @@ export default function PaymentPage() {
                           : 'bg-yellow-50 border-yellow-300'
                       }`}>
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-700 font-medium">Mã:</span>
+                          <span className="text-gray-700 font-medium">Code:</span>
                           <span className="text-orange-600 font-bold">{selectedVoucher.code}</span>
                         </div>
                         {!isVoucherApplicable(selectedVoucher) && (
                           <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-yellow-800 text-sm font-medium">
-                            ⚠️ Voucher này yêu cầu đơn hàng tối thiểu {selectedVoucher.minAmountOrder.toLocaleString('vi-VN')}₫. 
-                            Hiện tại giỏ hàng của bạn: {cartTotal.toLocaleString('vi-VN')}₫
+                            ⚠️ This voucher requires a minimum order of {selectedVoucher.minAmountOrder.toLocaleString('en-US')}₫. 
+                            Your current cart: {cartTotal.toLocaleString('en-US')}₫
                           </div>
                         )}
                         {isVoucherApplicable(selectedVoucher) && (
                           <>
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-700 font-medium">Giảm giá:</span>
+                              <span className="text-gray-700 font-medium">Discount:</span>
                               <span className="text-green-600 font-bold">
-                                -{calculateDiscount().toLocaleString('vi-VN')}₫ ({selectedVoucher.discount_percentage}%)
+                                -{calculateDiscount().toLocaleString('en-US')}₫ ({selectedVoucher.discount_percentage}%)
                               </span>
                             </div>
                             <div className="pt-2 border-t border-orange-200 flex items-center justify-between">
-                              <span className="text-gray-900 font-bold text-lg">Tổng thanh toán:</span>
+                              <span className="text-gray-900 font-bold text-lg">Total Payment:</span>
                               <span className="text-orange-600 font-bold text-xl">
-                                {finalTotal().toLocaleString('vi-VN')}₫
+                                {finalTotal().toLocaleString('en-US')}₫
                               </span>
                             </div>
                           </>
@@ -375,7 +375,7 @@ export default function PaymentPage() {
                   </div>
                 ) : (
                   <p className="text-gray-500 text-center py-4">
-                    Bạn chưa có voucher nào khả dụng
+                    You don't have any available vouchers
                   </p>
                 )}
               </div>
@@ -383,21 +383,21 @@ export default function PaymentPage() {
 
             {/* Order Summary */}
             <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Tóm tắt đơn hàng</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-gray-700">
-                  <span>Tạm tính:</span>
-                  <span>{cartTotal.toLocaleString('vi-VN')}₫</span>
+                  <span>Subtotal:</span>
+                  <span>{cartTotal.toLocaleString('en-US')}₫</span>
                 </div>
                 {selectedVoucher && (
                   <div className="flex justify-between text-green-600">
-                    <span>Giảm giá ({selectedVoucher.discount_percentage}%):</span>
-                    <span>-{calculateDiscount().toLocaleString('vi-VN')}₫</span>
+                    <span>Discount ({selectedVoucher.discount_percentage}%):</span>
+                    <span>-{calculateDiscount().toLocaleString('en-US')}₫</span>
                   </div>
                 )}
                 <div className="pt-2 border-t border-gray-200 flex justify-between text-lg font-bold text-gray-900">
-                  <span>Tổng cộng:</span>
-                  <span className="text-orange-600">{finalTotal().toLocaleString('vi-VN')}₫</span>
+                  <span>Total:</span>
+                  <span className="text-orange-600">{finalTotal().toLocaleString('en-US')}₫</span>
                 </div>
               </div>
             </div>
@@ -412,8 +412,8 @@ export default function PaymentPage() {
                 <QrCode size={48} />
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-800">Quét mã QR / VNPay</h3>
-                <p className="text-gray-500 mt-2">Thanh toán nhanh qua App ngân hàng</p>
+                <h3 className="text-2xl font-bold text-gray-800">Scan QR Code / VNPay</h3>
+                <p className="text-gray-500 mt-2">Quick payment via banking app</p>
               </div>
             </button>
 
@@ -425,8 +425,8 @@ export default function PaymentPage() {
                 <Banknote size={48} />
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-800">Tiền mặt tại quầy</h3>
-                <p className="text-gray-500 mt-2">Nhận hóa đơn và thanh toán cho thu ngân</p>
+                <h3 className="text-2xl font-bold text-gray-800">Cash at Counter</h3>
+                <p className="text-gray-500 mt-2">Receive receipt and pay at cashier</p>
               </div>
             </button>
             </div>
@@ -437,14 +437,14 @@ export default function PaymentPage() {
         {step === 'PROCESSING' && (
            <div className="flex flex-col items-center gap-6">
               <Loader2 className="animate-spin text-orange-600 w-16 h-16" />
-              <p className="text-2xl font-medium text-gray-600">Đang khởi tạo đơn hàng...</p>
+              <p className="text-2xl font-medium text-gray-600">Creating order...</p>
            </div>
         )}
 
         {/* VIEW 3: HIỂN THỊ QR CODE */}
         {step === 'QR_SHOW' && (
            <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-lg w-full animate-in zoom-in duration-300">
-              <h2 className="text-2xl font-bold mb-8">Quét mã để thanh toán</h2>
+              <h2 className="text-2xl font-bold mb-8">Scan code to pay</h2>
               
               <div className="bg-white p-4 border-2 border-orange-100 rounded-2xl inline-block shadow-inner mb-8">
                   <QRCodeCanvas 
@@ -457,9 +457,9 @@ export default function PaymentPage() {
 
               <div className="flex items-center justify-center gap-3 text-orange-600 font-medium text-lg bg-orange-50 py-3 rounded-xl">
                  <Loader2 className="animate-spin" size={24} />
-                 Đang chờ xác nhận từ ngân hàng...
+                 Waiting for bank confirmation...
               </div>
-              <p className="text-sm text-gray-400 mt-6">Đừng tắt màn hình này bạn nhé!</p>
+              <p className="text-sm text-gray-400 mt-6">Please don't close this screen!</p>
            </div>
         )}
 
@@ -470,16 +470,16 @@ export default function PaymentPage() {
                  <CheckCircle size={64} strokeWidth={3} />
               </div>
               <div>
-                 <h2 className="text-4xl font-bold text-gray-900">Đặt hàng thành công!</h2>
+                 <h2 className="text-4xl font-bold text-gray-900">Order successful!</h2>
                  <p className="text-xl text-gray-500 mt-3">
-                   Mã đơn hàng của bạn là: <span className="font-bold text-gray-900 text-2xl">#{orderId}</span>
+                   Your order number is: <span className="font-bold text-gray-900 text-2xl">#{orderId}</span>
                  </p>
                  {qrUrl ? (
-                    <p className="text-green-600 font-medium mt-2">Đã thanh toán thành công</p>
+                    <p className="text-green-600 font-medium mt-2">Payment successful</p>
                  ) : (
                     <div className="mt-6 p-4 bg-yellow-50 text-yellow-800 rounded-xl flex items-center justify-center gap-2 max-w-md mx-auto">
                        <AlertCircle size={24}/>
-                       <span>Vui lòng đến quầy để thanh toán tiền mặt</span>
+                       <span>Please go to the counter to pay with cash</span>
                     </div>
                  )}
               </div>
@@ -489,7 +489,7 @@ export default function PaymentPage() {
                    onClick={() => router.push('/kiosk')}
                    className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all"
                  >
-                   Về màn hình chính (10s)
+                   Back to Home (10s)
                  </button>
               </div>
            </div>

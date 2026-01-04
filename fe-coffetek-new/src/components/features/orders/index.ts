@@ -5,4 +5,6 @@ export * from "./OrderDetailModal";
 export * from "./OrderStatusFilter";
 export * from "./OrderEditInfoModal";
 export * from "./OrderDetailComponent";
+export * from "./KitchenOrderDisplay";
+export * from "./OrderQueue";
 

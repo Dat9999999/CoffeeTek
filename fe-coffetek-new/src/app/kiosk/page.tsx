@@ -20,7 +20,7 @@ export default function KioskIdlePage() {
         />
       </div>
 
-      {/* Content chính */}
+      {/* Main Content */}
       <div className="relative z-10 text-center text-white space-y-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -28,17 +28,17 @@ export default function KioskIdlePage() {
           className="space-y-2"
         >
           <h1 className="text-6xl font-bold tracking-tight">COFFEE TEK</h1>
-          <p className="text-xl font-light text-gray-200">Trải nghiệm cà phê công nghệ</p>
+          <p className="text-xl font-light text-gray-200">Experience tech coffee</p>
         </motion.div>
 
-        {/* Nút bấm hiệu ứng Pulse (Nhấp nháy) */}
+        {/* Pulse effect button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
           className="px-12 py-6 bg-orange-600 rounded-full text-2xl font-bold shadow-2xl hover:bg-orange-500 transition-colors border-4 border-orange-400/30 backdrop-blur-sm"
         >
-          CHẠM ĐỂ BẮT ĐẦU
+          TAP TO START
         </motion.button>
       </div>
 

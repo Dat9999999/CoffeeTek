@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -10,15 +11,57 @@ import { PosProductDetailResponse, PosProductSizeResponse, ProductDetailResponse
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService,
+              private redisService: RedisService) { }
 
   async toggleActiveStatus(id: number, isActive: boolean) {
-    return await this.prisma.product.update({
+    const result = await this.prisma.product.update({
       where: { id },
       data: { isActive },
     });
+    
+    // ✅ Fix Bug 2: Invalidate cache when product status changes
+    await this.invalidateProductCache();
+    
+    return result;
+  }
+  // helper generate cache key for product list
+  private generateCacheKey(query: GetAllProductsDto, prefix: string = 'products'): string {
+    const {
+      page,
+      size,
+      search,
+      orderBy = 'id', // ✅ Fix Bug 1: Use same defaults as query methods
+      orderDirection = 'asc', // ✅ Fix Bug 1: Use same defaults as query methods
+      categoryId,
+      isTopping,
+    } = query;
+
+    // Create a unique key based on all query parameters
+    const keyParts = [
+      prefix,
+      `page:${page}`,
+      `size:${size}`,
+      search ? `search:${search.toLowerCase()}` : 'search:null',
+      `orderBy:${orderBy}`,
+      `orderDir:${orderDirection}`,
+      categoryId ? `cat:${categoryId}` : 'cat:null',
+      isTopping !== undefined ? `topping:${isTopping}` : 'topping:null',
+    ];
+
+    return keyParts.join(':');
   }
 
+  // ✅ Helper method to invalidate all product caches
+  private async invalidateProductCache(): Promise<void> {
+    try {
+      await this.redisService.delPattern('products:*');
+      Logger.log('🗑️  Invalidated all product caches');
+    } catch (error) {
+      Logger.error('Failed to invalidate product cache', error);
+      // Don't throw - cache invalidation failure shouldn't break the operation
+    }
+  }
   async create(dto: CreateProductDto) {
     const {
       name,
@@ -83,12 +126,24 @@ export class ProductsService {
     });
 
     const new_product_detail = await this.findOne(product.id);
+    
+    // ✅ Fix Bug 2: Invalidate cache after creating new product
+    await this.invalidateProductCache();
+    
     return new_product_detail;
   }
 
   async findAll(
     query: GetAllProductsDto,
   ): Promise<ResponseGetAllDto<ProductDetailResponse>> {
+
+    const cacheKey = this.generateCacheKey(query);
+    const cachedData = await this.redisService.get<ResponseGetAllDto<ProductDetailResponse>>(cacheKey);
+    if (cachedData) {
+      Logger.log('Cache HIT for:', cacheKey);
+      return cachedData;
+    }
+    Logger.log('Cache MISS for:', cacheKey);
     const {
       page,
       size,
@@ -216,10 +271,7 @@ export class ProductsService {
         optionGroups: Array.from(optionGroupsMap.values()),
       };
     });
-
-    // 🔹 Kết quả trả về
-
-    return {
+    const result = {
       data,
       meta: {
         total,
@@ -228,12 +280,28 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+
+    // 🔹 Kết quả trả về
+    // ✅ Step 4: Store in cache (TTL: 1 hour = 3600 seconds)
+    await this.redisService.set(cacheKey, result, 3600);
+
+    // 🔹 Kết quả trả về
+
+    return result;
   }
 
   async findAllPos(
     query: GetAllProductsDto,
     // ✅ 1. Thay đổi kiểu trả về sang Response Type mới
   ): Promise<ResponseGetAllDto<PosProductDetailResponse>> {
+    const cacheKey = this.generateCacheKey(query, 'products:pos');
+
+    const cachedData = await this.redisService.get<ResponseGetAllDto<PosProductDetailResponse>>(cacheKey);
+    if (cachedData) {
+      Logger.log('Cache HIT for:', cacheKey);
+      return cachedData;
+    }
+    Logger.log('Cache MISS for pos:', cacheKey);
     const {
       page,
       size,
@@ -403,10 +471,7 @@ export class ProductsService {
         optionGroups: Array.from(optionGroupsMap.values()),
       };
     });
-
-    // 🔹 Kết quả trả về
-
-    return {
+    const result = {
       data,
       meta: {
         total,
@@ -415,6 +480,11 @@ export class ProductsService {
         totalPages: Math.ceil(total / size),
       },
     };
+
+    // 🔹 Kết quả trả về
+    // ✅ Step 4: Store in cache (TTL: 1 hour = 3600 seconds)
+    await this.redisService.set(cacheKey, result, 3600);
+    return result;
   }
 
   async findOne(id: number): Promise<ProductDetailResponse> {
@@ -537,7 +607,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.update({
+    const result = await this.prisma.product.update({
       where: { id },
       data: {
         name,
@@ -580,6 +650,11 @@ export class ProductsService {
       },
       include: { sizes: true, optionValues: true, toppings: true },
     });
+    
+    // ✅ Fix Bug 2: Invalidate cache after updating product
+    await this.invalidateProductCache();
+    
+    return result;
   }
 
   async remove(id: number) {
@@ -596,7 +671,12 @@ export class ProductsService {
     await this.prisma.productTopping.deleteMany({ where: { product_id: id } });
     await this.prisma.productImage.deleteMany({ where: { product_id: id } });
 
-    return this.prisma.product.delete({ where: { id } });
+    const result = await this.prisma.product.delete({ where: { id } });
+    
+    // ✅ Fix Bug 2: Invalidate cache after deleting product
+    await this.invalidateProductCache();
+    
+    return result;
   }
 
   async removeMany(ids: number[]) {
@@ -638,6 +718,9 @@ export class ProductsService {
         where: { id: { in: existingIds } },
       });
     });
+
+    // Invalidate cache after deleting multiple products
+    await this.invalidateProductCache();
 
     return {
       message: `Deleted ${existingIds.length} product(s) successfully.`,

@@ -1,6 +1,6 @@
-import { Body, Controller, Get, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, ParseBoolPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto, FaceIDStatusResponseDto } from './dto';
+import { authAssignRoleDto, authChangePasswordDto, authForgetPasswordDto, authLoginDto, authSignUpDto, UpdateProfileDto, FaceIDStatusResponseDto, RegisterFaceIDDto, UpdateFaceIDDto, LoginFaceIDDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorator';
 import * as client from '@prisma/client';
@@ -62,20 +62,35 @@ export class AuthController {
         return this.authservice.updateSecurity(user.id, dto);
     }
 
-    @Post('face-id/register')
-    // @UseGuards(AuthGuard('jwt'))
-    registerFaceID() {
-        return "calling register face id";
+  @Get('face-id/status')
+  @UseGuards(AuthGuard('jwt'))
+  async getFaceIDStatus(@GetUser() user: client.User): Promise<FaceIDStatusResponseDto> {
+    return this.authservice.checkFaceIDStatus(user.id);
     }
 
-    @Get('face-id/status')
-    // @UseGuards(AuthGuard('jwt'))
-    getFaceIDStatus(): FaceIDStatusResponseDto {
-        return { hasFaceID: false };
+    @Post('face-id/register')
+  @UseGuards(AuthGuard('jwt'))
+  async registerFaceID(
+    @GetUser() user: client.User,
+    @Body() dto: RegisterFaceIDDto,
+  ) {
+    return this.authservice.registerFaceID(user.id, dto.phone, dto.image);
     }
-    // @Put('face-id/update')
-    // @UseGuards(AuthGuard('jwt'))
-    // updateFaceID(@GetUser() user: client.User, @Body() dto: authUpdateFaceIDDto) {
-    //     return this.authservice.updateFaceID(user.id, dto);
-    // }
+  @Put('face-id/update')
+  @UseGuards(AuthGuard('jwt'))
+  async updateFaceID(
+    @GetUser() user: client.User,
+    @Body() dto: UpdateFaceIDDto,
+  ) {
+    return this.authservice.updateFaceID(user.id, dto.phone, dto.image);
+  }
+
+  @Post('face-id/login')
+  async loginWithFaceID(@Body() dto: LoginFaceIDDto) {
+    const result = await this.authservice.loginWithFaceID(dto.image);
+    if (!result) {
+      throw new BadRequestException('Face not recognized');
+    }
+    return result;
+  }
 }

@@ -76,7 +76,6 @@ export class AuthController {
   ) {
     return this.authservice.registerFaceID(user.id, dto.phone, dto.image);
     }
-
   @Put('face-id/update')
   @UseGuards(AuthGuard('jwt'))
   async updateFaceID(

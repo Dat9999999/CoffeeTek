@@ -1,16 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
 const sgMail = require('@sendgrid/mail');
 
 @Injectable()
 export class MailService {
     private readonly fromEmail: string;
-    private readonly apikey: string
+    private readonly apiKey: string;
     constructor() {
         if (process.env.SENDGRID_API_KEY == undefined) Logger.error(`lost sendgrid api key`)
         else {
-            sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-            this.apikey = process.env.SENDGRID_API_KEY
+            this.apiKey = process.env.SENDGRID_API_KEY
+            sgMail.setApiKey(this.apiKey)
             this.fromEmail = process.env.EMAIL_FROM || ''
         }
 

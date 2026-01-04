@@ -1,15 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllDto } from '../common/dto/pagination.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class PromotionService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService,
+    @Inject('PROMOTION_MAIL_SERVICE') private readonly client: ClientProxy
+  ) { }
 
   async create(createPromotionDto: CreatePromotionDto) {
-    return await this.prisma.$transaction(async (tx) => {
+    const newPromotion = await this.prisma.$transaction(async (tx) => {
       // check if any overlap promotion 
       const promotion = await tx.promotion.findMany({
         where: {
@@ -62,7 +65,17 @@ export class PromotionService {
         },
       });
 
-    })
+    });
+    //payload for sending email by MQ
+    const payload = {
+      id: newPromotion.id,
+      name: newPromotion.name,
+      startDate: newPromotion.start_date,
+      endDate: newPromotion.end_date,
+    };
+    // Send event to the MQ
+    this.client.emit('promotion_created_event', payload);
+    return newPromotion;
   }
 
   async findAll(paginationDto: GetAllDto) {
@@ -221,5 +234,36 @@ export class PromotionService {
       message: `Successfully deleted ${deleted.count} promotions`,
       count: deleted.count,
     };
+  }
+
+  async sendPromotionCreatedEvent(data: any, channel: any, originalMsg: any) {
+    try {
+      console.log(`🚀 Processing batch emails for Promotion: ${data.name} (ID: ${data.id})`);
+
+      // 2. Fetch customers from Database
+      const customers = await this.prisma.user.findMany({
+        // where: { roles: { has: 'customer' } },
+        select: { email: true, }
+      });
+
+      // 3. Loop and send emails
+      // Note: In real production, use a MailerService (like @nestjs-modules/mailer)
+      for (const customer of customers) {
+        Logger.log(`Sending email to ${customer.email}...`);
+        // await this.mailerService.sendMail();
+      }
+
+      // 4. IMPORTANT: Acknowledge the message
+      // This tells RabbitMQ the job is done and it can delete the message.
+      channel.ack(originalMsg);
+
+      Logger.log('✅ Batch email job completed successfully');
+    } catch (error) {
+      Logger.error('❌ Error processing batch job:', error);
+
+      // 5. If it fails, we "Nack" it. 
+      // requeue: true means put it back in the queue to try again later.
+      channel.nack(originalMsg, false, true);
+    }
   }
 }

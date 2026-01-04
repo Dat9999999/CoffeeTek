@@ -3,9 +3,11 @@ import { PromotionService } from './promotion.service';
 import { PromotionController } from './promotion.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MailModule } from 'src/common/mail/mail.module';
 
 @Module({
   imports: [PrismaModule,
+    MailModule,
     ClientsModule.register([
       {
         name: 'PROMOTION_MAIL_SERVICE', // Define a name for the microservice

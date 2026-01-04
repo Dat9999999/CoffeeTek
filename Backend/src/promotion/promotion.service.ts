@@ -4,11 +4,13 @@ import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllDto } from '../common/dto/pagination.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { MailService } from 'src/common/mail/mail.service';
 
 @Injectable()
 export class PromotionService {
   constructor(private readonly prisma: PrismaService,
-    @Inject('PROMOTION_MAIL_SERVICE') private readonly client: ClientProxy
+    @Inject('PROMOTION_MAIL_SERVICE') private readonly client: ClientProxy,
+    private readonly mailService: MailService
   ) { }
 
   async create(createPromotionDto: CreatePromotionDto) {
@@ -248,9 +250,14 @@ export class PromotionService {
 
       // 3. Loop and send emails
       // Note: In real production, use a MailerService (like @nestjs-modules/mailer)
+
       for (const customer of customers) {
         Logger.log(`Sending email to ${customer.email}...`);
-        // await this.mailerService.sendMail();
+        await this.mailService.sendMail(
+          customer.email,
+          `New Promotion: ${data.name}`,
+          `Dear Customer,\n\nWe are excited to announce our new promotion "${data.name}" valid from ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}.\n\nDon't miss out on our special offers!\n\nBest regards,\nCoffeeTek Team`,
+        );
       }
 
       // 4. IMPORTANT: Acknowledge the message

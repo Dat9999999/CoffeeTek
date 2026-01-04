@@ -1,18 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-const sgMail = require('@sendgrid/mail');
+// const sgMail = require('@sendgrid/mail');
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
     private readonly fromEmail: string;
     private readonly apiKey: string;
+    private resend: Resend;
     constructor() {
-        if (process.env.SENDGRID_API_KEY == undefined) Logger.error(`lost sendgrid api key`)
-        else {
-            this.apiKey = process.env.SENDGRID_API_KEY
-            sgMail.setApiKey(this.apiKey)
-            this.fromEmail = process.env.EMAIL_FROM || ''
-        }
-
+        this.apiKey = process.env.RESEND_API_KEY || '';
+        this.resend = new Resend(this.apiKey);
+        this.fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
     }
     async sendMail(toEmail: string, subject: string, htmlContent: string) {
         const msg = {
@@ -24,11 +22,12 @@ export class MailService {
         };
 
         try {
-            await sgMail.send(msg);
+            const result = await this.resend.emails.send(msg);
+            Logger.log('Email sent result:', result);
             Logger.log(`Email was sent successfully to ${toEmail}`);
         } catch (error) {
-            console.log(error)
             // Xử lý lỗi (ví dụ: throw exception)
+            throw error;
             Logger.error('error when try to send');
         }
     }

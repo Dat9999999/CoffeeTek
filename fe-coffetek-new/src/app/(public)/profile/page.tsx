@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useProfileStore } from "@/store/useProfileStore";
 import EditProfileForm from "@/components/features/profile/EditProfileForm";
 import FaceIDRegistration from "@/components/features/profile/FaceIDRegistration";
+import OrderHistory from "@/components/features/profile/OrderHistory";
 import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng nhập
 
 export default function ProfilePage() {
@@ -142,28 +143,7 @@ export default function ProfilePage() {
 
             {/* ORDERS TAB */}
             {activeTab === "orders" && (
-              <div>
-                <h3 className="text-xl font-semibold mb-4">
-                  Lịch sử mua hàng
-                </h3>
-                {orders?.length ? (
-                  <ul className="divide-y">
-                    {orders.map((order: any) => (
-                      <li key={order.id} className="py-3">
-                        <p className="font-medium">
-                          Mã đơn: {order.id} – {order.total_price}₫
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Ngày:{" "}
-                          {new Date(order.created_at).toLocaleDateString("vi-VN")}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>Chưa có đơn hàng nào.</p>
-                )}
-              </div>
+              <OrderHistory orders={orders || []} />
             )}
 
 

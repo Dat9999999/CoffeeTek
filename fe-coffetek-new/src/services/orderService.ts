@@ -113,4 +113,11 @@ export const orderService = {
         const res = await api.get(`/order/process-count`);
         return res.data;
     },
+
+    async getOrderHistoryByCustomer(customerPhone: string, page: number = 1, size: number = 20) {
+        const res = await api.get("/order/history/customer", {
+            params: { customerPhone, page, size },
+        });
+        return res.data;
+    },
 };

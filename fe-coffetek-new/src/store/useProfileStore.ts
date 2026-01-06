@@ -2,11 +2,18 @@ import { create } from "zustand";
 import { API_ENDPOINTS } from "@/lib/constant/api.constant";
 import { STORAGE_KEYS } from "@/lib/constant/storageKey.constant";
 import { toast } from "sonner";
+import { orderService } from "@/services/orderService";
 
 interface Order {
   id: number;
-  total_price: number;
+  final_price?: number;
+  total_price?: number;
+  original_price?: number;
   created_at: string;
+  status?: string;
+  note?: string;
+  invoiceUrl?: string | null;
+  order_details?: any[];
 }
 
 interface WishlistItem {
@@ -81,20 +88,38 @@ export const useProfileStore = create<UserState>((set) => ({
       console.log("PROFILE URL:", API_ENDPOINTS.USER.PROFILE);
       console.log("PROFILE DATA:", data);
 
+      // Fetch user profile data
+      const userData = {
+        id: data.id,
+        phone_number: data.phone_number,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        avatar: data.detail?.avatar_url || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&auto=format",
+        birthday: data.detail?.birthday,
+        sex: data.detail?.sex,
+        address: data.detail?.address,
+        roles: data.roles?.map((r: any) => r.role_name),
+      };
+
+      // Fetch order history using the new endpoint
+      let ordersData: Order[] = [];
+      try {
+        const orderHistoryRes = await orderService.getOrderHistoryByCustomer(
+          data.phone_number,
+          1,
+          100 // Get up to 100 orders
+        );
+        ordersData = orderHistoryRes.data || [];
+      } catch (orderError) {
+        console.error("Error fetching order history:", orderError);
+        // Fallback to orders from profile if available
+        ordersData = data.orders || [];
+      }
+
       set({
-        user: {
-          id: data.id,
-          phone_number: data.phone_number,
-          email: data.email,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          avatar: data.detail?.avatar_url || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&auto=format",
-          birthday: data.detail?.birthday,
-          sex: data.detail?.sex,
-          address: data.detail?.address,
-          roles: data.roles?.map((r: any) => r.role_name),
-        },
-        orders: data.orders || [],
+        user: userData,
+        orders: ordersData,
         wishlist: data.wishlist || [],
         loyalty: data.loyalty || { points: 0 },
         loading: false,

@@ -530,6 +530,50 @@ export class OrderService {
     return order;
   }
 
+  async getOrderHistoryByCustomerPhone(customerPhone: string, page: number = 1, size: number = 20) {
+    const skip = (page - 1) * size;
+
+    const where = {
+      customerPhone: customerPhone,
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take: size,
+        include: {
+          order_details: {
+            include: {
+              product: { include: { images: true } },
+              size: true,
+              ToppingOrderDetail: {
+                include: {
+                  topping: { include: { images: true } },
+                },
+              },
+              optionValue: { include: { option_group: true } },
+            },
+          },
+          Customer: true,
+          Staff: true,
+        },
+        orderBy: { created_at: 'desc' }, // Newest first
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    };
+  }
+
   async update(id: number, updateOrderDto: UpdateOrderDto) {
     const upateOrder = await this.prisma.order.findUnique({
       where: { id },

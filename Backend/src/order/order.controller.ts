@@ -6,6 +6,7 @@ import { Role } from 'src/auth/decorator/role.decorator';
 import { RolesGuard } from 'src/auth/strategy/role.strategy';
 import { AuthGuard } from '@nestjs/passport';
 import { GetAllOrderDto } from './dto/GetAllOrder.dto';
+import { GetOrderHistoryDto } from './dto/GetOrderHistory.dto';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { PaymentDTO } from './dto/payment.dto';
 import { VerifyReturnUrl } from 'vnpay';
@@ -74,7 +75,13 @@ export class OrderController {
     return this.orderService.getInvoice(+orderId);
   }
 
-
-
+  @Get('history/customer')
+  getOrderHistoryByCustomer(@Query() dto: GetOrderHistoryDto) {
+    return this.orderService.getOrderHistoryByCustomerPhone(
+      dto.customerPhone,
+      dto.page,
+      dto.size,
+    );
+  }
 
 }

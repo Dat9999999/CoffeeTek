@@ -9,11 +9,11 @@ import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng 
 export default function ProfilePage() {
   const { isAuthenticated, loading: authLoading } = useAuth(true); // true = auto redirect nếu chưa login
 
-  const { user, orders, wishlist, loyalty, fetchProfile, loading, error } =
+  const { user, orders, loyalty, fetchProfile, loading, error } =
     useProfileStore();
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "orders" | "wishlist" | "loyalty"
+    "profile" | "orders" | "loyalty"
   >("profile");
 
   // ✅ Khi đã xác thực xong thì mới fetch thông tin người dùng
@@ -54,7 +54,6 @@ export default function ProfilePage() {
               {[
                 { id: "profile", label: "Thông tin cá nhân" },
                 { id: "orders", label: "Lịch sử mua hàng" },
-                { id: "wishlist", label: "Wishlist" },
                 { id: "loyalty", label: "Điểm tích lũy" },
               ].map((tab) => (
                 <button
@@ -167,32 +166,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* WISHLIST TAB
-            {activeTab === "wishlist" && (
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Wishlist</h3>
-                {wishlist?.length ? (
-                  <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {wishlist.map((item: any) => (
-                      <li
-                        key={item.id}
-                        className="border rounded-xl p-3 text-center shadow-sm hover:shadow-md transition"
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-24 h-24 object-cover mx-auto rounded-md"
-                        />
-                        <p className="mt-2 text-sm font-medium">{item.name}</p>
-                        <p className="text-gray-600 text-sm">{item.price}₫</p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>Danh sách yêu thích trống.</p>
-                )}
-              </div>
-            )} */}
 
             {/* LOYALTY TAB */}
             {activeTab === "loyalty" && (

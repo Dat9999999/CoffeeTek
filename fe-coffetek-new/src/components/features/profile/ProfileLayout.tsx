@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import UserProfile from "./UserProfile";
 import OrderHistory from "./OrderHistory";
-import Wishlist from "./Wishlist";
 import Loyalty from "./Loyalty";
 
 interface ProfileLayoutProps {
@@ -21,7 +20,6 @@ export default function ProfileLayout({
   const tabs = [
     { id: "profile", label: "Thông tin cá nhân" },
     { id: "orders", label: "Lịch sử đơn hàng" },
-    { id: "wishlist", label: "Wishlist / Favorite" },
     { id: "loyalty", label: "Loyalty Points" },
   ];
 
@@ -57,7 +55,6 @@ export default function ProfileLayout({
         <section className="flex-1 p-8 bg-white">
           {active === "profile" && <UserProfile />}
           {active === "orders" && <OrderHistory orders={orders} />}
-          {active === "wishlist" && <Wishlist favorites={favorites} />}
           {active === "loyalty" && <Loyalty loyalty={loyalty} />}
         </section>
       </div>

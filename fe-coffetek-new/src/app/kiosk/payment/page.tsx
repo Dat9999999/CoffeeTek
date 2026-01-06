@@ -148,10 +148,16 @@ export default function PaymentPage() {
         // Get option values - Backend expects optionId, not optionValue
         const optionIds = Object.values(item.selectedOptions || {}).map(id => id.toString()).filter(Boolean);
         
+        // CRITICAL FIX: Backend expects Size.id (not ProductSize.id)
+        // selectedSize.id is ProductSize ID, but we need selectedSize.size.id (the actual Size ID)
+        const sizeId = item.selectedSize?.size?.id 
+          ? item.selectedSize.size.id.toString() 
+          : undefined;
+        
         return {
           productId: item.id.toString(),
           quantity: item.quantity.toString(),
-          sizeId: item.selectedSize?.id ? item.selectedSize.id.toString() : undefined,
+          sizeId: sizeId, // Use Size.id, not ProductSize.id
           note: item.note || '',
           // Map Topping: Backend yêu cầu { toppingId, quantity }
           toppingItems: item.selectedToppings && item.selectedToppings.length > 0

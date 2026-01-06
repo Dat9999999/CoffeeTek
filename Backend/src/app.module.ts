@@ -25,8 +25,7 @@ import { EventsModule } from './events/events.module';
 import { MaterialLossModule } from './material-loss/material-loss.module';
 import { MaterialRemainModule } from './material-remain/material-remain.module';
 import { NotificationModule } from './notification/notification.module';
-import { CotractingModule } from './cotracting/cotracting.module';
-;
+import { ContractingModule } from './contracting/contracting.module';
 import { FaceRecognitionModule } from './face-recognition/face-recognition.module';
 
 
@@ -64,7 +63,7 @@ import { FaceRecognitionModule } from './face-recognition/face-recognition.modul
     MaterialRemainModule,
     NotificationModule,
     EventsModule,
-    CotractingModule,
+    ContractingModule,
     FaceRecognitionModule,
   ],
 })

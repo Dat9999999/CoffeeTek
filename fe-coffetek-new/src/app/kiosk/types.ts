@@ -71,7 +71,7 @@ export interface OrderDetailItemDTO {
     toppingId: string;
     quantity: string;
   }[];
-  optionValue?: string[]; // Mảng ID của option
+  optionId: string[]; // Backend expects optionId (not optionValue)
 }
 
 export interface CreateOrderPayload {

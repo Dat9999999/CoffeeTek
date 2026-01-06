@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Banknote, QrCode, CheckCircle, ChevronLeft, Loader2, AlertCircle, Tag, X } from 'lucide-react';
+import { QrCode, CheckCircle, ChevronLeft, Loader2, Tag, X } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react'; // Import thư viện QR
 import api from '@/lib/api';
 import { CartItem, CreateOrderPayload, OrderDetailItemDTO } from '../types';
@@ -126,7 +126,7 @@ export default function PaymentPage() {
   };
 
   // --- HÀM 1: TẠO ĐƠN HÀNG ---
-  const handleCreateOrder = async (method: 'CASH' | 'VNPAY') => {
+  const handleCreateOrder = async () => {
     if (cart.length === 0) return;
     
     // Validate selected voucher before proceeding
@@ -139,19 +139,31 @@ export default function PaymentPage() {
     
     try {
       // 1. Map CartItem sang DTO Backend
-      const orderDetails: OrderDetailItemDTO[] = cart.map(item => ({
-        productId: item.id.toString(),
-        quantity: item.quantity.toString(),
-        sizeId: item.selectedSize?.id.toString(),
-        note: item.note || '',
-        // Map Topping: Backend yêu cầu { toppingId, quantity }
-        toppingItems: item.selectedToppings.map(t => ({
-            toppingId: t.id.toString(),
-            quantity: "1" // Mặc định 1 topping cùng loại
-        })),
-        // Map Option: Lấy mảng values từ object { groupId: valueId }
-        optionValue: Object.values(item.selectedOptions).map(id => id.toString())
-      }));
+      const orderDetails: OrderDetailItemDTO[] = cart.map(item => {
+        // Validate required fields
+        if (!item.id) {
+          throw new Error(`Cart item missing product ID`);
+        }
+        
+        // Get option values - Backend expects optionId, not optionValue
+        const optionIds = Object.values(item.selectedOptions || {}).map(id => id.toString()).filter(Boolean);
+        
+        return {
+          productId: item.id.toString(),
+          quantity: item.quantity.toString(),
+          sizeId: item.selectedSize?.id ? item.selectedSize.id.toString() : undefined,
+          note: item.note || '',
+          // Map Topping: Backend yêu cầu { toppingId, quantity }
+          toppingItems: item.selectedToppings && item.selectedToppings.length > 0
+            ? item.selectedToppings.map(t => ({
+                toppingId: t.id.toString(),
+                quantity: "1" // Mặc định 1 topping cùng loại
+              }))
+            : undefined,
+          // Map Option: Backend expects optionId (not optionValue)
+          optionId: optionIds.length > 0 ? optionIds : []
+        };
+      });
 
       const customerPhone = localStorage.getItem('kiosk_phone') || undefined; // Fallback nếu lỗi
 
@@ -159,63 +171,40 @@ export default function PaymentPage() {
         order_details: orderDetails,
         customerPhone: customerPhone ,
         staffId: '1', 
-        note: `Kiosk Order - ${method}`
+        note: `Kiosk Order - VNPAY`
       };
 
-      console.log("Sending Payload:", payload); // Debug xem payload đúng chưa
+      console.log("Sending Payload:", JSON.stringify(payload, null, 2)); // Debug xem payload đúng chưa
 
       // 2. Gọi API Tạo đơn
       const res = await api.post('/order', payload);
       const newOrder = res.data; // Object Order trả về
       console.log("Order Created:", newOrder);
       
+      // Validate order was created successfully
+      if (!newOrder || !newOrder.id) {
+        throw new Error("Order creation failed: Invalid response from server");
+      }
+      
       setOrderId(newOrder.id);
 
-      // 3. Phân nhánh xử lý
-      if (method === 'CASH') {
-        // For cash payment, apply voucher if selected
-        if (selectedVoucher?.code) {
-          await handleCashPayment(newOrder.id, newOrder.final_price || cartTotal);
-        } else {
-          setStep('SUCCESS');
-          localStorage.removeItem('kiosk_cart'); // Xóa giỏ
-        }
-      } else {
-        // VNPay Flow
-        await handleVNPay(newOrder.id, newOrder.final_price || 0); // Dùng final_price từ response cho chuẩn
-      }
+      // 3. VNPay Flow
+      await handleVNPay(newOrder.id, newOrder.final_price || 0); // Dùng final_price từ response cho chuẩn
 
     } catch (error: any) {
       console.error("Lỗi tạo đơn:", error.response?.data || error);
-      alert("Error creating order: " + (error.response?.data?.message || "Please try again"));
-      setStep('METHOD');
-    }
-  };
-
-  // --- HÀM 2: THANH TOÁN TIỀN MẶT VỚI VOUCHER ---
-  const handleCashPayment = async (orderId: number, amount: number) => {
-    try {
-      // Only send voucher code if it's applicable
-      const voucherCode = selectedVoucher && isVoucherApplicable(selectedVoucher) 
-        ? selectedVoucher.code 
-        : undefined;
-      
-      await api.patch('/order/paid/cash', {
-        orderId: orderId,
-        amount: amount,
-        ...(voucherCode && { voucherCode }),
+      const errorMessage = error.response?.data?.message || error.message || "Please try again";
+      console.error("Full error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: errorMessage
       });
-      
-      setStep('SUCCESS');
-      localStorage.removeItem('kiosk_cart');
-    } catch (error: any) {
-      console.error("Cash Payment Error:", error);
-      alert("Payment error: " + (error.response?.data?.message || "Please try again"));
+      alert(`Error creating order: ${errorMessage}`);
       setStep('METHOD');
     }
   };
 
-  // --- HÀM 3: LẤY LINK VNPAY & POLLING ---
+  // --- HÀM 2: LẤY LINK VNPAY & POLLING ---
   const handleVNPay = async (orderId: number, amount: number) => {
     try {
       // Gọi API lấy link thanh toán
@@ -240,7 +229,7 @@ export default function PaymentPage() {
          // Bắt đầu Polling kiểm tra trạng thái
          startPolling(orderId);
       } else {
-        alert("Unable to get payment link. Please choose Cash.");
+        alert("Unable to get payment link. Please try again.");
         setStep('METHOD');
       }
 
@@ -251,7 +240,7 @@ export default function PaymentPage() {
     }
   };
 
-  // --- HÀM 4: POLLING CHECK TRẠNG THÁI ---
+  // --- HÀM 3: POLLING CHECK TRẠNG THÁI ---
   const startPolling = (orderId: number) => {
     // Check mỗi 3 giây
     pollIntervalRef.current = setInterval(async () => {
@@ -402,11 +391,11 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            {/* Payment Methods */}
-            <div className="grid grid-cols-2 gap-8">
+            {/* Payment Method */}
+            <div className="flex justify-center">
             <button 
-              onClick={() => handleCreateOrder('VNPAY')}
-              className="group bg-white p-10 rounded-3xl shadow-sm border-2 border-transparent hover:border-blue-500 hover:shadow-blue-100 transition-all flex flex-col items-center gap-6"
+              onClick={() => handleCreateOrder()}
+              className="group bg-white p-10 rounded-3xl shadow-sm border-2 border-transparent hover:border-blue-500 hover:shadow-blue-100 transition-all flex flex-col items-center gap-6 w-full max-w-md"
             >
               <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                 <QrCode size={48} />
@@ -414,19 +403,6 @@ export default function PaymentPage() {
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-800">Scan QR Code / VNPay</h3>
                 <p className="text-gray-500 mt-2">Quick payment via banking app</p>
-              </div>
-            </button>
-
-            <button 
-              onClick={() => handleCreateOrder('CASH')}
-              className="group bg-white p-10 rounded-3xl shadow-sm border-2 border-transparent hover:border-green-500 hover:shadow-green-100 transition-all flex flex-col items-center gap-6"
-            >
-              <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Banknote size={48} />
-              </div>
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-800">Cash at Counter</h3>
-                <p className="text-gray-500 mt-2">Receive receipt and pay at cashier</p>
               </div>
             </button>
             </div>
@@ -474,14 +450,7 @@ export default function PaymentPage() {
                  <p className="text-xl text-gray-500 mt-3">
                    Your order number is: <span className="font-bold text-gray-900 text-2xl">#{orderId}</span>
                  </p>
-                 {qrUrl ? (
-                    <p className="text-green-600 font-medium mt-2">Payment successful</p>
-                 ) : (
-                    <div className="mt-6 p-4 bg-yellow-50 text-yellow-800 rounded-xl flex items-center justify-center gap-2 max-w-md mx-auto">
-                       <AlertCircle size={24}/>
-                       <span>Please go to the counter to pay with cash</span>
-                    </div>
-                 )}
+                 <p className="text-green-600 font-medium mt-2">Payment successful</p>
               </div>
               
               <div className="pt-10">

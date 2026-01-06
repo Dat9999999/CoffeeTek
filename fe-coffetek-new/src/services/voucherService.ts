@@ -84,10 +84,10 @@ export const voucherService = {
 
   // ====================================================
   // 📌 NEW API — Exchange bằng group_name (BACKEND MỚI)
-  // POST /voucher/exchange/group
+  // PUT /voucher/exchange-by-group
   // ====================================================
   async exchangeByGroup(groupName: string, customerPhone: string) {
-    const res = await api.post("/voucher/exchange/group", {
+    const res = await api.put("/voucher/exchange-by-group", {
       groupName,
       customerPhone,
     })
@@ -96,11 +96,11 @@ export const voucherService = {
 
   // ====================================================
   // 📌 NEW API — Lấy voucher active của user
-  // GET /voucher/user/active?phone=...
+  // GET /voucher/my-active?customerPhone=...
   // ====================================================
   async getUserActiveVoucher(phone: string): Promise<Voucher[]> {
-    const res = await api.get("/voucher/user/active", {
-      params: { phone },
+    const res = await api.get("/voucher/my-active", {
+      params: { customerPhone: phone },
     })
     return res.data
   },

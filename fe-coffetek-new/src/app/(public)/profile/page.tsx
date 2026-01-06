@@ -5,6 +5,7 @@ import { useProfileStore } from "@/store/useProfileStore";
 import EditProfileForm from "@/components/features/profile/EditProfileForm";
 import FaceIDRegistration from "@/components/features/profile/FaceIDRegistration";
 import OrderHistory from "@/components/features/profile/OrderHistory";
+import Loyalty from "@/components/features/profile/Loyalty";
 import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng nhập
 
 export default function ProfilePage() {
@@ -149,20 +150,7 @@ export default function ProfilePage() {
 
             {/* LOYALTY TAB */}
             {activeTab === "loyalty" && (
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Điểm tích lũy</h3>
-                {loyalty ? (
-                  <div className="text-lg">
-                    Bạn hiện có{" "}
-                    <span className="font-bold text-amber-600">
-                      {loyalty.points}
-                    </span>{" "}
-                    điểm.
-                  </div>
-                ) : (
-                  <p>Chưa có điểm tích lũy.</p>
-                )}
-              </div>
+              <Loyalty loyalty={loyalty} />
             )}
           </section>
         </div>

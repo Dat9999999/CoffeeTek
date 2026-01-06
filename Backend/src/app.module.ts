@@ -27,6 +27,7 @@ import { MaterialRemainModule } from './material-remain/material-remain.module';
 import { NotificationModule } from './notification/notification.module';
 import { ContractingModule } from './contracting/contracting.module';
 import { FaceRecognitionModule } from './face-recognition/face-recognition.module';
+import { StressTestController } from './stress-test/stress-test.controller';
 
 
 @Module({
@@ -66,5 +67,6 @@ import { FaceRecognitionModule } from './face-recognition/face-recognition.modul
     ContractingModule,
     FaceRecognitionModule,
   ],
+  controllers: [StressTestController],
 })
 export class AppModule { }

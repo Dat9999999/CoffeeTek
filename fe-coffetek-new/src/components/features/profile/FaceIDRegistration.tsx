@@ -350,7 +350,7 @@ export default function FaceIDRegistration() {
             <Scan className="text-blue-600" size={20} />
           </div>
           <div>
-            <CardTitle className="text-lg font-semibold">Face ID (AWS Rekognition)</CardTitle>
+            <CardTitle className="text-lg font-semibold">Face ID</CardTitle>
             <CardDescription>
               Đăng ký hoặc cập nhật Face ID để đăng nhập nhanh tại kiosk
             </CardDescription>
@@ -432,7 +432,7 @@ export default function FaceIDRegistration() {
         {/* Info Note */}
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-700">
-            <strong>Lưu ý:</strong> Face ID sử dụng AWS Rekognition để nhận diện khuôn mặt. 
+            <strong>Lưu ý:</strong> Face ID để nhận diện khuôn mặt. 
             Đảm bảo ánh sáng đủ và nhìn thẳng vào camera khi đăng ký. 
             Ảnh sẽ được xử lý an toàn và chỉ lưu thông tin nhận diện.
           </p>

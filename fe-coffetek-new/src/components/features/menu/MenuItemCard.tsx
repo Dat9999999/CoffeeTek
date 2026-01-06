@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AppImage } from "@/components/commons/AppImage";
+import ProductDetailsDialog from "./ProductDetailsDialog";
+import { useState } from "react";
 
 type MenuItemCardProps = {
   id: number;
@@ -21,6 +22,7 @@ export default function MenuItemCard({
   image,
   description,
 }: MenuItemCardProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   return (
     <motion.div
       className="group bg-white p-5 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 
@@ -75,21 +77,26 @@ export default function MenuItemCard({
           </p>
         )}
 
-        <Link href={`/menu/${id}`}>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+      <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="w-full py-2 rounded-full bg-orange-600 hover:bg-orange-700 
+                      text-white font-medium transition-all duration-300 
+                      shadow-sm hover:shadow-md"
           >
-            <Button
-              className="w-full py-2 rounded-full bg-orange-600 hover:bg-orange-700 
-                        text-white font-medium transition-all duration-300 
-                        shadow-sm hover:shadow-md"
-            >
-              See details
-            </Button>
-          </motion.div>
-        </Link>
+            See details
+          </Button>
+        </motion.div>
       </div>
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog
+        open={isDialogOpen}
+        productId={id}
+        onClose={() => setIsDialogOpen(false)}
+      />
     </motion.div>
   );
 }

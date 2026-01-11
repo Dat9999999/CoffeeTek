@@ -517,22 +517,8 @@ export class ReportsService {
         0,
       );
 
-      // 2. ⚠️ PLACEHOLDER: Tính COGS (INCORRECT - chỉ tính chi phí nhập kho, không phải COGS thực tế)
-      // TODO: Implement proper COGS calculation based on recipes and materials actually used
-      const cogsRecord = await this.prisma.materialImportation.findMany({
-        where: {
-          importDate: {
-            gte: query.startDate,
-            lt: query.endDate,
-          },
-        },
-        select: {
-          pricePerUnit: true,
-          importQuantity: true
-        },
-      });
-
-      const cogs = cogsRecord.reduce((sum, i) => sum + ((i.pricePerUnit ?? 0) * i.importQuantity), 0);
+      // 2. Calculate actual COGS based on materials consumed from recipes
+      const cogs = await this.calculateActualCOGS(new Date(query.startDate), new Date(query.endDate));
 
       // 3. Lợi nhuận = Doanh thu - COGS
       const profit = totalRevenue - cogs;
@@ -543,7 +529,6 @@ export class ReportsService {
         total_revenue: totalRevenue,
         cogs,
         profit,
-        warning: 'COGS calculation is a placeholder. Actual COGS should be based on materials consumed, not imported.',
       };
 
       // Store in cache (30 minutes TTL)
@@ -554,6 +539,117 @@ export class ReportsService {
       this.logger.error('Error calculating profit report', error);
       throw error;
     }
+  }
+
+  /**
+   * Calculate actual COGS (Cost of Goods Sold) based on materials consumed from recipes
+   * Uses average cost method for materials
+   */
+  private async calculateActualCOGS(startDate: Date, endDate: Date): Promise<number> {
+    // Get all completed orders in the date range
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.COMPLETED,
+        created_at: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+      include: {
+        order_details: {
+          include: {
+            product: {
+              include: {
+                Recipe: {
+                  include: {
+                    MaterialRecipe: {
+                      include: {
+                        Material: {
+                          include: {
+                            MaterialImportation: true,
+                          },
+                        },
+                        Size: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            size: true,
+          },
+        },
+      },
+    });
+
+    let totalCOGS = 0;
+    const materialPriceCache = new Map<number, number>(); // Cache material average prices
+
+    // Helper function to get material average price
+    const getMaterialAveragePrice = (material: any): number => {
+      if (materialPriceCache.has(material.id)) {
+        return materialPriceCache.get(material.id)!;
+      }
+
+      const importations = material.MaterialImportation;
+      if (importations.length === 0) {
+        materialPriceCache.set(material.id, 0);
+        return 0;
+      }
+
+      const totalValue = importations.reduce(
+        (sum: number, imp: any) => sum + (imp.pricePerUnit * imp.importQuantity),
+        0,
+      );
+      const totalQuantity = importations.reduce(
+        (sum: number, imp: any) => sum + imp.importQuantity,
+        0,
+      );
+      const avgPrice = totalQuantity > 0 ? totalValue / totalQuantity : 0;
+
+      materialPriceCache.set(material.id, avgPrice);
+      return avgPrice;
+    };
+
+    // Calculate COGS for each order
+    for (const order of orders) {
+      for (const orderDetail of order.order_details) {
+        const product = orderDetail.product;
+        const quantity = orderDetail.quantity;
+        const sizeId = orderDetail.size?.id ?? null;
+
+        // Skip if product has no recipe
+        if (!product.Recipe || product.Recipe.length === 0) {
+          continue;
+        }
+
+        const recipe = product.Recipe[0]; // Assuming one recipe per product
+        if (!recipe.MaterialRecipe || recipe.MaterialRecipe.length === 0) {
+          continue;
+        }
+
+        // Calculate cost for this order detail
+        for (const materialRecipe of recipe.MaterialRecipe) {
+          // Match size-specific recipes or default (sizeId = null)
+          if (
+            materialRecipe.sizeId !== null &&
+            materialRecipe.sizeId !== sizeId
+          ) {
+            continue; // Skip if size doesn't match
+          }
+
+          const material = materialRecipe.Material;
+          const consumePerUnit = materialRecipe.consume;
+          const totalConsume = consumePerUnit * quantity;
+          const avgPricePerUnit = getMaterialAveragePrice(material);
+
+          // Add to total COGS
+          totalCOGS += totalConsume * avgPricePerUnit;
+        }
+      }
+    }
+
+    return Math.round(totalCOGS * 100) / 100; // Round to 2 decimal places
   }
 
   private getTimeRanges() {

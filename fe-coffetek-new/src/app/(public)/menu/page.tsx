@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import MenuItemCard from "@/components/features/menu/MenuItemCard";
 import CategoryList from "@/components/features/menu/CategoryList";
 import SearchFilter from "@/components/features/menu/SearchFilter";

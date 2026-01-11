@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
@@ -36,6 +37,31 @@ export class RecipeController {
   @Get('/product/:id')
   findOneByProductId(@Param('id', ParseIntPipe) id: number) {
     return this.recipeService.findOneByProductId(id);
+  }
+
+  @Get('/cost/:productId')
+  async getProductCost(
+    @Param('productId', ParseIntPipe) productId: number,
+    @Query('sizeId') sizeId?: string,
+  ) {
+    const sizeIdNum = sizeId ? parseInt(sizeId) : undefined;
+    const cost = await this.recipeService.calculateProductCost(
+      productId,
+      sizeIdNum,
+    );
+    return { productId, sizeId: sizeIdNum, cost };
+  }
+
+  @Get('/cost/:productId/breakdown')
+  async getProductCostBreakdown(
+    @Param('productId', ParseIntPipe) productId: number,
+    @Query('sizeId') sizeId?: string,
+  ) {
+    const sizeIdNum = sizeId ? parseInt(sizeId) : undefined;
+    return this.recipeService.calculateProductCostWithBreakdown(
+      productId,
+      sizeIdNum,
+    );
   }
 
   @Put(':id')

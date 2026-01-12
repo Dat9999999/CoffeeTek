@@ -7,12 +7,28 @@ import { json } from 'express';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Connect to promotion emails queue
   app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.RMQ,
       options: {
         urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
         queue: 'promotion_emails_queue',
+        noAck: false, // Force manual acknowledgment for safety
+        prefetchCount: 1, // Process one job at a time to save CPU/RAM
+        queueOptions: { durable: true },
+      },
+    },
+  );
+
+  // Connect to order completion emails queue
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.RMQ,
+      options: {
+        urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+        queue: 'order_completion_emails_queue',
         noAck: false, // Force manual acknowledgment for safety
         prefetchCount: 1, // Process one job at a time to save CPU/RAM
         queueOptions: { durable: true },

@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/order/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -29,6 +30,8 @@ import { PaymentMethod } from 'src/common/enums/paymentMethod.enum';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { B2Service } from 'src/storage-file/b2.service';
 import { EventsGateway } from 'src/events/events.gateway';
+import { ClientProxy } from '@nestjs/microservices';
+import { MailService } from 'src/common/mail/mail.service';
 
 @Injectable()
 export class OrderService {
@@ -40,6 +43,8 @@ export class OrderService {
     private readonly invoiceService: InvoiceService,
     private readonly b2Service: B2Service,
     private readonly eventsGateway: EventsGateway,
+    @Inject('ORDER_EMAIL_SERVICE') private readonly emailClient: ClientProxy,
+    private readonly mailService: MailService,
   ) { }
 
   async getInvoice(orderId: number) {
@@ -716,6 +721,23 @@ export class OrderService {
       });
     }
 
+    // 🆕 Send email when order is COMPLETED
+    if (dto.status == OrderStatus.COMPLETED && order.customerPhone) {
+      const payload = {
+        orderId: order.id,
+        customerPhone: order.customerPhone,
+        finalPrice: order.final_price,
+      };
+      
+      this.logger.log(`📧 Emitting email event for completed order ${order.id}, customer ${order.customerPhone}`);
+      try {
+        this.emailClient.emit('order_completed_email', payload);
+        this.logger.log(`✅ Email event emitted successfully for order ${order.id}`);
+      } catch (error) {
+        this.logger.error(`❌ Failed to emit email event for order ${order.id}:`, error);
+      }
+    }
+
     this.logger.log(`📡 Triggering process order count event after updating order ID: ${dto.orderId} to status: ${dto.status}`);
     await this.broadcastProcessOrderCount();
 
@@ -1059,5 +1081,161 @@ export class OrderService {
     return await this.prisma.paymentDetail.create({
       data: paymentDetailData,
     });
+  }
+
+  /**
+   * Send order completion email to customer
+   * This method is called by RabbitMQ event handler
+   */
+  async sendOrderCompletionEmail(data: {
+    orderId: number;
+    customerPhone: string;
+    finalPrice: number;
+  }) {
+    try {
+      this.logger.log(
+        `📧 Processing order completion email for order ${data.orderId}, customer ${data.customerPhone}`,
+      );
+
+      // Get customer email from phone number
+      const customer = await this.prisma.user.findUnique({
+        where: { phone_number: data.customerPhone },
+        select: { email: true, first_name: true, last_name: true },
+      });
+
+      if (!customer || !customer.email) {
+        this.logger.warn(
+          `⚠️ Customer not found or no email for phone ${data.customerPhone}, skipping email`,
+        );
+        return;
+      }
+
+      // Get order details for email content
+      const order = await this.prisma.order.findUnique({
+        where: { id: data.orderId },
+        include: {
+          order_details: {
+            include: {
+              product: { select: { name: true } },
+              size: { select: { name: true } },
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        this.logger.warn(`⚠️ Order ${data.orderId} not found, skipping email`);
+        return;
+      }
+
+      // Format order items for email
+      const orderItems = order.order_details
+        .map((item) => {
+          const sizeText = item.size ? ` (${item.size.name})` : '';
+          return `${item.quantity}x ${item.product.name}${sizeText}`;
+        })
+        .join('<br>');
+
+      const customerName = `${customer.first_name} ${customer.last_name}`.trim() || 'Quý khách';
+
+      // Format price
+      const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(price);
+      };
+
+      // Send email
+      const emailResult = await this.mailService.sendMail(
+        customer.email,
+        `Đơn hàng #${data.orderId} đã hoàn thành - CoffeeTek`,
+        `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Order Completed - CoffeeTek</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding: 20px 0 30px 0;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                  <tr>
+                    <td align="center" style="padding: 40px 0 30px 0; background-color: #6F4E37;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">COFFEETEK</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px 30px 40px 30px;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="color: #333333; font-size: 24px; font-weight: bold; padding-bottom: 20px;">
+                            Chào ${customerName}, đơn hàng của bạn đã hoàn thành! ✅
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="color: #555555; font-size: 16px; line-height: 24px; padding-bottom: 30px;">
+                            Cảm ơn bạn đã đặt hàng tại CoffeeTek. Đơn hàng #${data.orderId} của bạn đã được hoàn thành và sẵn sàng để bạn thưởng thức!
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff8f0; border-radius: 5px; border-left: 4px solid #6F4E37;">
+                              <tr>
+                                <td style="padding: 20px;">
+                                  <p style="margin: 0 0 10px 0; color: #6F4E37; font-size: 15px; font-weight: bold;">📦 Chi tiết đơn hàng:</p>
+                                  <p style="margin: 0 0 15px 0; color: #333333; font-size: 14px; line-height: 22px;">
+                                    ${orderItems}
+                                  </p>
+                                  <p style="margin: 15px 0 0 0; color: #6F4E37; font-size: 16px; font-weight: bold;">
+                                    💰 Tổng tiền: ${formatPrice(data.finalPrice)}
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding-top: 30px; color: #555555; font-size: 14px; line-height: 22px;">
+                            Chúng tôi hy vọng bạn sẽ hài lòng với sản phẩm của chúng tôi. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi.
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding: 40px 0 0 0;">
+                            <a href="${process.env.FRONTEND_URL || 'https://coffeetek.store'}" style="background-color: #6F4E37; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">XEM LỊCH SỬ ĐƠN HÀNG</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 30px; background-color: #f9f9f9; color: #888888; font-size: 12px; text-align: center;">
+                      &copy; 2026 CoffeeTek Team. All rights reserved.<br>
+                      Bạn nhận được email này vì đã đặt hàng tại <a href="${process.env.FRONTEND_URL || 'https://coffeetek.store'}" style="color: #6F4E37;">coffeetek.store</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        `,
+      );
+
+      this.logger.log(
+        `✅ Order completion email sent successfully to ${customer.email} for order ${data.orderId}`,
+      );
+      this.logger.debug(`Email result: ${JSON.stringify(emailResult)}`);
+    } catch (error) {
+      this.logger.error(
+        `❌ Error sending order completion email for order ${data.orderId}:`,
+        error,
+      );
+      throw error; // Re-throw to trigger RabbitMQ nack
+    }
   }
 }

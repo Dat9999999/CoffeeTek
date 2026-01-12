@@ -10,6 +10,7 @@ import { GetOrderHistoryDto } from './dto/GetOrderHistory.dto';
 import { UpdateOrderStatusDTO } from './dto/UpdateOrderStatus.dto';
 import { PaymentDTO } from './dto/payment.dto';
 import { VerifyReturnUrl } from 'vnpay';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 
 @Controller('order')
 // @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -82,6 +83,28 @@ export class OrderController {
       dto.page,
       dto.size,
     );
+  }
+
+  @EventPattern('order_completed_email')
+  async handleOrderCompletedEmail(
+    @Payload() data: { orderId: number; customerPhone: string; finalPrice: number },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+
+    console.log(`📬 [OrderController] Received order_completed_email event for order ${data.orderId}`);
+
+    try {
+      await this.orderService.sendOrderCompletionEmail(data);
+      // Acknowledge the message
+      channel.ack(originalMsg);
+      console.log(`✅ [OrderController] Successfully processed email for order ${data.orderId}`);
+    } catch (error) {
+      console.error(`❌ [OrderController] Error processing email for order ${data.orderId}:`, error);
+      // Nack and requeue on error
+      channel.nack(originalMsg, false, true);
+    }
   }
 
 }

@@ -7,6 +7,8 @@ import { InvoiceModule } from 'src/invoice/invoice.module';
 import { B2Service } from 'src/storage-file/b2.service';
 import { StorageFileModule } from 'src/storage-file/storage-file.module';
 import { EventsModule } from 'src/events/events.module';
+import { MailModule } from 'src/common/mail/mail.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -24,6 +26,20 @@ import { EventsModule } from 'src/events/events.module';
     InvoiceModule,
     StorageFileModule,
     EventsModule,
+    MailModule,
+    ClientsModule.register([
+      {
+        name: 'ORDER_EMAIL_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'order_completion_emails_queue',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      },
+    ]),
   ],
   controllers: [OrderController],
   providers: [OrderService],

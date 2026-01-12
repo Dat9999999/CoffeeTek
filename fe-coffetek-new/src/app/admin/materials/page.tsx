@@ -9,6 +9,7 @@ import { useTableState } from "@/hooks/useTableState";
 import { CreateMaterialModal, ImportMaterialButton, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
 import { PageHeader } from "@/components/layouts";
 import { ExperimentOutlined } from "@ant-design/icons";
+import { formatPrice } from "@/utils/priceFormatter";
 
 export default function MaterialPage() {
     const { tableState, setTableState } = useTableState();
@@ -84,6 +85,20 @@ export default function MaterialPage() {
                     { title: "System quantity", dataIndex: "remain", sorter: false, render: (value: any) => (value ?? "N/A") },
                     { title: "Code", dataIndex: "code", sorter: true },
                     { title: "Unit", dataIndex: ["unit", "name"] },
+                    { 
+                        title: "Avg. Cost/Unit", 
+                        dataIndex: "averageCost", 
+                        sorter: true,
+                        render: (cost: number | undefined, record: Material) => {
+                            if (cost === undefined || cost === null) {
+                                return <span style={{ color: '#999' }}>N/A</span>;
+                            }
+                            if (cost === 0) {
+                                return <span style={{ color: '#999' }}>No import data</span>;
+                            }
+                            return <span style={{ fontWeight: 500 }}>{formatPrice(cost, { includeSymbol: true })}</span>;
+                        }
+                    },
                 ]}
                 onDetail={(record) => setDetailRecord(record)}
                 onEdit={(record) => setEditRecord(record)}

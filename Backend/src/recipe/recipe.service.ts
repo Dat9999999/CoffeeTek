@@ -66,21 +66,30 @@ export class RecipeService {
   }
 
   async findOne(id: number) {
-    return await this.prisma.recipe.findUnique({
+    const m = await this.prisma.material.findUnique({
       where: { id },
       include: {
-        Product: true,
-        MaterialRecipe: {
-          include: {
-            Material: {
-              include: {
-                Unit: true,
-              },
-            },
-          },
+        Unit: true,
+        materialRemain: {
+          orderBy: { date: 'desc' },
+          take: 1,
+        },
+        MaterialImportation: {
+          orderBy: { importDate: 'desc' },
         },
       },
     });
+  
+    if (!m) throw new NotFoundException(`Not found material id ${id}`);
+  
+    return {
+      id: m.id,
+      name: m.name,
+      code: m.code,
+      unit: m.Unit,
+      remain: m.materialRemain.length > 0 ? m.materialRemain[0].remain : null,
+      MaterialImportation: m.MaterialImportation, // ✅ Add this line
+    };
   }
 
   async findOneByProductId(productId: number) {

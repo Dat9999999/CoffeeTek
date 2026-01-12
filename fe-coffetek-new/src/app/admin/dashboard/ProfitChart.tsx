@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Card, Select, Spin, Typography, message } from "antd";
+import React, { useEffect, useState, useMemo } from "react";
+import { Card, Select, Spin, Typography, message, Row, Col, Statistic, theme } from "antd";
 import {
     ResponsiveContainer,
     ComposedChart,
@@ -13,8 +13,14 @@ import {
     Bar,
     Line,
 } from "recharts";
+import {
+    DollarCircleOutlined,
+    WalletOutlined,
+    RiseOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
-import { reportService } from "@/services/reportService"; // ✅ Use real service
+import { reportService } from "@/services/reportService";
+import { formatPrice } from "@/utils";
 const { Title } = Typography;
 
 interface MonthlyProfitData {
@@ -27,16 +33,24 @@ interface MonthlyProfitData {
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1; // 1-12
 
-// Custom Tooltip (English)
+// Custom Tooltip with better formatting
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+        const formatCurrency = (value: number) => {
+            return new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+                maximumFractionDigits: 0,
+            }).format(value);
+        };
+
         return (
             <div className="p-3 bg-white border rounded shadow-md">
                 <p className="font-bold">{`Month: ${label}`}</p>
                 {payload.map((entry: any) =>
                     entry.value !== null ? (
                         <p key={entry.name} style={{ color: entry.color }}>
-                            {`${entry.name}: ${entry.value.toLocaleString("en-US")}`}
+                            {`${entry.name}: ${formatCurrency(entry.value)}`}
                         </p>
                     ) : null
                 )}
@@ -50,9 +64,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const formatYAxis = (value: number) => `${(value / 1_000_000).toFixed(1)}M`;
 
 export const ProfitChart: React.FC = () => {
+    const { token } = theme.useToken();
     const [year, setYear] = useState<number>(currentYear);
     const [data, setData] = useState<MonthlyProfitData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+
+    // Calculate totals from data
+    const totals = useMemo(() => {
+        const totalRevenue = data.reduce((sum, d) => sum + (d.revenue || 0), 0);
+        const totalCost = data.reduce((sum, d) => sum + (d.cost || 0), 0);
+        const totalProfit = data.reduce((sum, d) => sum + (d.profit || 0), 0);
+        return { totalRevenue, totalCost, totalProfit };
+    }, [data]);
 
     const fetchData = async (selectedYear: number) => {
         try {
@@ -142,7 +165,48 @@ export const ProfitChart: React.FC = () => {
 
     return (
         <>
-            <Title level={4}>Revenue Overview</Title>
+            <Title level={4}>Profit & Cost Analysis</Title>
+
+            {/* Summary Statistics Cards */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title={`Total Revenue (${year})`}
+                            value={formatPrice(totals.totalRevenue, { includeSymbol: true })}
+                            valueStyle={{ color: token.colorSuccess }}
+                            prefix={<DollarCircleOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title={`Total Cost/COGS (${year})`}
+                            value={formatPrice(totals.totalCost, { includeSymbol: true })}
+                            valueStyle={{ color: token.colorWarning }}
+                            prefix={<WalletOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title={`Total Profit (${year})`}
+                            value={formatPrice(totals.totalProfit, { includeSymbol: true })}
+                            valueStyle={{ 
+                                color: totals.totalProfit >= 0 ? token.colorSuccess : token.colorError 
+                            }}
+                            prefix={<RiseOutlined />}
+                        />
+                        {totals.totalRevenue > 0 && (
+                            <Typography.Text type="secondary" style={{ fontSize: '0.9em', display: 'block', marginTop: 8 }}>
+                                Margin: {((totals.totalProfit / totals.totalRevenue) * 100).toFixed(1)}%
+                            </Typography.Text>
+                        )}
+                    </Card>
+                </Col>
+            </Row>
 
             <Card
                 title="Profit calculation based on revenue and material cost"

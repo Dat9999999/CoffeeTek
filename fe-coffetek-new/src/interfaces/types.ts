@@ -169,6 +169,7 @@ export interface Material {
     code: string;
     unit: Unit;
     Unit: Unit;
+    averageCost?: number; // Average cost per unit from MaterialImportation
 }
 
 export interface Contracting {

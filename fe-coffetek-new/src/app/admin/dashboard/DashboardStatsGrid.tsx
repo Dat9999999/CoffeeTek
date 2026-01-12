@@ -74,6 +74,22 @@ export function DashboardStatsGrid() {
     const revenueChangeColor = revenueChange >= 0 ? token.colorSuccess : token.colorError;
     const isRevenueUp = revenueChange >= 0;
 
+    // Calculate cost change
+    const costChange = stats.costYesterday === 0
+        ? (stats.costToday > 0 ? 100 : 0)
+        : ((stats.costToday - stats.costYesterday) / stats.costYesterday) * 100;
+
+    const costChangeColor = costChange <= 0 ? token.colorSuccess : token.colorError; // Lower cost is better
+    const isCostDown = costChange <= 0;
+
+    // Calculate profit change
+    const profitChange = stats.profitYesterday === 0
+        ? (stats.profitToday > 0 ? 100 : 0)
+        : ((stats.profitToday - stats.profitYesterday) / stats.profitYesterday) * 100;
+
+    const profitChangeColor = profitChange >= 0 ? token.colorSuccess : token.colorError;
+    const isProfitUp = profitChange >= 0;
+
     return (
         <div style={{ paddingBottom: '24px' }}>
             <Row gutter={[16, 16]}>
@@ -104,6 +120,44 @@ export function DashboardStatsGrid() {
                             prefix={<ShoppingCartOutlined />}
                             suffix="orders"
                         />
+                    </Card>
+                </Col>
+
+                {/* Today's Cost */}
+                <Col xs={24} sm={12} md={8} lg={6}>
+                    <Card>
+                        <Statistic
+                            title="Today's Cost (COGS)"
+                            value={formatPrice(stats.costToday, { includeSymbol: true })}
+                            valueStyle={{ color: token.colorWarning }}
+                            prefix={<WalletOutlined />}
+                        />
+                        <Typography.Text type="secondary" style={{ fontSize: '0.9em' }}>
+                            <span style={{ color: costChangeColor, marginRight: 4 }}>
+                                {isCostDown ? <ArrowDownOutlined /> : <ArrowUpOutlined />}
+                                {Math.abs(costChange).toFixed(1)}%
+                            </span>
+                            vs. yesterday ({formatPrice(stats.costYesterday, { includeSymbol: true })})
+                        </Typography.Text>
+                    </Card>
+                </Col>
+
+                {/* Today's Profit */}
+                <Col xs={24} sm={12} md={8} lg={6}>
+                    <Card>
+                        <Statistic
+                            title="Today's Profit"
+                            value={formatPrice(stats.profitToday, { includeSymbol: true })}
+                            valueStyle={{ color: stats.profitToday >= 0 ? token.colorSuccess : token.colorError }}
+                            prefix={<DollarCircleOutlined />}
+                        />
+                        <Typography.Text type="secondary" style={{ fontSize: '0.9em' }}>
+                            <span style={{ color: profitChangeColor, marginRight: 4 }}>
+                                {isProfitUp ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+                                {Math.abs(profitChange).toFixed(1)}%
+                            </span>
+                            vs. yesterday ({formatPrice(stats.profitYesterday, { includeSymbol: true })})
+                        </Typography.Text>
                     </Card>
                 </Col>
 

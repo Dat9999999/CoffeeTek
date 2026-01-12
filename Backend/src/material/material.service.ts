@@ -179,10 +179,12 @@ export class MaterialService {
       const exactMatch = await this.prisma.material.findFirst({
         where: { code: searchName },
         include: {
-          Unit: true, materialRemain: {
+          Unit: true, 
+          materialRemain: {
             orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
             take: 1, // chỉ lấy 1 bản ghi
           },
+          MaterialImportation: true,
         },
       });
 
@@ -205,6 +207,7 @@ export class MaterialService {
                 orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
                 take: 1, // chỉ lấy 1 bản ghi
               },
+              MaterialImportation: true,
             },
             orderBy: { [orderBy]: orderDirection },
           }),
@@ -225,6 +228,7 @@ export class MaterialService {
               orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
               take: 1, // chỉ lấy 1 bản ghi
             },
+            MaterialImportation: true,
           },
           orderBy: { [orderBy]: orderDirection },
         }),
@@ -232,12 +236,31 @@ export class MaterialService {
       ]);
     }
 
+    // Helper function to calculate average cost from importations
+    const calculateAverageCost = (importations: any[]): number => {
+      if (!importations || importations.length === 0) {
+        return 0;
+      }
+
+      const totalValue = importations.reduce(
+        (sum, imp) => sum + (imp.pricePerUnit * imp.importQuantity),
+        0,
+      );
+      const totalQuantity = importations.reduce(
+        (sum, imp) => sum + imp.importQuantity,
+        0,
+      );
+
+      return totalQuantity > 0 ? totalValue / totalQuantity : 0;
+    };
+
     const data = materials.map((m) => ({
       id: m.id,
       name: m.name,
       remain: m.materialRemain.length > 0 ? m.materialRemain[0].remain : null,
       code: m.code,
       unit: m.Unit,
+      averageCost: calculateAverageCost(m.MaterialImportation || []),
     }));
 
     const res: ResponseGetAllDto<any> = {
@@ -262,6 +285,9 @@ export class MaterialService {
         materialRemain: {
           orderBy: { date: 'desc' }, // lấy bản ghi mới nhất
           take: 1, // chỉ lấy 1 bản ghi
+        },
+        MaterialImportation: {
+          orderBy: { importDate: 'desc' },
         },
       },
     });

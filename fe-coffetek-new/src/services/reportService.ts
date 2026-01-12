@@ -16,6 +16,10 @@ export interface TopNRevenueDto extends ReportQueryDto {
 export interface DashboardStats {
     revenueToday: number;
     revenueYesterday: number;
+    costToday: number;
+    costYesterday: number;
+    profitToday: number;
+    profitYesterday: number;
     cancelledOrdersToday: number;
     totalOrdersToday: number;
     totalMembers: number;

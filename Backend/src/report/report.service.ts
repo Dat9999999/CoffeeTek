@@ -790,10 +790,20 @@ export class ReportsService {
       }),
     ]);
 
+    // Calculate COGS separately (not a Prisma query, so can't be in transaction)
+    const [costToday, costYesterday] = await Promise.all([
+      this.calculateActualCOGS(startOfToday, endOfToday),
+      this.calculateActualCOGS(startOfYesterday, endOfYesterday),
+    ]);
+
     // Format the return object
     const result = {
       revenueToday: revenueTodayAgg._sum.final_price || 0,
       revenueYesterday: revenueYesterdayAgg._sum.final_price || 0,
+      costToday: costToday || 0,
+      costYesterday: costYesterday || 0,
+      profitToday: (revenueTodayAgg._sum.final_price || 0) - (costToday || 0),
+      profitYesterday: (revenueYesterdayAgg._sum.final_price || 0) - (costYesterday || 0),
       cancelledOrdersToday: cancelledOrdersToday,
       totalOrdersToday: totalOrdersToday,
       totalMembers: totalMembers,

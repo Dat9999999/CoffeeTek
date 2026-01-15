@@ -1,3 +1,8 @@
+## Account for testing:
+manager account: 0987654321 
+password: 123456
+
+
 ## CoffeeTek Monorepo
 
 CoffeeTek is a full‑stack monorepo:

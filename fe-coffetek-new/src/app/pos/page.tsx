@@ -85,6 +85,11 @@ export default function PosPageTest() {
         setMounted(true);
     }, []);
     const handleAddPosItem = (product: Product) => {
+        // Prevent adding disabled products
+        if (product.isActive === false) {
+            message.warning(`${product.name} is currently unavailable`);
+            return;
+        }
         const newItem: ProductPosItem = {
             posItemId: uuidv4(),
             product: product,

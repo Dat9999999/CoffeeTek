@@ -40,6 +40,7 @@ export interface Product {
   price: number; // Giá base
   old_price?: number;
   is_multi_size: boolean;
+  isActive?: boolean;
   product_detail?: string;
   categoryId?: number; // Bổ sung trường này
   images: { image_name: string; sort_index: number }[];

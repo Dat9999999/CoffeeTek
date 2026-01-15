@@ -250,6 +250,7 @@ export class ProductsService {
         is_multi_size: product.is_multi_size,
         product_detail: product.product_detail,
         isTopping: product.isTopping,
+        isActive: product.isActive,
         price: product.price,
         category_id: product.category_id,
         category: product.category,
@@ -338,6 +339,7 @@ export class ProductsService {
             ? { category_id: { in: categoryIds } }
             : {},
         isTopping !== undefined ? { isTopping } : {},
+        // Show all products (active and inactive) - UI will handle disabled state
       ],
     };
 
@@ -461,6 +463,7 @@ export class ProductsService {
         is_multi_size: product.is_multi_size,
         product_detail: product.product_detail,
         isTopping: product.isTopping,
+        isActive: product.isActive,
         price: mainPrice, // Giá mới (hoặc giá cũ)
         old_price: mainPrice !== mainOldPrice ? mainOldPrice : undefined, // Chỉ gán nếu có KM
         category_id: product.category_id,
@@ -547,6 +550,7 @@ export class ProductsService {
       name: product.name,
       is_multi_size: product.is_multi_size,
       isTopping: product.isTopping,
+      isActive: product.isActive,
       product_detail: product.product_detail,
       price: product.price,
       category_id: product.category_id,

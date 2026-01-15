@@ -87,6 +87,10 @@ export default function KioskMenuPage() {
 
   // Mở Modal chọn món
   const handleProductClick = (product: Product) => {
+    // Don't open modal if product is disabled
+    if (product.isActive === false) {
+      return;
+    }
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
@@ -185,25 +189,52 @@ export default function KioskMenuPage() {
                   ? getImageUrl(product.images[0].image_name) 
                   : 'https://via.placeholder.com/300?text=No+Image';
                 
+                const isDisabled = product.isActive === false;
+                
                 return (
                   <div 
                     key={product.id}
                     onClick={() => handleProductClick(product)} // Mở Modal
-                    className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-orange-200 active:scale-95 transition-all duration-200 cursor-pointer group"
+                    className={`bg-white rounded-2xl p-4 shadow-sm border border-transparent transition-all duration-200 group relative ${
+                      isDisabled 
+                        ? 'opacity-60 cursor-not-allowed grayscale' 
+                        : 'hover:border-orange-200 active:scale-95 cursor-pointer'
+                    }`}
                   >
-                    <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 relative">
-                      <img src={imgUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-lg text-orange-600">
-                        <Plus size={24} strokeWidth={3} />
+                    {/* Disabled overlay badge */}
+                    {isDisabled && (
+                      <div className="absolute top-3 left-3 z-10 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                        Hết hàng
                       </div>
+                    )}
+                    
+                    <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 relative">
+                      <img 
+                        src={imgUrl} 
+                        alt={product.name} 
+                        className={`w-full h-full object-cover transition-transform duration-500 ${
+                          isDisabled ? '' : 'group-hover:scale-105'
+                        }`} 
+                      />
+                      {!isDisabled && (
+                        <div className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-lg text-orange-600">
+                          <Plus size={24} strokeWidth={3} />
+                        </div>
+                      )}
                     </div>
                     
-                    <h3 className="font-bold text-gray-800 text-lg line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                    <h3 className={`font-bold text-lg line-clamp-2 min-h-[3.5rem] ${
+                      isDisabled ? 'text-gray-400' : 'text-gray-800'
+                    }`}>
+                      {product.name}
+                    </h3>
                     
                     <div className="mt-2 flex flex-col items-start">
-                    <span className="text-orange-600 font-bold text-xl">
-                      {renderPrice(product)}
-                    </span>
+                      <span className={`font-bold text-xl ${
+                        isDisabled ? 'text-gray-400' : 'text-orange-600'
+                      }`}>
+                        {renderPrice(product)}
+                      </span>
                       {product.old_price && (
                         <span className="text-gray-400 text-sm line-through decoration-1">
                           {product.old_price.toLocaleString()}đ

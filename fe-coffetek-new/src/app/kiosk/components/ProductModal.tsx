@@ -60,6 +60,8 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart, ed
 
   if (!product || !isOpen) return null;
 
+  const isDisabled = product.isActive === false;
+
   // Tính giá
   const basePrice = product.is_multi_size && selectedSize ? selectedSize.price : product.price;
   const toppingsPrice = selectedToppings.reduce((sum, t) => sum + t.price, 0);
@@ -68,6 +70,10 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart, ed
 
   // Xử lý thêm vào giỏ hoặc cập nhật
   const handleAddToCart = () => {
+    // Prevent adding disabled products
+    if (isDisabled) {
+      return;
+    }
     onAddToCart({
       ...product,
       cartId: editingItem?.cartId || Math.random().toString(36).substr(2, 9),
@@ -253,11 +259,18 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart, ed
               {/* Nút Thêm vào giỏ hoặc Cập nhật */}
               <button 
                 onClick={handleAddToCart}
-                disabled={product.is_multi_size && !selectedSize}
+                disabled={isDisabled || (product.is_multi_size && !selectedSize)}
                 className="flex-1 bg-orange-600 text-white h-14 rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between px-6"
               >
-                <span>{editingItem ? 'Update' : 'Add to Cart'}</span>
-                <span>{totalPrice.toLocaleString()}đ</span>
+                <span>
+                  {isDisabled 
+                    ? 'Hết hàng' 
+                    : editingItem 
+                      ? 'Update' 
+                      : 'Add to Cart'
+                  }
+                </span>
+                {!isDisabled && <span>{totalPrice.toLocaleString()}đ</span>}
               </button>
             </div>
           </div>

@@ -66,4 +66,10 @@ export const productService = {
         const res = await api.get("/products/pos", { params });
         return res.data;
     },
+
+    // Toggle product active status
+    async toggleActiveStatus(id: number, isActive: boolean) {
+        const res = await api.patch(`/products?id=${id}&isActive=${isActive}`);
+        return res.data;
+    },
 };

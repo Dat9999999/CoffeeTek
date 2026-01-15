@@ -35,6 +35,11 @@ export function PosShell({ children }: { children: React.ReactNode }) {
 
         },
         {
+            key: "/pos/menu",
+            label: <Link href="/pos/menu">Menu</Link>,
+            style: { padding: 1 }
+        },
+        {
             key: "/pos/inventory",
             label: <Link href="/pos/inventory">Inventory</Link>,
         },

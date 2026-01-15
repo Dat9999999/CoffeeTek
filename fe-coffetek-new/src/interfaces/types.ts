@@ -278,6 +278,7 @@ export interface Product {
     product_detail?: string | null;
     price?: number | null;
     category_id?: number | null;
+    isActive?: boolean;
     isTopping?: boolean;
     sizes?: ProductSize[];
     optionGroups: ProductOptionValueGroup[];

@@ -129,6 +129,8 @@ export function ProductCardList({
                             // ✅ 2. Lấy % giảm giá đã định dạng (dạng chuỗi)
                             const formattedDiscount = formatDiscountPercent(bestDiscount);
 
+                            const isDisabled = product.isActive === false;
+
                             return (
                                 <Col
                                     key={product.id}
@@ -137,15 +139,19 @@ export function ProductCardList({
                                     md={6}
                                     lg={6}
                                     xl={6}
-                                    onClick={() => onSelect?.(product)}
+                                    onClick={() => !isDisabled && onSelect?.(product)}
                                     style={{ overflow: "hidden", padding: token.paddingSM }}
                                 >
                                     <div
-                                        className="relative border-2 border-solid rounded-lg shadow-md cursor-pointer overflow-hidden hover:shadow-xl hover:scale-[1.03] transition-all duration-200 ease-out"
+                                        className={`relative border-2 border-solid rounded-lg shadow-md overflow-hidden transition-all duration-200 ease-out ${
+                                            isDisabled
+                                                ? 'opacity-60 cursor-not-allowed grayscale'
+                                                : 'cursor-pointer hover:shadow-xl hover:scale-[1.03]'
+                                        }`}
                                         style={{
                                             aspectRatio: "1 / 1",
                                             padding: 0,
-                                            borderColor: token.colorBorderSecondary,
+                                            borderColor: isDisabled ? token.colorError : token.colorBorderSecondary,
                                             backgroundColor: token.colorBgContainer,
                                         }}
                                     >
@@ -159,6 +165,19 @@ export function ProductCardList({
                                             }}
                                             preview={false}
                                         />
+
+                                        {/* Disabled badge */}
+                                        {isDisabled && (
+                                            <div
+                                                className="absolute top-2 left-2 z-10 px-3 py-1 rounded-full text-white font-bold shadow-lg"
+                                                style={{
+                                                    backgroundColor: token.colorError,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                Hết hàng
+                                            </div>
+                                        )}
 
                                         {/* ✅ Giá góc trên phải */}
                                         <div
@@ -209,7 +228,9 @@ export function ProductCardList({
                                         <div
                                             className="absolute bottom-0 left-0 w-full"
                                             style={{
-                                                background: `linear-gradient(to top, ${token.colorPrimary}dd, ${token.colorPrimary}88, transparent)`,
+                                                background: isDisabled
+                                                    ? `linear-gradient(to top, ${token.colorTextSecondary}dd, ${token.colorTextSecondary}88, transparent)`
+                                                    : `linear-gradient(to top, ${token.colorPrimary}dd, ${token.colorPrimary}88, transparent)`,
                                                 padding: token.paddingMD,
                                             }}
                                         >

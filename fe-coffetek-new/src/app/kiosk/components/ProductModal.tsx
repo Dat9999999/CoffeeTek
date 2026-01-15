@@ -264,7 +264,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart, ed
               >
                 <span>
                   {isDisabled 
-                    ? 'Hết hàng' 
+                    ? 'Out of Stock' 
                     : editingItem 
                       ? 'Update' 
                       : 'Add to Cart'

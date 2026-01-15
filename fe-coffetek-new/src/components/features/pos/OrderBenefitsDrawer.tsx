@@ -132,7 +132,7 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
         <Drawer
             title={
                 <Text style={{ fontSize: 24, fontWeight: 700 }}>
-                    Thông tin đơn hàng
+                    Order Information
                 </Text>
             }
             open={open}
@@ -263,7 +263,7 @@ export const OrderBenefitsDrawer: React.FC<OrderBenefitsDrawerProps> = ({
                                                     Giảm: {voucher.discount_percentage}%
                                                 </Text>
                                                 <Text type="secondary" style={{ fontSize: 16 }}>
-                                                    Đơn tối thiểu: {voucher.minAmountOrder.toLocaleString()}đ
+                                                    Min Order: {voucher.minAmountOrder.toLocaleString()}đ
                                                 </Text>
                                             </div>
                                             {voucher.disabled ? (

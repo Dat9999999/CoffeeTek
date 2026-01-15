@@ -215,7 +215,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     level={3}
                 >
                     <ShoppingOutlined style={{ marginRight: 8, fontSize: 24 }} /> 
-                    Đơn hàng ({posItems?.length || 0})
+                    Order ({posItems?.length || 0})
                 </Typography.Title>
 
                 {/* Items List */}
@@ -229,7 +229,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description={
                                 <Text style={{ fontSize: 18, color: token.colorTextSecondary }}>
-                                    Chưa có sản phẩm
+                                    No products yet
                                 </Text>
                             }
                         />
@@ -268,7 +268,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                                 fontWeight: 600,
                             }}
                         >
-                            Thanh toán
+                            Payment
                         </Text>
                     </Divider>
 
@@ -276,7 +276,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                         paddingLeft: token.paddingSM,
                         paddingRight: token.paddingSM,
                     }}>
-                        <Text style={{ fontSize: 18, color: token.colorTextSecondary }}>Tạm tính</Text>
+                        <Text style={{ fontSize: 18, color: token.colorTextSecondary }}>Subtotal</Text>
                         <Text style={{ fontSize: 18, fontWeight: 600 }}>
                             {formatPrice(totalAmount, { includeSymbol: true })}
                         </Text>
@@ -286,7 +286,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                         paddingLeft: token.paddingSM,
                         paddingRight: token.paddingSM,
                     }}>
-                        <Text style={{ fontSize: 18, color: token.colorTextSecondary }}>Giảm giá</Text>
+                        <Text style={{ fontSize: 18, color: token.colorTextSecondary }}>Discount</Text>
                         <Space>
                             {selectedVoucher ? (
                                 <>
@@ -317,7 +317,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                         }}
                     >
                         <Text style={{ fontSize: 20, fontWeight: 700, color: token.colorPrimary }}>
-                            Tổng thanh toán
+                            Total Payment
                         </Text>
                         <Text style={{ fontSize: 24, fontWeight: 700, color: token.colorPrimary }}>
                             {formatPrice(totalPayment, { includeSymbol: true })}
@@ -332,7 +332,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                                 fontWeight: 600,
                             }}
                         >
-                            Phương thức
+                            Payment Method
                         </Text>
                     </Divider>
 
@@ -353,7 +353,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             }}
                         >
                             <DollarOutlined style={{ fontSize: 20, marginRight: 8 }} /> 
-                            Tiền mặt
+                            Cash
                         </Radio>
                         <Radio 
                             value="vnpay"
@@ -378,7 +378,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             borderRadius: token.borderRadiusLG,
                         }}>
                             <div className="flex justify-between items-center">
-                                <Text style={{ fontSize: 18, fontWeight: 600 }}>Tiền nhận</Text>
+                                <Text style={{ fontSize: 18, fontWeight: 600 }}>Cash Received</Text>
 
                                 <InputNumber<number>
                                     addonAfter={getPriceSymbol()}
@@ -390,7 +390,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                                         fontSize: 18,
                                         height: 52,
                                     }}
-                                    placeholder="Nhập số tiền"
+                                    placeholder="Enter amount"
                                     size="large"
                                     formatter={(value) =>
                                         formatPrice(value, {
@@ -409,7 +409,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             </div>
 
                             <div className="flex justify-between items-center py-2">
-                                <Text style={{ fontSize: 20, fontWeight: 700 }}>Tiền thừa</Text>
+                                <Text style={{ fontSize: 20, fontWeight: 700 }}>Change</Text>
                                 <Text style={{ 
                                     fontSize: 24, 
                                     fontWeight: 700, 
@@ -444,7 +444,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             marginTop: token.marginXS,
                         }}
                     >
-                        {posItems.length === 0 ? "Chưa có sản phẩm" : "Thanh toán"}
+                        {posItems.length === 0 ? "No products yet" : "Pay"}
                     </Button>
 
                     {/* ========== PHẦN THÔNG TIN ĐƠN HÀNG (XUỐNG DƯỚI) ========== */}
@@ -456,7 +456,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                                 fontWeight: 600,
                             }}
                         >
-                            Thông tin đơn hàng
+                            Order Information
                         </Text>
                     </Divider>
 
@@ -471,11 +471,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     >
                         <Flex align="center" gap={10}>
                             <UserOutlined style={{ fontSize: 20, color: token.colorPrimary }} />
-                            <Text style={{ fontSize: 18, fontWeight: 600 }}>Khách hàng</Text>
+                            <Text style={{ fontSize: 18, fontWeight: 600 }}>Customer</Text>
                         </Flex>
                         <Flex align="center" gap={8}>
                             <Text style={{ fontSize: 18, fontWeight: 600, color: selectedCustomer ? token.colorText : token.colorTextSecondary }}>
-                                {selectedCustomer?.last_name || "Chọn"}
+                                {selectedCustomer?.last_name || "Select"}
                             </Text>
                             <RightOutlined
                                 style={{
@@ -503,7 +503,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             <Text style={{ fontSize: 18, fontWeight: 600, color: selectedVoucher ? token.colorSuccess : token.colorTextSecondary }}>
                                 {selectedVoucher
                                     ? selectedVoucher.code
-                                    : "Chọn"}
+                                    : "Select"}
                             </Text>
                             <RightOutlined
                                 style={{
@@ -525,7 +525,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     >
                         <Flex align="center" gap={10}>
                             <FileTextOutlined style={{ fontSize: 20, color: token.colorPrimary }} />
-                            <Text style={{ fontSize: 18, fontWeight: 600 }}>Ghi chú</Text>
+                            <Text style={{ fontSize: 18, fontWeight: 600 }}>Note</Text>
                         </Flex>
                         <Flex align="center" gap={8} style={{ flex: '0 1 auto', overflow: 'hidden' }}>
                             <div style={{ maxWidth: '180px', overflow: 'hidden' }}>
@@ -540,7 +540,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                                         fontWeight: 500,
                                     }}
                                 >
-                                    {note || "Thêm"}
+                                    {note || "Add"}
                                 </Text>
                             </div>
                             <RightOutlined
@@ -569,14 +569,14 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             <Modal
                 title={
                     <Text style={{ fontSize: 24, fontWeight: 700 }}>
-                        Thêm ghi chú đơn hàng
+                        Add Order Note
                     </Text>
                 }
                 open={noteModalOpen}
                 onOk={handleSaveNote}
                 onCancel={() => setNoteModalOpen(false)}
-                okText="Lưu"
-                cancelText="Hủy"
+                okText="Save"
+                cancelText="Cancel"
                 width={700}
                 okButtonProps={{ size: "large", style: { fontSize: 18, height: 48 } }}
                 cancelButtonProps={{ size: "large", style: { fontSize: 18, height: 48 } }}
@@ -585,7 +585,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     rows={8}
                     value={tempNote}
                     onChange={(e) => setTempNote(e.target.value)}
-                    placeholder="Nhập ghi chú cho đơn hàng..."
+                    placeholder="Enter note for order..."
                     style={{ fontSize: 18 }}
                     size="large"
                 />

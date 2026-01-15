@@ -52,12 +52,12 @@ export default function EditProfileForm() {
   };
 
   if (!user)
-    return <p className="text-center text-gray-500 mt-4">Đang tải thông tin...</p>;
+    return <p className="text-center text-gray-500 mt-4">Loading information...</p>;
 
   return (
     <Card className="rounded-2xl shadow-md">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">Thông tin cá nhân</CardTitle>
+        <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
         <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
           {isEditing ? "Hủy" : "Chỉnh sửa"}
         </Button>

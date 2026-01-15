@@ -631,7 +631,7 @@ export const ProductPosItemModal = ({
                             }}
                             onClick={handleSave}
                         >
-                            {mode === "add" ? "Thêm vào đơn hàng" : "Cập nhật"}:{" "}
+                            {mode === "add" ? "Add to Order" : "Update"}:{" "}
                             {formatPrice(totalPrice * quantity, { includeSymbol: true })}
                         </Button>
                     </Col>

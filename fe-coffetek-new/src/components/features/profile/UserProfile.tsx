@@ -57,7 +57,7 @@ export default function UserProfile() {
   };
 
   if (loading) {
-    return <p className="text-gray-500">Đang tải thông tin...</p>;
+    return <p className="text-gray-500">Loading information...</p>;
   }
 
   if (error) {
@@ -69,7 +69,7 @@ export default function UserProfile() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 border-b pb-3">
         <h2 className="text-2xl font-semibold text-gray-800">
-          Thông tin cá nhân
+          Personal Information
         </h2>
         <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
           {isEditing ? "Hủy" : "Chỉnh sửa"}

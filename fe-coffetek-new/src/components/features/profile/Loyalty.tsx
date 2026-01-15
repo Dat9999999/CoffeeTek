@@ -143,7 +143,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
 
   const handleExchange = async (groupName: string, requirePoint: number) => {
     if (!user?.phone_number) {
-      toast.error("Vui lòng đăng nhập để đổi voucher");
+      toast.error("Please login to redeem voucher");
       return;
     }
 
@@ -162,7 +162,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
     try {
       setExchangingGroup(groupName);
       await voucherService.exchangeByGroup(groupName, user.phone_number);
-      toast.success("Đổi voucher thành công!");
+      toast.success("Voucher redeemed successfully!");
       
       // Refresh data
       await Promise.all([fetchMyVouchers(), fetchAvailableVouchers()]);
@@ -264,10 +264,10 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                 <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
                   <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                    Hiện không có voucher nào
+                    No vouchers available
                   </h4>
                   <p className="text-gray-500">
-                    Vui lòng quay lại sau để xem các voucher mới
+                    Please check back later for new vouchers
                   </p>
                 </div>
               ) : (
@@ -291,7 +291,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                                 {group.discount_percentage}% OFF
                               </Badge>
                               <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
-                                Còn {group.count} voucher
+                                {group.count} vouchers left
                               </Badge>
                             </div>
                           </div>
@@ -301,13 +301,13 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         {/* Discount Info */}
                         <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 mb-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Giảm giá:</span>
+                            <span className="text-sm text-gray-600">Discount:</span>
                             <span className="font-bold text-orange-600">
                               {group.discount_percentage}%
                             </span>
                           </div>
                           <div className="flex items-center justify-between mt-1">
-                            <span className="text-sm text-gray-600">Đơn tối thiểu:</span>
+                            <span className="text-sm text-gray-600">Min Order:</span>
                             <span className="font-semibold text-gray-900">
                               {group.minAmountOrder.toLocaleString("vi-VN")}₫
                             </span>
@@ -327,7 +327,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         {group.userHasThisType ? (
                           <div className="w-full py-3 rounded-lg bg-green-100 text-green-700 font-semibold flex items-center justify-center gap-2">
                             <CheckCircle2 className="w-4 h-4" />
-                            Đã có voucher này
+                            You have this voucher
                           </div>
                         ) : (
                           <>
@@ -347,24 +347,24 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                               {exchangingGroup === group.group_name ? (
                                 <>
                                   <Loader2 className="w-4 h-4 animate-spin" />
-                                  Đang đổi...
+                                  Exchanging...
                                 </>
                               ) : (
                                 <>
                                   <Coins className="w-4 h-4" />
-                                  Đổi {group.requirePoint.toLocaleString("vi-VN")} điểm
+                                  Redeem {group.requirePoint.toLocaleString("vi-VN")} points
                                 </>
                               )}
                             </button>
 
                             {!canAfford(group.requirePoint) && (
                               <p className="text-xs text-red-500 text-center mt-2">
-                                Cần thêm {group.requirePoint - points} điểm
+                                Need {group.requirePoint - points} more points
                               </p>
                             )}
                             {group.count === 0 && (
                               <p className="text-xs text-red-500 text-center mt-2">
-                                Đã hết voucher
+                                Out of vouchers
                               </p>
                             )}
                           </>
@@ -387,10 +387,10 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                 <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
                   <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                    Bạn chưa có voucher nào
+                    You don't have any vouchers yet
                   </h4>
                   <p className="text-gray-500">
-                    Đổi điểm để nhận voucher giảm giá ngay!
+                    Redeem points to get discount vouchers now!
                   </p>
                 </div>
               ) : (
@@ -418,7 +418,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
 
                         {/* Voucher Code */}
                         <div className="bg-white rounded-lg p-3 mb-3 border-2 border-dashed border-green-300">
-                          <div className="text-xs text-gray-600 mb-1">Mã voucher:</div>
+                          <div className="text-xs text-gray-600 mb-1">Voucher Code:</div>
                           <div className="font-mono font-bold text-lg text-green-700 text-center">
                             {voucher.code}
                           </div>
@@ -427,13 +427,13 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         {/* Discount Info */}
                         <div className="bg-white/50 rounded-lg p-3 mb-3">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-600">Giảm giá:</span>
+                            <span className="text-sm text-gray-600">Discount:</span>
                             <span className="font-bold text-green-600">
                               {voucher.discount_percentage}%
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Đơn tối thiểu:</span>
+                            <span className="text-sm text-gray-600">Min Order:</span>
                             <span className="font-semibold text-gray-900">
                               {voucher.minAmountOrder.toLocaleString("vi-VN")}₫
                             </span>
@@ -444,7 +444,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         <div className="flex items-center gap-2 text-xs text-gray-600">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            Có hiệu lực đến: {new Date(voucher.valid_to).toLocaleDateString("vi-VN")}
+                            Valid until: {new Date(voucher.valid_to).toLocaleDateString("vi-VN")}
                           </span>
                         </div>
                       </div>

@@ -97,7 +97,7 @@ export const ProductSearchSelector = ({
             showSearch
             labelInValue
             value={null}
-            placeholder="Tìm kiếm sản phẩm..."
+            placeholder="Search products..."
             style={{
                 fontSize: 18,
                 ...style
@@ -119,7 +119,7 @@ export const ProductSearchSelector = ({
                 fetching ? (
                     <Spin style={{ margin: "8px auto", display: "block" }} size="small" />
                 ) : searchTextRef.current.trim() && !fetching && isEmptyRef.current ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không tìm thấy" />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Not found" />
                 ) : null
             }
             suffixIcon={<SearchOutlined style={{ fontSize: 20 }} />}

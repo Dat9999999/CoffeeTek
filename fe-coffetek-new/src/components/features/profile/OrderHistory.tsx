@@ -69,28 +69,28 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
         };
       case "paid":
         return {
-          label: "Đã thanh toán",
+          label: "Paid",
           icon: CheckCircle2,
           color: "bg-blue-100 text-blue-700 border-blue-300",
           iconColor: "text-blue-600",
         };
       case "pending":
         return {
-          label: "Đang chờ",
+          label: "Pending",
           icon: Clock,
           color: "bg-yellow-100 text-yellow-700 border-yellow-300",
           iconColor: "text-yellow-600",
         };
       case "shipping":
         return {
-          label: "Đang giao",
+          label: "Shipping",
           icon: Truck,
           color: "bg-purple-100 text-purple-700 border-purple-300",
           iconColor: "text-purple-600",
         };
       case "canceled":
         return {
-          label: "Đã hủy",
+          label: "Canceled",
           icon: XCircle,
           color: "bg-red-100 text-red-700 border-red-300",
           iconColor: "text-red-600",
@@ -154,10 +154,10 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
       <div className="text-center py-12">
         <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-gray-700 mb-2">
-          Chưa có đơn hàng nào
+          No orders yet
         </h3>
         <p className="text-gray-500">
-          Bạn chưa có đơn hàng nào. Hãy đặt hàng để xem lịch sử ở đây!
+          You don't have any orders yet. Place an order to see your history here!
         </p>
       </div>
     );
@@ -167,10 +167,10 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
     <div className="space-y-4">
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          Lịch sử mua hàng
+          Order History
         </h3>
         <p className="text-gray-600">
-          Xem chi tiết các đơn hàng bạn đã đặt
+          View details of your orders
         </p>
       </div>
 
@@ -231,12 +231,12 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                       {isExpanded ? (
                         <>
                           <ChevronUp className="w-4 h-4" />
-                          <span>Thu gọn</span>
+                          <span>Collapse</span>
                         </>
                       ) : (
                         <>
                           <ChevronDown className="w-4 h-4" />
-                          <span>Xem chi tiết</span>
+                          <span>View details</span>
                         </>
                       )}
                     </button>
@@ -257,7 +257,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                     {isLoading ? (
                       <div className="p-8 flex items-center justify-center">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
-                        <span className="ml-2 text-gray-600">Đang tải chi tiết...</span>
+                        <span className="ml-2 text-gray-600">Loading details...</span>
                       </div>
                     ) : (
                       <div className="p-6 space-y-4">
@@ -265,7 +265,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                         {fullOrder.order_details && fullOrder.order_details.length > 0 ? (
                           <div className="space-y-3">
                             <h4 className="font-semibold text-gray-800 mb-3">
-                              Sản phẩm đã đặt
+                              Ordered Products
                             </h4>
                             {fullOrder.order_details.map((detail: any) => {
                               const productImage = getProductImage(detail.product);
@@ -291,7 +291,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                                     {/* Product Info */}
                                     <div className="flex-1 min-w-0">
                                       <h5 className="font-semibold text-gray-900 mb-1">
-                                        {detail.product_name || detail.product?.name || "Sản phẩm"}
+                                        {detail.product_name || detail.product?.name || "Product"}
                                       </h5>
 
                                       {/* Size */}
@@ -338,7 +338,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                                       {/* Quantity and Price */}
                                       <div className="flex items-center justify-between mt-2">
                                         <span className="text-sm text-gray-600">
-                                          Số lượng: {detail.quantity}
+                                          Quantity: {detail.quantity}
                                         </span>
                                         <span className="font-semibold text-gray-900">
                                           {(detail.unit_price * detail.quantity).toLocaleString("vi-VN")}₫
@@ -352,7 +352,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                           </div>
                         ) : (
                           <p className="text-gray-500 text-center py-4">
-                            Không có thông tin chi tiết đơn hàng
+                            No order details available
                           </p>
                         )}
 
@@ -360,21 +360,21 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                         <div className="bg-white rounded-lg p-4 border border-gray-200">
                           <div className="space-y-2">
                             <div className="flex justify-between text-gray-700">
-                              <span>Tổng tiền sản phẩm:</span>
+                              <span>Total Product Amount:</span>
                               <span>
                                 {fullOrder.original_price?.toLocaleString("vi-VN") || orderTotal.toLocaleString("vi-VN")}₫
                               </span>
                             </div>
                             {fullOrder.original_price && fullOrder.final_price && fullOrder.original_price !== fullOrder.final_price && (
                               <div className="flex justify-between text-green-600">
-                                <span>Giảm giá:</span>
+                                <span>Discount:</span>
                                 <span>
                                   -{(fullOrder.original_price - fullOrder.final_price).toLocaleString("vi-VN")}₫
                                 </span>
                               </div>
                             )}
                             <div className="pt-2 border-t border-gray-200 flex justify-between text-lg font-bold text-gray-900">
-                              <span>Tổng thanh toán:</span>
+                              <span>Total Payment:</span>
                               <span className="text-orange-600">
                                 {orderTotal.toLocaleString("vi-VN")}₫
                               </span>
@@ -386,7 +386,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                         {fullOrder.note && (
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <p className="text-sm text-blue-800">
-                              <span className="font-medium">Ghi chú:</span> {fullOrder.note}
+                              <span className="font-medium">Note:</span> {fullOrder.note}
                             </p>
                           </div>
                         )}
@@ -402,12 +402,12 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                               {loadingInvoiceId === fullOrder.id ? (
                                 <>
                                   <Loader2 className="w-4 h-4 animate-spin" />
-                                  Đang tải...
+                                  Loading...
                                 </>
                               ) : (
                                 <>
                                   <ExternalLink className="w-4 h-4" />
-                                  Xem hóa đơn
+                                  View Invoice
                                 </>
                               )}
                             </button>

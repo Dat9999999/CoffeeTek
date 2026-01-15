@@ -18,8 +18,8 @@ export default function ProfileLayout({
   loyalty,
 }: ProfileLayoutProps) {
   const tabs = [
-    { id: "profile", label: "Thông tin cá nhân" },
-    { id: "orders", label: "Lịch sử đơn hàng" },
+    { id: "profile", label: "Personal Information" },
+    { id: "orders", label: "Order History" },
     { id: "loyalty", label: "Loyalty Points" },
   ];
 
@@ -31,7 +31,7 @@ export default function ProfileLayout({
         {/* Sidebar */}
         <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Tài khoản của bạn
+            Your Account
           </h2>
           <nav className="flex lg:flex-col gap-2">
             {tabs.map((t) => (

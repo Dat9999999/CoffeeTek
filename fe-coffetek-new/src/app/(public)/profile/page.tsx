@@ -50,13 +50,13 @@ export default function ProfilePage() {
           {/* SIDEBAR NAVIGATION */}
           <aside className="bg-gray-50 lg:w-64 border-b lg:border-b-0 lg:border-r p-6">
             <h2 className="text-2xl font-semibold text-gray-800">
-              Tài khoản của tôi
+              My Account
             </h2>
             <nav className="mt-6 flex flex-row lg:flex-col gap-2 overflow-x-auto">
               {[
-                { id: "profile", label: "Thông tin cá nhân" },
-                { id: "orders", label: "Lịch sử mua hàng" },
-                { id: "loyalty", label: "Điểm tích lũy" },
+                { id: "profile", label: "Personal Information" },
+                { id: "orders", label: "Order History" },
+                { id: "loyalty", label: "Loyalty Points" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -82,7 +82,7 @@ export default function ProfilePage() {
                 {/* INFO */}
                 <div className="space-y-5">
                   <h3 className="text-xl font-semibold text-gray-800">
-                    Thông tin cá nhân
+                    Personal Information
                   </h3>
                   {user ? (
                     <div className="space-y-3">
@@ -102,34 +102,34 @@ export default function ProfilePage() {
                       </div>
                       <div className="text-base text-gray-700 space-y-5">
                         <p>
-                          <span className="font-medium">Ngày sinh:</span>{" "}
+                          <span className="font-medium">Date of Birth:</span>{" "}
                           {user.birthday
                             ? new Date(user.birthday).toLocaleDateString("vi-VN")
-                            : "Chưa cập nhật"}
+                            : "Not updated"}
                         </p>
                         <p>
-                          <span className="font-medium">Giới tính:</span>{" "}
-                          {user.sex || "Chưa cập nhật"}
+                          <span className="font-medium">Gender:</span>{" "}
+                          {user.sex || "Not updated"}
                         </p>
                         <p>
-                          <span className="font-medium">Địa chỉ:</span>{" "}
-                          {user.address || "Chưa có"}
+                          <span className="font-medium">Address:</span>{" "}
+                          {user.address || "Not provided"}
                         </p>
                         <p>
-                          <span className="font-medium">Vai trò:</span>{" "}
+                          <span className="font-medium">Roles:</span>{" "}
                           {user.roles?.join(", ")}
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <p>Không tìm thấy thông tin người dùng.</p>
+                    <p>User information not found.</p>
                   )}
                 </div>
 
                 {/* FORM CHỈNH SỬA */}
                 <div className="border-l pl-6">
                   <h3 className="text-xl font-semibold mb-4">
-                    Cập nhật thông tin
+                    Update Information
                   </h3>
                   <EditProfileForm />
                   </div>

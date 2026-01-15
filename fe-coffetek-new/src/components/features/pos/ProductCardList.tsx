@@ -175,7 +175,7 @@ export function ProductCardList({
                                                     fontSize: 12,
                                                 }}
                                             >
-                                                Hết hàng
+                                                Out of Stock
                                             </div>
                                         )}
 
@@ -262,7 +262,7 @@ export function ProductCardList({
                     <Empty 
                         description={
                             <span style={{ fontSize: 16, color: token.colorTextSecondary }}>
-                                Không có dữ liệu
+                                No data available
                             </span>
                         } 
                         style={{ marginTop: 50 }} 

@@ -115,7 +115,7 @@ export default function KioskMenuPage() {
     if (!product.is_multi_size) {
       return product.price 
         ? `${product.price.toLocaleString()}đ` 
-        : 'Liên hệ';
+        : 'Contact us';
     }
 
     // 2. Nếu có nhiều size -> Tìm Min và Max
@@ -134,7 +134,7 @@ export default function KioskMenuPage() {
       return `${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}đ`;
     }
 
-    return 'Chưa có giá';
+    return 'Price not available';
   };
 
 
@@ -204,7 +204,7 @@ export default function KioskMenuPage() {
                     {/* Disabled overlay badge */}
                     {isDisabled && (
                       <div className="absolute top-3 left-3 z-10 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        Hết hàng
+                        Out of Stock
                       </div>
                     )}
                     

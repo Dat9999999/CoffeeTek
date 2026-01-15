@@ -94,7 +94,7 @@ export default function CartPage() {
 
   // Clear all items
   const clearCart = () => {
-    if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
+    if (confirm('Are you sure you want to clear all items from cart?')) {
       setCart([]);
       localStorage.removeItem('kiosk_cart');
     }
@@ -168,10 +168,10 @@ export default function CartPage() {
           <div className="p-2 bg-gray-100 rounded-full">
             <ChevronLeft size={24} />
           </div>
-          <span>Tiếp tục mua hàng</span>
+          <span>Continue Shopping</span>
         </button>
         <div className="font-bold text-xl text-orange-600">
-          Giỏ hàng
+          Cart
         </div>
         <div className="w-24" /> {/* Spacer for centering */}
       </header>
@@ -184,14 +184,14 @@ export default function CartPage() {
               <ShoppingCart className="text-gray-400" size={64} />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h2>
-              <p className="text-gray-500 text-lg">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Empty Cart</h2>
+              <p className="text-gray-500 text-lg">Add products to your cart</p>
             </div>
             <button
               onClick={goToMenu}
               className="bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-500 active:scale-95 transition-all"
             >
-              Xem thực đơn
+              View Menu
             </button>
           </div>
         ) : (
@@ -258,7 +258,7 @@ export default function CartPage() {
                       {/* Options */}
                       {Object.keys(item.selectedOptions).length > 0 && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600 mb-1">Tùy chọn:</p>
+                          <p className="text-sm text-gray-600 mb-1">Options:</p>
                           <div className="flex flex-wrap gap-2">
                             {Object.entries(item.selectedOptions).map(([groupId, valueId]) => {
                               const group = item.optionGroups.find(g => g.id === Number(groupId));
@@ -279,7 +279,7 @@ export default function CartPage() {
                       {/* Note */}
                       {item.note && (
                         <div className="mb-2">
-                          <p className="text-xs text-gray-500 italic">Ghi chú: {item.note}</p>
+                          <p className="text-xs text-gray-500 italic">Note: {item.note}</p>
                         </div>
                       )}
 
@@ -312,13 +312,13 @@ export default function CartPage() {
                             className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-medium hover:bg-orange-100 transition-colors"
                           >
                             <Edit2 size={18} />
-                            Sửa
+                            Edit
                           </button>
                         </div>
 
                         {/* Total Price */}
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">Thành tiền</p>
+                          <p className="text-sm text-gray-500">Total</p>
                           <p className="text-2xl font-bold text-orange-600">
                             {item.totalPrice.toLocaleString('vi-VN')}₫
                           </p>
@@ -338,7 +338,7 @@ export default function CartPage() {
                   className="flex items-center gap-2 px-6 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors"
                 >
                   <Trash2 size={20} />
-                  Xóa tất cả
+                  Clear All
                 </button>
               </div>
             )}
@@ -352,11 +352,11 @@ export default function CartPage() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="text-gray-600 text-sm">Tổng số lượng</p>
-                <p className="text-2xl font-bold text-gray-900">{totalItems} sản phẩm</p>
+                <p className="text-gray-600 text-sm">Total Quantity</p>
+                <p className="text-2xl font-bold text-gray-900">{totalItems} items</p>
               </div>
               <div className="text-right">
-                <p className="text-gray-600 text-sm">Tổng thanh toán</p>
+                <p className="text-gray-600 text-sm">Total Payment</p>
                 <p className="text-3xl font-bold text-orange-600">
                   {totalAmount.toLocaleString('vi-VN')}₫
                 </p>
@@ -366,7 +366,7 @@ export default function CartPage() {
               onClick={() => goToPayment()}
               className="w-full h-16 bg-orange-600 text-white rounded-2xl font-bold text-xl hover:bg-orange-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
             >
-              Thanh toán
+              Pay
             </button>
           </div>
         </footer>

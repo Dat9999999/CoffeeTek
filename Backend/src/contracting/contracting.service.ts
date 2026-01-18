@@ -523,6 +523,121 @@ export class ContractingService {
   }
 
   /**
+   * Calculate and store material consumption for a specific completed order
+   * This is called via RabbitMQ background job
+   */
+  async calculateAndStoreConsumption(orderId: number) {
+    // Get the order with all necessary relations
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        order_details: {
+          include: {
+            product: {
+              include: {
+                Recipe: {
+                  include: {
+                    MaterialRecipe: {
+                      include: {
+                        Material: true,
+                        Size: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            size: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    const orderDate = new Date(order.created_at);
+    orderDate.setUTCHours(0, 0, 0, 0);
+
+    // Calculate consumption for each order detail
+    const consumptionRecords: Array<{
+      materialId: number;
+      consumed: number;
+      orderId: number;
+      orderDetailId: number;
+      date: Date;
+    }> = [];
+
+    for (const orderDetail of order.order_details) {
+      const product = orderDetail.product;
+      const quantity = orderDetail.quantity;
+      const sizeId = orderDetail.size?.id ?? null;
+
+      if (!product.Recipe || product.Recipe.length === 0) {
+        continue;
+      }
+
+      // Get material recipes for this product
+      const recipe = product.Recipe[0];
+      if (!recipe.MaterialRecipe || recipe.MaterialRecipe.length === 0) {
+        continue;
+      }
+
+      // Calculate consumption for each material in the recipe
+      for (const materialRecipe of recipe.MaterialRecipe) {
+        // Check if this material recipe matches the size (or is default)
+        if (
+          materialRecipe.sizeId === null ||
+          materialRecipe.sizeId === sizeId
+        ) {
+          const materialId = materialRecipe.materialId;
+          const consumePerUnit = materialRecipe.consume;
+          const totalConsume = consumePerUnit * quantity;
+
+          consumptionRecords.push({
+            materialId,
+            consumed: totalConsume,
+            orderId,
+            orderDetailId: orderDetail.id,
+            date: orderDate,
+          });
+        }
+      }
+    }
+
+    // Store consumption records in batch
+    if (consumptionRecords.length > 0) {
+      try {
+        await this.prisma.materialConsumption.createMany({
+          data: consumptionRecords,
+        });
+      } catch (error: any) {
+        // Handle case where table doesn't exist yet (migration not applied)
+        if (error.code === 'P2021' && error.meta?.table === 'public.material_consumptions') {
+          console.warn(
+            `⚠️ [ContractingService] MaterialConsumption table does not exist. ` +
+            `Migration may not be applied yet. Skipping consumption storage for order ${orderId}.`
+          );
+          // Return early without failing - the feature will work once migration is applied
+          return {
+            orderId,
+            recordsCreated: 0,
+            warning: 'Table does not exist - migration required',
+          };
+        }
+        // Re-throw other errors
+        throw error;
+      }
+    }
+
+    return {
+      orderId,
+      recordsCreated: consumptionRecords.length,
+    };
+  }
+
+  /**
    * Get contracting records for a specific date grouped by material
    */
   async getByDate(date: Date) {
@@ -559,6 +674,101 @@ export class ContractingService {
     });
 
     return contractings;
+  }
+
+  /**
+   * Get stored material consumption records by date
+   * This shows the consumption records that were calculated and stored by the background job
+   */
+  async getConsumptionRecordsByDate(date: Date) {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+    const nextDay = new Date(normalizedDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    // Get all consumption records for this date
+    const records = await this.prisma.materialConsumption.findMany({
+      where: {
+        date: {
+          gte: normalizedDate,
+          lt: nextDay,
+        },
+      },
+      include: {
+        Material: {
+          include: {
+            Unit: true,
+          },
+        },
+      },
+      orderBy: {
+        Material: {
+          name: 'asc',
+        },
+      },
+    });
+
+    // Group by materialId and sum consumed amounts
+    const groupedByMaterial = records.reduce((acc, record) => {
+      const materialId = record.materialId;
+      if (!acc[materialId]) {
+        acc[materialId] = {
+          materialId,
+          materialName: record.Material.name,
+          materialCode: record.Material.code,
+          unit: record.Material.Unit?.symbol || record.Material.Unit?.name || '',
+          totalConsumed: 0,
+          recordCount: 0,
+          orderIds: new Set<number>(),
+          records: [],
+        };
+      }
+      acc[materialId].totalConsumed += record.consumed;
+      acc[materialId].recordCount += 1;
+      acc[materialId].orderIds.add(record.orderId);
+      acc[materialId].records.push({
+        id: record.id,
+        consumed: record.consumed,
+        orderId: record.orderId,
+        orderDetailId: record.orderDetailId,
+        date: record.date,
+      });
+      return acc;
+    }, {} as Record<number, {
+      materialId: number;
+      materialName: string;
+      materialCode: string;
+      unit: string;
+      totalConsumed: number;
+      recordCount: number;
+      orderIds: Set<number>;
+      records: Array<{
+        id: number;
+        consumed: number;
+        orderId: number;
+        orderDetailId: number | null;
+        date: Date;
+      }>;
+    }>);
+
+    // Convert to array and format orderIds
+    const summary = Object.values(groupedByMaterial).map(item => ({
+      materialId: item.materialId,
+      materialName: item.materialName,
+      materialCode: item.materialCode,
+      unit: item.unit,
+      totalConsumed: item.totalConsumed,
+      recordCount: item.recordCount,
+      orderCount: item.orderIds.size,
+      orderIds: Array.from(item.orderIds),
+      records: item.records,
+    }));
+
+    return {
+      date: normalizedDate.toISOString().split('T')[0],
+      totalRecords: records.length,
+      materials: summary,
+    };
   }
 }
 

@@ -36,7 +36,7 @@ model User {
   watseLog            watseLog[]
   Notifications       Notification[]
   contractings        Contracting[]
-  FaceID              FaceID?             
+  FaceID              FaceID?
 
   @@map("users")
 }
@@ -204,7 +204,7 @@ model Order {
   Customer      User?   @relation("CustomerOrders", fields: [customerPhone], references: [phone_number])
 
   staffId         Int
-  Staff           User?           @relation("StaffOrders", fields: [staffId], references: [id])
+  Staff           User?          @relation("StaffOrders", fields: [staffId], references: [id])
   paymentDetailId Int?           @unique
   PaymentDetail   PaymentDetail? @relation("OrderPaymentDetail", fields: [paymentDetailId], references: [id])
   invoiceUrl      String?
@@ -313,6 +313,7 @@ model Material {
   materialRemain      materialRemain[]
   watseLog            watseLog[]
   contractings        Contracting[]
+  MaterialConsumption MaterialConsumption[]
 
   @@map("materials")
 }
@@ -340,6 +341,20 @@ model materialRemain {
   date       DateTime @default(now())
 
   @@unique([date, materialId])
+}
+
+model MaterialConsumption {
+  id            Int      @id @default(autoincrement())
+  materialId    Int
+  Material      Material @relation(fields: [materialId], references: [id])
+  consumed      Float
+  orderId       Int
+  orderDetailId Int?
+  date          DateTime @default(now())
+
+  @@index([materialId, date])
+  @@index([orderId])
+  @@map("material_consumptions")
 }
 
 model watseLog {
@@ -458,16 +473,17 @@ model Contracting {
 
   @@map("contractings")
 }
+
 model FaceID {
-  id                Int      @id @default(autoincrement())
-  faceId            String   @unique // AWS Rekognition Face ID
-  collectionId      String   @default("coffetek-faces")
-  externalImageId   String   // User's phone number
-  registeredAt      DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
-  userId            Int      @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id              Int      @id @default(autoincrement())
+  faceId          String   @unique // AWS Rekognition Face ID
+  collectionId    String   @default("coffetek-faces")
+  externalImageId String // User's phone number
+  registeredAt    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("face_ids")
 }

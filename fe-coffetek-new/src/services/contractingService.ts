@@ -104,5 +104,33 @@ export const contractingService = {
     async delete(id: number): Promise<void> {
         await api.delete(`/contracting/${id}`);
     },
+
+    async getConsumptionRecords(date: Date | string): Promise<{
+        date: string;
+        totalRecords: number;
+        materials: Array<{
+            materialId: number;
+            materialName: string;
+            materialCode: string;
+            unit: string;
+            totalConsumed: number;
+            recordCount: number;
+            orderCount: number;
+            orderIds: number[];
+            records: Array<{
+                id: number;
+                consumed: number;
+                orderId: number;
+                orderDetailId: number | null;
+                date: string;
+            }>;
+        }>;
+    }> {
+        const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+        const res = await api.get(`/contracting/consumption-records`, {
+            params: { date: dateStr }
+        });
+        return res.data;
+    },
 };
 

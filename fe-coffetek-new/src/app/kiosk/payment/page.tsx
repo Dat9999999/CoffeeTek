@@ -230,6 +230,11 @@ export default function PaymentPage() {
       const paymentUrl = payRes.data; // API trả về string URL
       if (paymentUrl && typeof paymentUrl === 'string' && paymentUrl.startsWith('http')) {
          setQrUrl(paymentUrl);
+         
+         // Open VNPay directly in new tab
+         window.open(paymentUrl, '_blank');
+         
+         // Show QR code screen for reference and polling
          setStep('QR_SHOW');
          
          // Bắt đầu Polling kiểm tra trạng thái
@@ -428,7 +433,7 @@ export default function PaymentPage() {
            <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-lg w-full animate-in zoom-in duration-300">
               <h2 className="text-2xl font-bold mb-8">Scan code to pay</h2>
               
-              <div className="bg-white p-4 border-2 border-orange-100 rounded-2xl inline-block shadow-inner mb-8">
+              <div className="bg-white p-4 border-2 border-orange-100 rounded-2xl inline-block shadow-inner mb-6">
                   <QRCodeCanvas 
                     value={qrUrl} 
                     size={280}
@@ -437,11 +442,23 @@ export default function PaymentPage() {
                   />
               </div>
 
+              {/* Button to open VNPay directly */}
+              <div className="mb-6">
+                <button
+                  onClick={() => window.open(qrUrl, '_blank')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+                >
+                  <QrCode size={24} />
+                  <span>Open VNPay to Scan QR Code</span>
+                </button>
+                <p className="text-xs text-gray-500 mt-2">Or scan the QR code above with your banking app</p>
+              </div>
+
               <div className="flex items-center justify-center gap-3 text-orange-600 font-medium text-lg bg-orange-50 py-3 rounded-xl">
                  <Loader2 className="animate-spin" size={24} />
                  Waiting for bank confirmation...
               </div>
-              <p className="text-sm text-gray-400 mt-6">Please don't close this screen!</p>
+              <p className="text-sm text-gray-400 mt-6">Please complete payment in the opened VNPay window</p>
            </div>
         )}
 

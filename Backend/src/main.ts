@@ -36,6 +36,20 @@ async function bootstrap() {
     },
   );
 
+  // Connect to material consumption calculation queue
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.RMQ,
+      options: {
+        urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+        queue: 'material_consumption_queue',
+        noAck: false, // Force manual acknowledgment for safety
+        prefetchCount: 1, // Process one job at a time to save CPU/RAM
+        queueOptions: { durable: true },
+      },
+    },
+  );
+
   await app.startAllMicroservices();
 
   // Increase body size limit (default 50MB, configurable via env)

@@ -117,6 +117,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     icon: <SolutionOutlined />,
                     label: <Link href="/admin/contracting">Material Contracting</Link>,
                 },
+                {
+                    key: "/admin/consumption-records",
+                    icon: <AuditOutlined />,
+                    label: <Link href="/admin/consumption-records">Consumption Records</Link>,
+                },
             ],
         },
     ];

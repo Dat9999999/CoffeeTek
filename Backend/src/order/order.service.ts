@@ -44,6 +44,7 @@ export class OrderService {
     private readonly b2Service: B2Service,
     private readonly eventsGateway: EventsGateway,
     @Inject('ORDER_EMAIL_SERVICE') private readonly emailClient: ClientProxy,
+    @Inject('MATERIAL_CONSUMPTION_SERVICE') private readonly consumptionClient: ClientProxy,
     private readonly mailService: MailService,
   ) { }
 
@@ -735,6 +736,21 @@ export class OrderService {
         this.logger.log(`✅ Email event emitted successfully for order ${order.id}`);
       } catch (error) {
         this.logger.error(`❌ Failed to emit email event for order ${order.id}:`, error);
+      }
+    }
+
+    // 🆕 Calculate material consumption when order is COMPLETED
+    if (dto.status == OrderStatus.COMPLETED) {
+      const consumptionPayload = {
+        orderId: order.id,
+      };
+      
+      this.logger.log(`📊 Emitting material consumption event for completed order ${order.id}`);
+      try {
+        this.consumptionClient.emit('calculate_material_consumption', consumptionPayload);
+        this.logger.log(`✅ Material consumption event emitted successfully for order ${order.id}`);
+      } catch (error) {
+        this.logger.error(`❌ Failed to emit consumption event for order ${order.id}:`, error);
       }
     }
 

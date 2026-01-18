@@ -42,7 +42,7 @@ export function EditContractingModal({
             const res = await materialService.getAll({ page: 1, size: 1000 });
             setMaterials(res.data);
         } catch (error) {
-            message.error("Không thể tải danh sách nguyên liệu!");
+            message.error("Failed to load materials list!");
         } finally {
             setLoadingMaterials(false);
         }
@@ -59,15 +59,15 @@ export function EditContractingModal({
                 quantity: values.quantity,
             };
             await contractingService.update(contracting.id, data);
-            message.success("Cập nhật thầu khoáng thành công!");
+            message.success("Material contracting updated successfully!");
             onSuccess();
             form.resetFields();
             onClose();
         } catch (err: any) {
             if (err?.response?.status === 400) {
-                message.error(err.response.data?.message || "Không đủ nguyên liệu tồn kho!");
+                message.error(err.response.data?.message || "Insufficient stock!");
             } else if (!err.errorFields) {
-                message.error("Có lỗi xảy ra!");
+                message.error("An error occurred!");
             }
         } finally {
             setLoading(false);
@@ -76,13 +76,13 @@ export function EditContractingModal({
 
     return (
         <Modal
-            title="Chỉnh sửa thầu khoáng"
+            title="Edit Material Contracting"
             open={open}
             onCancel={onClose}
             onOk={handleSubmit}
             confirmLoading={loading}
-            okText="Cập nhật"
-            cancelText="Hủy"
+            okText="Update"
+            cancelText="Cancel"
             afterOpenChange={(visible) => {
                 if (!visible) form.resetFields();
             }}
@@ -91,19 +91,19 @@ export function EditContractingModal({
             <Form form={form} layout="vertical">
                 <Form.Item
                     name="date"
-                    label="Ngày"
-                    rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
+                    label="Date"
+                    rules={[{ required: true, message: "Please select a date!" }]}
                 >
                     <DatePicker
                         style={{ width: "100%" }}
                         format="DD/MM/YYYY"
-                        placeholder="Chọn ngày"
+                        placeholder="Select Date"
                     />
                 </Form.Item>
 
                 <Form.Item
                     name="materialId"
-                    label="Nguyên liệu"
+                    label="Material"
                 >
                     <Select
                         disabled
@@ -116,15 +116,15 @@ export function EditContractingModal({
 
                 <Form.Item
                     name="quantity"
-                    label="Số lượng"
+                    label="Quantity"
                     rules={[
-                        { required: true, message: "Vui lòng nhập số lượng!" },
-                        { type: "number", min: 1, message: "Số lượng phải lớn hơn 0!" },
+                        { required: true, message: "Please enter quantity!" },
+                        { type: "number", min: 1, message: "Quantity must be greater than 0!" },
                     ]}
                 >
                     <InputNumber
                         style={{ width: "100%" }}
-                        placeholder="Nhập số lượng"
+                        placeholder="Enter Quantity"
                         min={1}
                     />
                 </Form.Item>

@@ -7,8 +7,11 @@ import { contractingService, type Contracting } from "@/services/contractingServ
 import { useTableState } from "@/hooks/useTableState";
 import { PageHeader } from "@/components/layouts";
 import { SolutionOutlined } from "@ant-design/icons";
-import { DatePicker, message } from "antd";
+import { DatePicker, message, Space, Button } from "antd";
 import dayjs, { Dayjs } from "dayjs";
+import { MaterialSearchSelector } from "@/components/features/materials/MaterialSearchSelector";
+import { UserSearchSelector } from "@/components/features/pos/UserSearchSelector";
+import { Material, User } from "@/interfaces";
 import { CreateContractingModal } from "@/components/features/contracting/CreateContractingModal";
 import { EditContractingModal } from "@/components/features/contracting/EditContractingModal";
 import { DeleteContractingModal } from "@/components/features/contracting/DeleteContractingModal";
@@ -18,7 +21,9 @@ export default function ContractingPage() {
     const [data, setData] = useState<Contracting[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+    const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
 
     const [openAddModal, setOpenAddModal] = useState(false);
     const [editRecord, setEditRecord] = useState<Contracting | null>(null);
@@ -28,11 +33,12 @@ export default function ContractingPage() {
         setLoading(true);
         try {
             const res = await contractingService.getAll({
-    // Sửa dòng này: Chuyển sang ISO String
-            date: selectedDate.toISOString(), 
-            page: tableState.currentPage,
-            size: tableState.pageSize,
-        });
+                date: selectedDate ? selectedDate.toISOString() : undefined,
+                materialId: selectedMaterial?.id,
+                employeeId: selectedEmployee?.id,
+                page: tableState.currentPage,
+                size: tableState.pageSize,
+            });
             setData(res.data);
             setTotal(res.meta.total);
         } catch (err: any) {
@@ -44,7 +50,7 @@ export default function ContractingPage() {
 
     useEffect(() => {
         fetchData();
-    }, [tableState, selectedDate]);
+    }, [tableState, selectedDate, selectedMaterial, selectedEmployee]);
 
     const handleDeleteSuccess = (newPage?: number) => {
         if (newPage && newPage !== tableState.currentPage) {
@@ -57,23 +63,43 @@ export default function ContractingPage() {
 
     return (
         <>
-            <PageHeader icon={<SolutionOutlined />} title="Quản lý thầu khoáng" />
+            <PageHeader icon={<SolutionOutlined />} title="Material Contracting" />
             
             <TableToolbar
-                search={tableState.search}
-                onSearchChange={(value: string) =>
-                    setTableState({ ...tableState, search: value })
-                }
                 onAdd={() => setOpenAddModal(true)}
-                addLabel="Thêm mới"
+                addLabel="Add New"
                 renderFilter={
-                    <DatePicker
-                        value={selectedDate}
-                        onChange={(date) => setSelectedDate(date || dayjs())}
-                        format="DD/MM/YYYY"
-                        style={{ width: 200 }}
-                        placeholder="Chọn ngày"
-                    />
+                    <Space size="middle" wrap>
+                        <DatePicker
+                            value={selectedDate}
+                            onChange={(date) => setSelectedDate(date || null)}
+                            format="DD/MM/YYYY"
+                            style={{ width: 200 }}
+                            placeholder="Select Date"
+                            allowClear
+                        />
+                        <div style={{ width: 250 }}>
+                            <MaterialSearchSelector
+                                onSelect={(material) => setSelectedMaterial(material)}
+                            />
+                        </div>
+                        <div style={{ width: 250 }}>
+                            <UserSearchSelector
+                                onSelect={(user) => setSelectedEmployee(user)}
+                            />
+                        </div>
+                        {(selectedMaterial || selectedEmployee || selectedDate) && (
+                            <Button
+                                onClick={() => {
+                                    setSelectedDate(null);
+                                    setSelectedMaterial(null);
+                                    setSelectedEmployee(null);
+                                }}
+                            >
+                                Clear All
+                            </Button>
+                        )}
+                    </Space>
                 }
             />
 
@@ -91,17 +117,17 @@ export default function ContractingPage() {
                         width: 80,
                     },
                     { 
-                        title: "Nguyên liệu", 
+                        title: "Material", 
                         dataIndex: ["Material", "name"],
                         render: (_, record) => record.Material?.name || "N/A",
                     },
                     { 
-                        title: "Mã nguyên liệu", 
+                        title: "Material Code", 
                         dataIndex: ["Material", "code"],
                         render: (_, record) => record.Material?.code || "N/A",
                     },
                     { 
-                        title: "Số lượng", 
+                        title: "Quantity", 
                         dataIndex: "quantity",
                         sorter: true,
                         render: (value: number, record) => {
@@ -110,7 +136,7 @@ export default function ContractingPage() {
                         },
                     },
                     { 
-                        title: "Ngày tạo", 
+                        title: "Created Date", 
                         dataIndex: "created_at",
                         sorter: true,
                         render: (value: string | Date) => {
@@ -118,7 +144,7 @@ export default function ContractingPage() {
                         },
                     },
                     { 
-                        title: "Nhân viên", 
+                        title: "Employee", 
                         dataIndex: ["User", "last_name"],
                         render: (_, record) => {
                             if (record.User) {
@@ -138,7 +164,7 @@ export default function ContractingPage() {
                 open={openAddModal}
                 onClose={() => setOpenAddModal(false)}
                 onSuccess={fetchData}
-                defaultDate={selectedDate.toDate()}
+                defaultDate={selectedDate ? selectedDate.toDate() : new Date()}
             />
 
             {/* EDIT */}

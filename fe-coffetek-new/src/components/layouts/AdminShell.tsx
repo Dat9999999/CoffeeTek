@@ -113,14 +113,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     label: <Link href="/admin/materials">Material</Link>,
                 },
                 {
-                    key: "/admin/inventory-checking",
-                    icon: <AuditOutlined />,
-                    label: <Link href="/admin/inventory-checking">Inventory Checking</Link>,
-                },
-                {
                     key: "/admin/contracting",
                     icon: <SolutionOutlined />,
-                    label: <Link href="/admin/contracting">Quản lý thầu khoáng</Link>,
+                    label: <Link href="/admin/contracting">Material Contracting</Link>,
                 },
             ],
         },

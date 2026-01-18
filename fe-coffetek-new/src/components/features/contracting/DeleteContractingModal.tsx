@@ -27,7 +27,7 @@ export function DeleteContractingModal({
 
         try {
             await contractingService.delete(record.id);
-            message.success("Xóa thầu khoáng thành công!");
+            message.success("Material contracting deleted successfully!");
 
             // Tính toán trang mới nếu cần
             const currentPageItems = totalItems - (tableState.currentPage - 1) * tableState.pageSize;
@@ -38,7 +38,7 @@ export function DeleteContractingModal({
             onSuccess(newPage);
             onClose();
         } catch (err: any) {
-            message.error(err?.response?.data?.message || "Có lỗi xảy ra khi xóa!");
+            message.error(err?.response?.data?.message || "An error occurred while deleting!");
         }
     };
 
@@ -47,25 +47,25 @@ export function DeleteContractingModal({
             title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <ExclamationCircleOutlined style={{ color: "red" }} />
-                    <span>Xác nhận xóa</span>
+                    <span>Confirm Delete</span>
                 </div>
             }
             open={open}
             onOk={handleDelete}
             onCancel={onClose}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText="Delete"
+            cancelText="Cancel"
             okButtonProps={{ danger: true }}
             // icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
         >
             <p>
-                Bạn có chắc chắn muốn xóa thầu khoáng này không?
+                Are you sure you want to delete this material contracting?
                 <br />
                 {record && (
                     <>
-                        <strong>Nguyên liệu:</strong> {record.Material?.name || "N/A"}
+                        <strong>Material:</strong> {record.Material?.name || "N/A"}
                         <br />
-                        <strong>Số lượng:</strong> {record.quantity}
+                        <strong>Quantity:</strong> {record.quantity}
                     </>
                 )}
             </p>

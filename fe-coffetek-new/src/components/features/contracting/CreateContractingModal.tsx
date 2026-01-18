@@ -40,7 +40,7 @@ export function CreateContractingModal({
             const res = await materialService.getAll({ page: 1, size: 1000 });
             setMaterials(res.data);
         } catch (error) {
-            message.error("Không thể tải danh sách nguyên liệu!");
+            message.error("Failed to load materials list!");
         } finally {
             setLoadingMaterials(false);
         }
@@ -57,15 +57,15 @@ export function CreateContractingModal({
             materialId: values.materialId,
         };
             await contractingService.create(data);
-            message.success("Tạo thầu khoáng thành công!");
+            message.success("Material contracting created successfully!");
             onSuccess();
             form.resetFields();
             onClose();
         } catch (err: any) {
             if (err?.response?.status === 400) {
-                message.error(err.response.data?.message || "Không đủ nguyên liệu tồn kho!");
+                message.error(err.response.data?.message || "Insufficient stock!");
             } else if (!err.errorFields) {
-                message.error("Có lỗi xảy ra!");
+                message.error("An error occurred!");
             }
         } finally {
             setLoading(false);
@@ -74,13 +74,13 @@ export function CreateContractingModal({
 
     return (
         <Modal
-            title="Thêm thầu khoáng"
+            title="Add Material Contracting"
             open={open}
             onCancel={onClose}
             onOk={handleSubmit}
             confirmLoading={loading}
-            okText="Tạo"
-            cancelText="Hủy"
+            okText="Create"
+            cancelText="Cancel"
             afterOpenChange={(visible) => {
                 if (!visible) form.resetFields();
             }}
@@ -89,28 +89,28 @@ export function CreateContractingModal({
             <Form form={form} layout="vertical">
                 <Form.Item
                     name="date"
-                    label="Ngày"
-                    rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
+                    label="Date"
+                    rules={[{ required: true, message: "Please select a date!" }]}
                 >
                     <DatePicker
                         style={{ width: "100%" }}
                         format="DD/MM/YYYY"
-                        placeholder="Chọn ngày"
+                        placeholder="Select Date"
                     />
                 </Form.Item>
 
                 <Form.Item
                     name="materialId"
-                    label="Nguyên liệu"
-                    rules={[{ required: true, message: "Vui lòng chọn nguyên liệu!" }]}
+                    label="Material"
+                    rules={[{ required: true, message: "Please select a material!" }]}
                 >
                     {loadingMaterials ? (
                         <Spin />
                     ) : (
                         <Select
-                            placeholder="Chọn nguyên liệu"
+                            placeholder="Select Material"
                             options={materials.map((m) => ({
-                                label: `${m.name} (${m.code}) - Tồn kho: ${m.remain} ${m.unit?.symbol || ""}`,
+                                label: `${m.name} (${m.code}) - Stock: ${m.remain} ${m.unit?.symbol || ""}`,
                                 value: m.id,
                             }))}
                             showSearch
@@ -124,15 +124,15 @@ export function CreateContractingModal({
 
                 <Form.Item
                     name="quantity"
-                    label="Số lượng"
+                    label="Quantity"
                     rules={[
-                        { required: true, message: "Vui lòng nhập số lượng!" },
-                        { type: "number", min: 1, message: "Số lượng phải lớn hơn 0!" },
+                        { required: true, message: "Please enter quantity!" },
+                        { type: "number", min: 1, message: "Quantity must be greater than 0!" },
                     ]}
                 >
                     <InputNumber
                         style={{ width: "100%" }}
-                        placeholder="Nhập số lượng"
+                        placeholder="Enter Quantity"
                         min={1}
                     />
                 </Form.Item>

@@ -37,9 +37,11 @@ export interface UpdateContractingDto {
 }
 
 export interface GetContractingsByDateDto {
-    date: Date | string;
+    date?: Date | string;
     page?: number;
     size?: number;
+    materialId?: number;
+    employeeId?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -54,17 +56,25 @@ export interface PaginatedResponse<T> {
 
 export const contractingService = {
     async getAll(params: GetContractingsByDateDto): Promise<PaginatedResponse<Contracting>> {
-        // Backend uses GET with body (unusual but following backend design)
-        // Using axios.request to send GET with body
-        const res = await api.request({
-            method: 'GET',
-            url: "/contracting",
-            data: {
-                date: typeof params.date === 'string' ? params.date : params.date.toISOString(),
-                page: params.page || 1,
-                size: params.size || 10,
-            },
-        });
+        // Build query params object
+        const queryParams: any = {
+            page: params.page || 1,
+            size: params.size || 10,
+        };
+        
+        if (params.date) {
+            queryParams.date = typeof params.date === 'string' ? params.date : params.date.toISOString();
+        }
+        
+        if (params.materialId) {
+            queryParams.materialId = params.materialId;
+        }
+        
+        if (params.employeeId) {
+            queryParams.employeeId = params.employeeId;
+        }
+        
+        const res = await api.get("/contracting", { params: queryParams });
         return res.data;
     },
 

@@ -47,8 +47,8 @@ const PublicFooter = () => {
                         <h3 className="text-xl font-semibold mb-4">Contact Info</h3>
                         <ul className="space-y-2 text-gray-600">
                             <li>+1 123 456 7890</li>
-                            <li>coffee@alowishus.com.au</li>
-                            <li>123 Coffee Street, Brisbane,<br />QLD Australia</li>
+                            <li>coffeeTek@support.com</li>
+                            <li>123 Coffee Street, District 1, Ho Chi Minh City</li>
                         </ul>
                     </div>
 

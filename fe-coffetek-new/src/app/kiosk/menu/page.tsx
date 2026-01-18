@@ -144,7 +144,7 @@ export default function KioskMenuPage() {
       {/* HEADER */}
       <header className="h-20 bg-white shadow-sm flex items-center px-6 justify-between flex-shrink-0 z-20">
         <button 
-          onClick={() => router.push('/kiosk')} // Về trang chờ
+          onClick={() => window.location.href = '/'} 
           className="flex items-center gap-2 text-gray-600 font-medium active:scale-95 transition-transform"
         >
           <div className="p-2 bg-gray-100 rounded-full"><ChevronLeft size={24} /></div>
@@ -217,9 +217,9 @@ export default function KioskMenuPage() {
                         }`} 
                       />
                       {!isDisabled && (
-                        <div className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-lg text-orange-600">
-                          <Plus size={24} strokeWidth={3} />
-                        </div>
+                      <div className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-lg text-orange-600">
+                        <Plus size={24} strokeWidth={3} />
+                      </div>
                       )}
                     </div>
                     
@@ -233,8 +233,8 @@ export default function KioskMenuPage() {
                       <span className={`font-bold text-xl ${
                         isDisabled ? 'text-gray-400' : 'text-orange-600'
                       }`}>
-                        {renderPrice(product)}
-                      </span>
+                      {renderPrice(product)}
+                    </span>
                       {product.old_price && (
                         <span className="text-gray-400 text-sm line-through decoration-1">
                           {product.old_price.toLocaleString()}đ

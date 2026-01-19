@@ -132,5 +132,23 @@ export const contractingService = {
         });
         return res.data;
     },
+
+    async resetRemain(date: Date | string): Promise<{
+        date: string;
+        message: string;
+        results: Array<{
+            materialId: number;
+            materialName: string;
+            oldRemain: number | null;
+            newRemain: number;
+            totalContracted: number;
+        }>;
+    }> {
+        const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+        const res = await api.post(`/contracting/reset-remain`, null, {
+            params: { date: dateStr }
+        });
+        return res.data;
+    },
 };
 

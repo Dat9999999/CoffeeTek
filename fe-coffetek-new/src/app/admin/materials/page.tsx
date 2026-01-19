@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DataTable } from "@/components/commons/table/DataTable";
 import { TableToolbar } from "@/components/commons/table/TableToolbar";
 import { materialService } from "@/services/materialService";
+import { contractingService } from "@/services/contractingService";
 import type { Material } from "@/interfaces";
 import { useTableState } from "@/hooks/useTableState";
 import { CreateMaterialModal, ImportMaterialButton, DeleteManyMaterialsModal, DeleteMaterialModal, EditMaterialModal, MaterialDetailModal } from "@/components/features/materials";
@@ -28,6 +29,14 @@ export default function MaterialPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Auto reset remain for today before fetching materials
+            try {
+                await contractingService.resetRemain(new Date());
+            } catch (err) {
+                // Silently fail if reset fails - don't block material loading
+                console.error('Failed to auto reset remain:', err);
+            }
+
             const res: any = await materialService.getAll({
                 page: tableState.currentPage,
                 size: tableState.pageSize,

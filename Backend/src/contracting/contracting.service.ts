@@ -614,6 +614,138 @@ export class ContractingService {
   }
 
   /**
+   * Reset and recalculate remain for today based on yesterday's remain + imports - today's contracting
+   * This does NOT modify any contracting records, only recalculates and updates materialRemain
+   */
+  async resetRemainForDate(date: Date) {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+    const nextDate = new Date(normalizedDate);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+
+    // Get all materials that have contracting for this date
+    const contractings = await this.prisma.contracting.findMany({
+      where: {
+        created_at: {
+          gte: normalizedDate,
+          lt: nextDate,
+        },
+      },
+      include: {
+        Material: {
+          include: { Unit: true },
+        },
+      },
+      distinct: ['materialId'],
+    });
+
+    const results: Array<{
+      materialId: number;
+      materialName: string;
+      oldRemain: number | null;
+      newRemain: number;
+      totalContracted: number;
+    }> = [];
+
+    for (const contracting of contractings) {
+      const materialId = contracting.materialId;
+
+      // Get yesterday's remain (last remain before today)
+      const lastRemain = await this.prisma.materialRemain.findFirst({
+        where: {
+          materialId,
+          date: {
+            lt: normalizedDate,
+          },
+        },
+        orderBy: {
+          date: 'desc',
+        },
+      });
+
+      // Get imports after last remain date (or all imports if no last remain)
+      const lastRemainDate = lastRemain?.date || new Date(0);
+      const imports = await this.prisma.materialImportation.findMany({
+        where: {
+          materialId,
+          importDate: {
+            gte: lastRemainDate,
+            lt: normalizedDate,
+          },
+        },
+      });
+
+      const totalImported = imports.reduce(
+        (sum, imp) => sum + imp.importQuantity,
+        0,
+      );
+
+      // Get all contracting for this material today
+      const todayContractings = await this.prisma.contracting.findMany({
+        where: {
+          materialId,
+          created_at: {
+            gte: normalizedDate,
+            lt: nextDate,
+          },
+        },
+      });
+
+      const totalContracted = todayContractings.reduce(
+        (sum, c) => sum + c.quantity,
+        0,
+      );
+
+      // Calculate old remain: yesterday's remain + imports
+      const oldRemain = (lastRemain?.remain || 0) + totalImported;
+
+      // Calculate new remain: old remain - total contracted today
+      const newRemain = Math.max(0, oldRemain - totalContracted);
+
+      // Get current remain record for today
+      const todayRemain = await this.prisma.materialRemain.findFirst({
+        where: {
+          materialId,
+          date: {
+            gte: normalizedDate,
+            lt: nextDate,
+          },
+        },
+      });
+
+      // Update or create remain record
+      if (todayRemain) {
+        await this.prisma.materialRemain.update({
+          where: { id: todayRemain.id },
+          data: { remain: newRemain },
+        });
+      } else {
+        await this.prisma.materialRemain.create({
+          data: {
+            materialId,
+            date: normalizedDate,
+            remain: newRemain,
+          },
+        });
+      }
+
+      results.push({
+        materialId,
+        materialName: contracting.Material.name,
+        oldRemain: todayRemain?.remain ?? null,
+        newRemain,
+        totalContracted,
+      });
+    }
+
+    return {
+      date: normalizedDate.toISOString().split('T')[0],
+      message: `Reset remain for ${results.length} materials`,
+      results,
+    };
+  }
+
+  /**
    * Get available quantity for a material on a specific date
    * This considers last remain + imports after last remain - already contracted
    */

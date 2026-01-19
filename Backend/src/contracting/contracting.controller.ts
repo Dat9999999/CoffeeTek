@@ -81,6 +81,12 @@ export class ContractingController {
     );
   }
 
+  @Post('reset-remain')
+  @UseGuards(AuthGuard('jwt'))
+  resetRemainForToday(@Query('date', ParseDatePipe) date: Date) {
+    return this.contractingService.resetRemainForDate(date);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   findOne(@Param('id') id: string) {

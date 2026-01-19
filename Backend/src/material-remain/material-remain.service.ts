@@ -8,7 +8,6 @@ export class MaterialRemainService {
   constructor(private readonly prisma: PrismaService) { }
 
   async getRemainCheckBySystem(date: Date) {
-
     date.setUTCHours(0, 0, 0, 0);
     // Ngày tiếp theo: Dùng làm mốc kết thúc (nhỏ hơn < nextDate)
     const nextDate = new Date(date);
@@ -22,9 +21,16 @@ export class MaterialRemainService {
     const lastDateEnd = new Date(lastDateStart);
     lastDateEnd.setUTCDate(lastDateEnd.getUTCDate() + 1);
 
-
     const materials = await this.prisma.material.findMany({ include: { Unit: true }, });
-    let res: { materialId: number, materialName: string, materialUnit: string, lastRemainQuantity: number }[] = []
+    let res: { 
+      materialId: number, 
+      materialName: string, 
+      materialUnit: string, 
+      lastRemainQuantity: number,
+      totalContractedToday: number,
+      totalConsumedToday: number,
+      totalRemainAfterContracting: number | null
+    }[] = []
 
     for (const materialRemain of materials) {
       const materialId = materialRemain.id;
@@ -32,13 +38,64 @@ export class MaterialRemainService {
       // TÌM KHO CUỐI KỲ TRƯỚC: Phải nằm trong phạm vi của ngày hôm trước
       const lastRemain = await this.getLastRemain(lastDateEnd, materialId);
 
-      // Kiểm tra logic và tính toán
+      // Get material remain record for today (stored after contracting)
+      const todayRemain = await this.prisma.materialRemain.findFirst({
+        where: {
+          materialId: materialId,
+          date: {
+            gte: date,
+            lt: nextDate,
+          },
+        },
+      });
+
+      // Get all contracting records for today
+      const contractingsToday = await this.prisma.contracting.findMany({
+        where: {
+          materialId: materialId,
+          created_at: {
+            gte: date,
+            lt: nextDate,
+          },
+        },
+      });
+
+      // Calculate total contracted quantity for today
+      const totalContractedToday = contractingsToday.reduce(
+        (sum, c) => sum + c.quantity,
+        0,
+      );
+
+      // Get all consumption records for today
+      const consumptionsToday = await this.prisma.materialConsumption.findMany({
+        where: {
+          materialId: materialId,
+          date: {
+            gte: date,
+            lt: nextDate,
+          },
+        },
+      });
+
+      // Calculate total consumed quantity for today
+      const totalConsumedToday = consumptionsToday.reduce(
+        (sum, c) => sum + c.consumed,
+        0,
+      );
+
+      // Get total remain after contracting from stored record
+      // This is calculated as: old remain - contracting quantity (stored when contracting is created)
+      // If no record exists, it means no contracting was created for this material today
+      const totalRemainAfterContracting = todayRemain?.remain ?? null;
 
       res.push({
         materialId: materialId,
         materialName: materialRemain.name,
         materialUnit: materialRemain.Unit?.symbol || materialRemain.Unit?.name || '',
         lastRemainQuantity: !lastRemain ? 0 : lastRemain.remain,
+        totalContractedToday: totalContractedToday,
+        totalConsumedToday: totalConsumedToday,
+        totalRemainAfterContracting: totalRemainAfterContracting,
       });
     }
 

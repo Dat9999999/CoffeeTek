@@ -720,6 +720,77 @@ export class OrderService {
           invoiceUrl: key,
         },
       });
+
+      // 🆕 Add 1% of total bill as customer points
+      if (order.customerPhone && order.final_price > 0) {
+        try {
+          const pointsToAdd = Math.round(order.final_price * 0.01); // 1% of final_price
+          
+          this.logger.log(
+            `💰 Adding ${pointsToAdd} points (1% of ${order.final_price} VND) to customer ${order.customerPhone} for order ${order.id}`,
+          );
+
+          // Upsert customer point record
+          const existingPoint = await this.prisma.customerPoint.findUnique({
+            where: { customerPhone: order.customerPhone },
+          });
+
+          const newTotalPoints = existingPoint
+            ? existingPoint.points + pointsToAdd
+            : pointsToAdd;
+
+          // Find the appropriate loyalty level based on new total points
+          const eligibleLevels = await this.prisma.loyalLevel.findMany({
+            where: {
+              required_points: {
+                lte: newTotalPoints, // Points >= required_points
+              },
+            },
+            orderBy: {
+              required_points: 'desc', // Get highest level first
+            },
+          });
+
+          const newLoyalLevelId =
+            eligibleLevels.length > 0 ? eligibleLevels[0].id : null;
+
+          if (existingPoint) {
+            // Update existing points and loyalty level
+            await this.prisma.customerPoint.update({
+              where: { customerPhone: order.customerPhone },
+              data: {
+                points: newTotalPoints,
+                loyalLevelId: newLoyalLevelId,
+              },
+            });
+            const levelName =
+              eligibleLevels.length > 0 ? eligibleLevels[0].name : 'None';
+            this.logger.log(
+              `✅ Updated customer points: ${existingPoint.points} + ${pointsToAdd} = ${newTotalPoints} (Level: ${levelName})`,
+            );
+          } else {
+            // Create new customer point record
+            await this.prisma.customerPoint.create({
+              data: {
+                customerPhone: order.customerPhone,
+                points: pointsToAdd,
+                loyalLevelId: newLoyalLevelId,
+              },
+            });
+            const levelName =
+              eligibleLevels.length > 0 ? eligibleLevels[0].name : 'None';
+            this.logger.log(
+              `✅ Created new customer point record with ${pointsToAdd} points (Level: ${levelName})`,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `❌ Failed to add customer points for order ${order.id}:`,
+            error,
+          );
+          // Don't throw error - points addition failure shouldn't break order payment
+        }
+      }
     }
 
     // 🆕 Send email when order is COMPLETED

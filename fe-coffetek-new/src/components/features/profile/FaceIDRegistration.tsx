@@ -78,7 +78,7 @@ export default function FaceIDRegistration() {
   // Open dialog and start camera
   const openCameraDialog = async (action: "register" | "update") => {
     if (!user?.phone_number) {
-      setError("Vui lòng cập nhật số điện thoại trước khi đăng ký Face ID.");
+      setError("Please update your phone number before registering Face ID.");
       return;
     }
 
@@ -181,7 +181,7 @@ export default function FaceIDRegistration() {
       } catch (err: any) {
         console.error("Camera Error:", err);
         if (isMounted) {
-          setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera.");
+          setError("Unable to access camera. Please check camera permissions.");
           setIsDialogOpen(false);
         }
       }
@@ -215,7 +215,7 @@ export default function FaceIDRegistration() {
       // Capture image
       const imageData = captureImage();
       if (!imageData) {
-        throw new Error("Không thể chụp ảnh từ camera.");
+        throw new Error("Unable to capture image from camera.");
       }
 
       // Stop camera
@@ -249,8 +249,8 @@ export default function FaceIDRegistration() {
       setIsRegistered(true);
       setSuccess(
         actionTypeRef.current === "register" 
-          ? "Đăng ký Face ID thành công!" 
-          : "Cập nhật Face ID thành công!"
+          ? "Face ID registered successfully!" 
+          : "Face ID updated successfully!"
       );
       
       // Clear success message after 3 seconds
@@ -264,7 +264,7 @@ export default function FaceIDRegistration() {
       setIsCapturing(false);
 
       // Handle errors
-      let errorMessage = `Không thể ${actionTypeRef.current === "register" ? "đăng ký" : "cập nhật"} Face ID. Vui lòng thử lại.`;
+      let errorMessage = `Unable to ${actionTypeRef.current === "register" ? "register" : "update"} Face ID. Please try again.`;
       
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -276,19 +276,19 @@ export default function FaceIDRegistration() {
       if (err.response?.data?.errorCode) {
         switch (err.response.data.errorCode) {
           case "PERMISSION_REFUSED":
-            errorMessage = "Bạn đã từ chối quyền truy cập camera.";
+            errorMessage = "Camera access permission denied.";
             break;
           case "NO_FACE_DETECTED":
-            errorMessage = "Không phát hiện khuôn mặt. Vui lòng đảm bảo ánh sáng đủ và nhìn thẳng vào camera.";
+            errorMessage = "No face detected. Please ensure adequate lighting and look straight at the camera.";
             break;
           case "MULTIPLE_FACES":
-            errorMessage = "Phát hiện nhiều khuôn mặt. Vui lòng chỉ có một người trong khung hình.";
+            errorMessage = "Multiple faces detected. Please ensure only one person is in the frame.";
             break;
           case "FACE_DUPLICATE":
-            errorMessage = "Khuôn mặt này đã được đăng ký trong hệ thống.";
+            errorMessage = "This face has already been registered in the system.";
             break;
           case "INVALID_IMAGE":
-            errorMessage = "Ảnh không hợp lệ. Vui lòng thử lại.";
+            errorMessage = "Invalid image. Please try again.";
             break;
         }
       }
@@ -335,7 +335,7 @@ export default function FaceIDRegistration() {
         <CardContent className="p-6">
           <div className="flex items-center justify-center gap-3">
             <Loader2 className="animate-spin text-blue-600" size={24} />
-            <span className="text-gray-600">Đang kiểm tra trạng thái Face ID...</span>
+            <span className="text-gray-600">Checking Face ID status...</span>
           </div>
         </CardContent>
       </Card>
@@ -352,7 +352,7 @@ export default function FaceIDRegistration() {
           <div>
             <CardTitle className="text-lg font-semibold">Face ID</CardTitle>
             <CardDescription>
-              Đăng ký hoặc cập nhật Face ID để đăng nhập nhanh tại kiosk
+              Register or update Face ID for quick login at kiosk
             </CardDescription>
           </div>
         </div>
@@ -366,9 +366,9 @@ export default function FaceIDRegistration() {
               <>
                 <CheckCircle className="text-green-600" size={24} />
                 <div>
-                  <p className="font-medium text-gray-900">Face ID đã được đăng ký</p>
+                  <p className="font-medium text-gray-900">Face ID registered</p>
                   <p className="text-sm text-gray-500">
-                    Bạn có thể sử dụng Face ID để đăng nhập tại kiosk
+                    You can use Face ID to login at kiosk
                   </p>
                 </div>
               </>
@@ -376,9 +376,9 @@ export default function FaceIDRegistration() {
               <>
                 <AlertCircle className="text-amber-600" size={24} />
                 <div>
-                  <p className="font-medium text-gray-900">Chưa đăng ký Face ID</p>
+                  <p className="font-medium text-gray-900">Face ID not registered</p>
                   <p className="text-sm text-gray-500">
-                    Đăng ký Face ID để đăng nhập nhanh hơn
+                    Register Face ID for faster login
                   </p>
                 </div>
               </>
@@ -398,7 +398,7 @@ export default function FaceIDRegistration() {
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <Camera className="mr-2" size={18} />
-              Đăng ký Face ID
+              Register Face ID
             </Button>
           ) : (
             <Button
@@ -408,7 +408,7 @@ export default function FaceIDRegistration() {
               className="flex-1"
             >
               <Camera className="mr-2" size={18} />
-              Cập nhật Face ID
+              Update Face ID
             </Button>
           )}
         </div>
@@ -432,9 +432,9 @@ export default function FaceIDRegistration() {
         {/* Info Note */}
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-700">
-            <strong>Lưu ý:</strong> Face ID để nhận diện khuôn mặt. 
-            Đảm bảo ánh sáng đủ và nhìn thẳng vào camera khi đăng ký. 
-            Ảnh sẽ được xử lý an toàn và chỉ lưu thông tin nhận diện.
+            <strong>Note:</strong> Face ID is used for face recognition. 
+            Ensure adequate lighting and look straight at the camera when registering. 
+            Images will be processed securely and only recognition data will be stored.
           </p>
         </div>
       </CardContent>
@@ -444,10 +444,10 @@ export default function FaceIDRegistration() {
         <DialogContent className="sm:max-w-2xl" showCloseButton={!isProcessing}>
           <DialogHeader>
             <DialogTitle>
-              {actionTypeRef.current === "register" ? "Đăng ký Face ID" : "Cập nhật Face ID"}
+              {actionTypeRef.current === "register" ? "Register Face ID" : "Update Face ID"}
             </DialogTitle>
             <DialogDescription>
-              Nhìn thẳng vào camera và đảm bảo ánh sáng đủ. Nhấn nút chụp ảnh khi sẵn sàng.
+              Look straight at the camera and ensure adequate lighting. Press the capture button when ready.
             </DialogDescription>
           </DialogHeader>
 
@@ -459,7 +459,7 @@ export default function FaceIDRegistration() {
                   <div className="text-center">
                     <Loader2 className="animate-spin text-white mx-auto mb-4" size={48} />
                     <p className="text-white font-medium text-lg">
-                      Đang khởi động camera...
+                      Starting camera...
                     </p>
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export default function FaceIDRegistration() {
                   <div className="text-center">
                     <Loader2 className="animate-spin text-white mx-auto mb-4" size={48} />
                     <p className="text-white font-medium text-lg">
-                      Đang xử lý ảnh...
+                      Processing image...
                     </p>
                   </div>
                 </div>
@@ -506,7 +506,7 @@ export default function FaceIDRegistration() {
                   className="flex-1"
                   disabled={isCapturing}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleCapture}
@@ -516,12 +516,12 @@ export default function FaceIDRegistration() {
                   {isCapturing ? (
                     <>
                       <Loader2 className="animate-spin mr-2" size={18} />
-                      Đang chụp...
+                      Capturing...
                     </>
                   ) : (
                     <>
                       <Camera className="mr-2" size={18} />
-                      Chụp ảnh
+                      Capture Photo
                     </>
                   )}
                 </Button>

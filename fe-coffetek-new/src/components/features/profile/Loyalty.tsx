@@ -352,7 +352,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                               ) : (
                                 <>
                                   <Coins className="w-4 h-4" />
-                                  Redeem {group.requirePoint.toLocaleString("vi-VN")} points
+                                  Redeem {group.requirePoint.toLocaleString("en-US")} points
                                 </>
                               )}
                             </button>

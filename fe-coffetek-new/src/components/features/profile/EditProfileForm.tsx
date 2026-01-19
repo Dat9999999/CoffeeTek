@@ -47,7 +47,7 @@ export default function EditProfileForm() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setSuccess("Cập nhật thông tin thành công!");
+    setSuccess("Profile updated successfully!");
     setIsEditing(false);
   };
 
@@ -59,33 +59,33 @@ export default function EditProfileForm() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
         <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
-          {isEditing ? "Hủy" : "Chỉnh sửa"}
+          {isEditing ? "Cancel" : "Edit"}
         </Button>
       </CardHeader>
 
       <CardContent>
         {!isEditing ? (
           <div className="grid grid-cols-2 gap-4">
-            <ProfileField label="Họ" value={formData.last_name} />
-            <ProfileField label="Tên" value={formData.first_name} />
+            <ProfileField label="Last Name" value={formData.last_name} />
+            <ProfileField label="First Name" value={formData.first_name} />
             <ProfileField label="Email" value={formData.email} />
-            <ProfileField label="Số điện thoại" value={formData.phone_number} />
-            <ProfileField label="Ngày sinh" value={formatDateDisplay(formData.birthday)} />
-            <ProfileField label="Giới tính" value={formData.sex || "Unknown"} />
-            <ProfileField label="Địa chỉ" value={formData.address || "Unknown"} />
+            <ProfileField label="Phone Number" value={formData.phone_number} />
+            <ProfileField label="Date of Birth" value={formatDateDisplay(formData.birthday)} />
+            <ProfileField label="Gender" value={formData.sex || "Unknown"} />
+            <ProfileField label="Address" value={formData.address || "Unknown"} />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-            <Input id="last_name" value={formData.last_name} onChange={handleChange} placeholder="Họ" />
-            <Input id="first_name" value={formData.first_name} onChange={handleChange} placeholder="Tên" />
+            <Input id="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" />
+            <Input id="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" />
             <Input id="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-            <Input id="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="Số điện thoại" />
+            <Input id="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="Phone Number" />
             <Input id="birthday" type="date" value={formData.birthday} onChange={handleChange} />
-            <Input id="sex" value={formData.sex} onChange={handleChange} placeholder="Giới tính" />
-            <Input id="address" value={formData.address} onChange={handleChange} placeholder="Địa chỉ" />
+            <Input id="sex" value={formData.sex} onChange={handleChange} placeholder="Gender" />
+            <Input id="address" value={formData.address} onChange={handleChange} placeholder="Address" />
 
             <div className="col-span-2 flex justify-end mt-4">
-              <Button type="submit">Lưu thay đổi</Button>
+              <Button type="submit">Save Changes</Button>
             </div>
           </form>
         )}
@@ -98,7 +98,7 @@ export default function EditProfileForm() {
   );
 }
 
-// Subcomponent hiển thị thông tin
+// Subcomponent to display information
 function ProfileField({ label, value }: any) {
   return (
     <div className="flex flex-col">
@@ -110,7 +110,7 @@ function ProfileField({ label, value }: any) {
   );
 }
 
-// Helper format ngày
+// Helper to format date
 function formatDateDisplay(date: any) {
   if (!date) return "Unknown";
   const d = new Date(date);

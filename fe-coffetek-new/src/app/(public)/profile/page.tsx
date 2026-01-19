@@ -6,10 +6,10 @@ import EditProfileForm from "@/components/features/profile/EditProfileForm";
 import FaceIDRegistration from "@/components/features/profile/FaceIDRegistration";
 import OrderHistory from "@/components/features/profile/OrderHistory";
 import Loyalty from "@/components/features/profile/Loyalty";
-import { useAuth } from "@/hooks/useAuth"; // ✅ import hook kiểm tra đăng nhập
+import { useAuth } from "@/hooks/useAuth"; // ✅ Import hook to check authentication
 
 export default function ProfilePage() {
-  const { isAuthenticated, loading: authLoading } = useAuth(true); // true = auto redirect nếu chưa login
+  const { isAuthenticated, loading: authLoading } = useAuth(true); // true = auto redirect if not logged in
 
   const { user, orders, loyalty, fetchProfile, loading, error } =
     useProfileStore();
@@ -18,14 +18,14 @@ export default function ProfilePage() {
     "profile" | "orders" | "loyalty"
   >("profile");
 
-  // ✅ Khi đã xác thực xong thì mới fetch thông tin người dùng
+  // ✅ Fetch user information only after authentication is complete
   useEffect(() => {
     if (isAuthenticated) {
       fetchProfile();
     }
   }, [isAuthenticated, fetchProfile]);
 
-  // ⏳ Đang kiểm tra token hoặc load user
+  // ⏳ Checking token or loading user
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
@@ -34,7 +34,7 @@ export default function ProfilePage() {
     );
   }
 
-  // ❌ Nếu có lỗi khi lấy thông tin user
+  // ❌ If there's an error fetching user information
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                {/* FORM CHỈNH SỬA */}
+                {/* EDIT FORM */}
                 <div className="border-l pl-6">
                   <h3 className="text-xl font-semibold mb-4">
                     Update Information

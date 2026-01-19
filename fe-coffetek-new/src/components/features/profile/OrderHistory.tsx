@@ -62,7 +62,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
     switch (statusLower) {
       case "completed":
         return {
-          label: "Hoàn thành",
+          label: "Completed",
           icon: CheckCircle2,
           color: "bg-green-100 text-green-700 border-green-300",
           iconColor: "text-green-600",
@@ -128,13 +128,13 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
       if (invoiceUrl) {
         // Open invoice in new window
         window.open(invoiceUrl, '_blank', 'noopener,noreferrer');
-        toast.success("Đang mở hóa đơn...");
+        toast.success("Opening invoice...");
       } else {
-        toast.error("Không thể lấy đường dẫn hóa đơn");
+        toast.error("Unable to get invoice URL");
       }
     } catch (error: any) {
       console.error("Error fetching invoice:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Không thể tải hóa đơn";
+      const errorMessage = error.response?.data?.message || error.message || "Unable to load invoice";
       toast.error(errorMessage);
     } finally {
       setLoadingInvoiceId(null);
@@ -202,7 +202,7 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
                       <div className="flex items-center gap-2">
                         <Receipt className="w-5 h-5 text-gray-500" />
                         <span className="font-bold text-lg text-gray-900">
-                          Đơn #{order.id}
+                          Order #{order.id}
                         </span>
                       </div>
                       <Badge

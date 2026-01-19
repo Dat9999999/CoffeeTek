@@ -41,7 +41,7 @@ export default function LoginPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isCameraReadyRef = useRef<boolean>(false);
 
-  // Xử lý nhập phím số
+  // Handle number input
   const handleType = (num: string) => {
     if (phone.length < 10) setPhone(prev => prev + num);
     setError('');
@@ -52,7 +52,7 @@ export default function LoginPage() {
     setError('');
   };
 
-  // HÀM QUAN TRỌNG: Kiểm tra và Đăng nhập
+  // IMPORTANT: Check and Login
   const handleLogin = async () => {
     // Basic validation
     if (phone.length < 10 || !phone.startsWith('0')) {
@@ -372,7 +372,7 @@ export default function LoginPage() {
         <p className="text-gray-500">Enter phone number to earn points & receive offers</p>
       </div>
 
-      {/* Màn hình hiển thị số */}
+      {/* Phone number display */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-100 text-center relative">
         <span className={`text-4xl font-bold tracking-widest ${phone ? 'text-gray-900' : 'text-gray-300'}`}>
           {phone}
@@ -380,7 +380,7 @@ export default function LoginPage() {
         {error && <p className="text-red-500 text-sm mt-2 absolute -bottom-6 left-0 right-0">{error}</p>}
       </div>
 
-      {/* Bàn phím số (Numpad) */}
+      {/* Number pad (Numpad) */}
       <div className="grid grid-cols-3 gap-4 px-4">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
           <button
@@ -411,7 +411,7 @@ export default function LoginPage() {
         </button>
       </div>
 
-      {/* Nút Submit */}
+      {/* Submit Button */}
       <button
         onClick={handleLogin}
         disabled={loading || phone.length < 10}
@@ -631,7 +631,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-screen bg-gray-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
       
-      {/* Nút Back */}
+      {/* Back Button */}
       <button 
         onClick={loginMethod === 'SELECT' ? () => router.back() : handleBackToSelect} 
         className="absolute top-8 left-8 p-3 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors z-10"

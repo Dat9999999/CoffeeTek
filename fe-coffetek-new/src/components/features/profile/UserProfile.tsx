@@ -89,7 +89,7 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Hiển thị thông tin hoặc form chỉnh sửa */}
+      {/* Display information or edit form */}
       {!isEditing ? (
         <div className="grid grid-cols-2 gap-x-12 gap-y-4">
           <ProfileField label="Phone Number" value={formData.phone_number} />

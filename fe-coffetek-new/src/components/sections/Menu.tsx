@@ -282,7 +282,17 @@ export default function Menu() {
                     <MenuItemCard
                       id={item.id}
                       name={item.name}
-                      price={item.price || 0}
+                      price={(() => {
+                        // If product has multiple sizes, get the minimum price from sizes
+                        if (item.is_multi_size && item.sizes && item.sizes.length > 0) {
+                          const prices = item.sizes.map((s: any) => s.price || 0).filter((p: number) => p > 0);
+                          if (prices.length > 0) {
+                            return Math.min(...prices);
+                          }
+                        }
+                        // Otherwise, use the base price if it's greater than 0
+                        return (item.price && item.price > 0) ? item.price : null;
+                      })()}
                       description={item.description}
                       image={item.images?.[0]?.image_name || item.image_url || "/placeholder.jpg"}
                     />

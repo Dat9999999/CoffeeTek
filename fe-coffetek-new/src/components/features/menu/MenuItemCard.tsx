@@ -62,7 +62,7 @@ export default function MenuItemCard({
         >
           {name}
         </motion.h3>
-        {price && (
+        {price && price > 0 && (
           <motion.p 
             className="text-gray-500 font-medium mb-1"
             initial={{ opacity: 0.8 }}

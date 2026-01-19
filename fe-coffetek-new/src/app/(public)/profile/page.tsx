@@ -29,7 +29,7 @@ export default function ProfilePage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
-        Đang tải thông tin...
+        Loading...
       </div>
     );
   }
@@ -38,7 +38,7 @@ export default function ProfilePage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
-        Lỗi: {error}
+        Error: {error}
       </div>
     );
   }
@@ -104,7 +104,7 @@ export default function ProfilePage() {
                         <p>
                           <span className="font-medium">Date of Birth:</span>{" "}
                           {user.birthday
-                            ? new Date(user.birthday).toLocaleDateString("vi-VN")
+                            ? new Date(user.birthday).toLocaleDateString("en-US")
                             : "Not updated"}
                         </p>
                         <p>

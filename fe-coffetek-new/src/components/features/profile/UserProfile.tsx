@@ -49,7 +49,7 @@ export default function UserProfile() {
     setSuccess("");
     try {
       // await updateProfile(formData);
-      setSuccess("Cập nhật thông tin thành công!");
+      setSuccess("Profile updated successfully!");
       setIsEditing(false);
     } catch (err) {
       console.error("Update failed:", err);
@@ -72,7 +72,7 @@ export default function UserProfile() {
           Personal Information
         </h2>
         <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
-          {isEditing ? "Hủy" : "Chỉnh sửa"}
+          {isEditing ? "Cancel" : "Edit"}
         </Button>
       </div>
 
@@ -92,22 +92,22 @@ export default function UserProfile() {
       {/* Hiển thị thông tin hoặc form chỉnh sửa */}
       {!isEditing ? (
         <div className="grid grid-cols-2 gap-x-12 gap-y-4">
-          <ProfileField label="Số điện thoại" value={formData.phone_number} />
-          <ProfileField label="Ngày sinh" value={formatDateDisplay(formData.birthday)} />
-          <ProfileField label="Giới tính" value={formData.sex || "Unknown"} />
-          <ProfileField label="Địa chỉ" value={formData.address || "Unknown"} />
+          <ProfileField label="Phone Number" value={formData.phone_number} />
+          <ProfileField label="Date of Birth" value={formatDateDisplay(formData.birthday)} />
+          <ProfileField label="Gender" value={formData.sex || "Unknown"} />
+          <ProfileField label="Address" value={formData.address || "Unknown"} />
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-8 gap-y-4">
-          <Input id="last_name" value={formData.last_name} onChange={handleChange} placeholder="Họ" />
-          <Input id="first_name" value={formData.first_name} onChange={handleChange} placeholder="Tên" />
+          <Input id="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" />
+          <Input id="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" />
           <Input id="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-          <Input id="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="Số điện thoại" />
+          <Input id="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="Phone Number" />
           <Input id="birthday" type="date" value={formData.birthday} onChange={handleChange} />
-          <Input id="sex" value={formData.sex} onChange={handleChange} placeholder="Giới tính" />
-          <Input id="address" value={formData.address} onChange={handleChange} placeholder="Địa chỉ" />
+          <Input id="sex" value={formData.sex} onChange={handleChange} placeholder="Gender" />
+          <Input id="address" value={formData.address} onChange={handleChange} placeholder="Address" />
           <div className="col-span-2 flex justify-end mt-4">
-            <Button type="submit">Lưu thay đổi</Button>
+            <Button type="submit">Save Changes</Button>
           </div>
         </form>
       )}

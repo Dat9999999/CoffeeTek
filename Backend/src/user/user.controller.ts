@@ -42,8 +42,8 @@ export class UserController {
   }
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
-  getUsers(@GetUser() user: client.User) {
-    return user;
+  async getUsers(@GetUser() user: client.User) {
+    return await this.userService.getUserProfile(user.id);
   }
   @Patch('update/:id')
   @UseInterceptors(FileInterceptor('avatar', {

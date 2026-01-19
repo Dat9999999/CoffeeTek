@@ -128,6 +128,29 @@ export class UserService {
     return 'Hello World!';
   }
 
+  async getUserProfile(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        detail: true,
+        roles: true,
+        CustomerPoint: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Format response to include loyalty points
+    return {
+      ...user,
+      loyalty: {
+        points: user.CustomerPoint?.points || 0,
+      },
+    };
+  }
+
   async getAllUsersForPos(query: GetAllDto) {
     const {
       page,

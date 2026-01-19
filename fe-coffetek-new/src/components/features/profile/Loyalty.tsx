@@ -111,7 +111,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
       setGroupedVouchers(groupedArray);
     } catch (error: any) {
       console.error("Error fetching available vouchers:", error);
-      toast.error("Không thể tải danh sách voucher");
+      toast.error("Failed to load vouchers list");
     } finally {
       setLoading(false);
     }
@@ -150,12 +150,12 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
     // Check if user already has a voucher from this group
     const userHasThisType = myVouchers.some((v: Voucher) => v.group_name === groupName);
     if (userHasThisType) {
-      toast.error("Bạn đã có voucher loại này rồi! Mỗi loại voucher chỉ được đổi một lần.");
+      toast.error("You already have this type of voucher! Each voucher type can only be exchanged once.");
       return;
     }
 
     if (points < requirePoint) {
-      toast.error(`Bạn không đủ điểm! Cần ${requirePoint} điểm, bạn có ${points} điểm.`);
+      toast.error(`You don't have enough points! Need ${requirePoint} points, you have ${points} points.`);
       return;
     }
 
@@ -172,7 +172,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
       await fetchProfile();
     } catch (error: any) {
       console.error("Error exchanging voucher:", error);
-      const errorMessage = error.message || error.response?.data?.message || "Không thể đổi voucher";
+      const errorMessage = error.message || error.response?.data?.message || "Failed to exchange voucher";
       toast.error(errorMessage);
     } finally {
       setExchangingGroup(null);
@@ -191,15 +191,15 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
               <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
-              Điểm tích lũy của bạn
+              Your Loyalty Points
             </h3>
-            <p className="text-gray-600">Sử dụng điểm để đổi voucher giảm giá</p>
+            <p className="text-gray-600">Use points to exchange discount vouchers</p>
           </div>
           <div className="text-right">
             <div className="text-4xl font-bold text-amber-600 mb-1">
-              {points.toLocaleString("vi-VN")}
+              {points.toLocaleString("en-US")}
             </div>
-            <div className="text-sm text-gray-600">điểm</div>
+            <div className="text-sm text-gray-600">points</div>
           </div>
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          Voucher có sẵn
+          Available Vouchers
           {activeTab === "available" && (
             <motion.div
               layoutId="activeTab"
@@ -230,7 +230,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          Voucher của tôi
+          My Vouchers
           {myVouchers.length > 0 && (
             <Badge className="ml-2 bg-orange-600 text-white text-xs">
               {myVouchers.length}
@@ -309,7 +309,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-sm text-gray-600">Min Order:</span>
                             <span className="font-semibold text-gray-900">
-                              {group.minAmountOrder.toLocaleString("vi-VN")}₫
+                              ${group.minAmountOrder.toLocaleString("en-US")}
                             </span>
                           </div>
                         </div>
@@ -318,8 +318,8 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-4">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            {new Date(group.valid_from).toLocaleDateString("vi-VN")} -{" "}
-                            {new Date(group.valid_to).toLocaleDateString("vi-VN")}
+                            {new Date(group.valid_from).toLocaleDateString("en-US")} -{" "}
+                            {new Date(group.valid_to).toLocaleDateString("en-US")}
                           </span>
                         </div>
 
@@ -435,7 +435,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-600">Min Order:</span>
                             <span className="font-semibold text-gray-900">
-                              {voucher.minAmountOrder.toLocaleString("vi-VN")}₫
+                              ${voucher.minAmountOrder.toLocaleString("en-US")}
                             </span>
                           </div>
                         </div>
@@ -444,7 +444,7 @@ export default function Loyalty({ loyalty }: LoyaltyProps) {
                         <div className="flex items-center gap-2 text-xs text-gray-600">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            Valid until: {new Date(voucher.valid_to).toLocaleDateString("vi-VN")}
+                            Valid until: {new Date(voucher.valid_to).toLocaleDateString("en-US")}
                           </span>
                         </div>
                       </div>

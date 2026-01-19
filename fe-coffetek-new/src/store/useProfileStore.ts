@@ -74,7 +74,7 @@ export const useProfileStore = create<UserState>((set) => ({
 
       // 🟠 Kiểm tra token hết hạn
       if (res.status === 401) {
-        toast.warning("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!");
+        toast.warning("Your session has expired, please login again!");
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem("USER");
         set({ user: null, loading: false });
@@ -117,11 +117,14 @@ export const useProfileStore = create<UserState>((set) => ({
         ordersData = data.orders || [];
       }
 
+      // Extract loyalty points from CustomerPoint or loyalty object
+      const loyaltyPoints = data.loyalty?.points ?? data.CustomerPoint?.points ?? 0;
+
       set({
         user: userData,
         orders: ordersData,
         wishlist: data.wishlist || [],
-        loyalty: data.loyalty || { points: 0 },
+        loyalty: { points: loyaltyPoints },
         loading: false,
       });
     } catch (err: any) {

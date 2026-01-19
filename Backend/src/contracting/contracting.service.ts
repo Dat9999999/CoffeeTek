@@ -52,75 +52,32 @@ export class ContractingService {
       );
     }
 
-    // Get available inventory (last remain + imports)
-    const availableQuantity = await this.getAvailableQuantity(materialId, normalizedDate);
-
-    if (quantity > availableQuantity) {
-      throw new BadRequestException(
-        `Insufficient inventory. Available: ${availableQuantity} ${material.Unit?.symbol || ''}, Requested: ${quantity}`,
-      );
-    }
-
-    // Check if there's already a remain record for today (from previous contracting today)
-    const todayRemain = await this.prisma.materialRemain.findFirst({
+    // Get last remain record for this material (most recent, regardless of date)
+    // This is the source of truth for available quantity
+    const lastRemain = await this.prisma.materialRemain.findFirst({
       where: {
         materialId,
-        date: {
-          gte: normalizedDate,
-          lt: new Date(normalizedDate.getTime() + 24 * 60 * 60 * 1000),
-        },
+      },
+      orderBy: {
+        date: 'desc',
       },
     });
 
-    let oldRemain: number;
-
-    if (todayRemain) {
-      // If there's already a remain record for today, use that as the base
-      // This means we're creating a second (or more) contracting for the same material today
-      oldRemain = todayRemain.remain;
-    } else {
-      // If no remain record for today, calculate from yesterday's remain + imports
-      const lastRemain = await this.prisma.materialRemain.findFirst({
-        where: {
-          materialId,
-          date: {
-            lt: normalizedDate,
-          },
-        },
-        orderBy: {
-          date: 'desc',
-        },
-      });
-
-      // Get imports after last remain date (or all imports if no last remain)
-      const lastRemainDate = lastRemain?.date || new Date(0);
-      const imports = await this.prisma.materialImportation.findMany({
-        where: {
-          materialId,
-          importDate: {
-            gte: lastRemainDate,
-            lt: normalizedDate,
-          },
-        },
-      });
-
-      const totalImported = imports.reduce(
-        (sum, imp) => sum + imp.importQuantity,
-        0,
-      );
-
-      // Calculate old remain: last remain + imports
-      oldRemain = (lastRemain?.remain || 0) + totalImported;
-    }
-
-    // Calculate new remain: old remain - contracting quantity
-    const newRemain = oldRemain - quantity;
-
-    if (newRemain < 0) {
+    if (!lastRemain) {
       throw new BadRequestException(
-        `Insufficient inventory. Available: ${oldRemain} ${material.Unit?.symbol || ''}, Requested: ${quantity}`,
+        `No remain record found for material ${material.name}. Please import materials first to create an initial remain record.`,
       );
     }
+
+    // Validate sufficient inventory based on last remain
+    if (quantity > lastRemain.remain) {
+      throw new BadRequestException(
+        `Insufficient inventory. Available: ${lastRemain.remain} ${material.Unit?.symbol || ''}, Requested: ${quantity}. Please import more materials first.`,
+      );
+    }
+
+    // Calculate new remain: last remain - contracting quantity
+    const newRemain = lastRemain.remain - quantity;
 
     // Create contracting record
     const contracting = await this.prisma.contracting.create({
@@ -145,12 +102,33 @@ export class ContractingService {
       },
     });
 
-    // Record new remain in materialRemain table
-    await this.recordMaterialRemainAfterContracting(
-      materialId,
-      normalizedDate,
-      newRemain,
-    );
+    // Check if there's already a remain record for today
+    const todayRemain = await this.prisma.materialRemain.findFirst({
+      where: {
+        materialId,
+        date: {
+          gte: normalizedDate,
+          lt: new Date(normalizedDate.getTime() + 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+
+    if (todayRemain) {
+      // Update existing remain record for today
+      await this.prisma.materialRemain.update({
+        where: { id: todayRemain.id },
+        data: { remain: newRemain },
+      });
+    } else {
+      // Create new remain record for today by subtracting from last remain
+      await this.prisma.materialRemain.create({
+        data: {
+          materialId,
+          date: normalizedDate,
+          remain: newRemain,
+        },
+      });
+    }
 
     return contracting;
   }

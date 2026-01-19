@@ -137,8 +137,8 @@ export class MaterialService {
   }
 
   async importMaterial(dto: ImportMaterialDto) {
-    //store import history here if needed
-    await this.prisma.materialImportation.create({
+    // Store import history
+    const importation = await this.prisma.materialImportation.create({
       data: {
         materialId: dto.materialId,
         importQuantity: dto.quantity,
@@ -148,17 +148,43 @@ export class MaterialService {
         employeeId: (dto as any).employeeId ?? 1, // employeeId = 1 is owner
       },
     });
-    // const material = await this.prisma.material.update({
-    //   where: { id: dto.materialId },
-    //   data: {
-    //     remain: {
-    //       increment: dto.quantity,
-    //     },
-    //   },
-    // });
+
+    // Get last remain record for this material (most recent)
+    const lastRemain = await this.prisma.materialRemain.findFirst({
+      where: {
+        materialId: dto.materialId,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+
+    let newRemain: number;
+
+    if (lastRemain) {
+      // Update the last remain record directly: add imported quantity
+      newRemain = lastRemain.remain + dto.quantity;
+      await this.prisma.materialRemain.update({
+        where: { id: lastRemain.id },
+        data: { remain: newRemain },
+      });
+    } else {
+      // If no remain record exists, create one for today with imported quantity
+      newRemain = dto.quantity;
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      await this.prisma.materialRemain.create({
+        data: {
+          materialId: dto.materialId,
+          date: today,
+          remain: newRemain,
+        },
+      });
+    }
+
     // send log import material here
     Logger.log(
-      `Import material id ${dto.materialId} with quantity ${dto.quantity}`,
+      `Import material id ${dto.materialId} with quantity ${dto.quantity}, new remain: ${newRemain}`,
       `MaterialService, price per unit : ${dto.pricePerUnit}`,
     );
     return dto;
